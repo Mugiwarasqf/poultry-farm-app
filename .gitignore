@@ -1,0 +1,32 @@
+# Terraform
+infra/**/.build/
+infra/**/.terraform/
+# infra/.terraform.lock.hcl is intentionally NOT ignored — commit it for
+# reproducible provider versions across machines.
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfplan
+infra/crash.log
+infra/crash.*.log
+infra/terraform.tfvars
+infra/override.tf
+infra/override.tf.json
+infra/*_override.tf
+infra/*_override.tf.json
+
+# Backend (Node/TypeScript)
+backend/node_modules/
+backend/dist/
+backend/*.zip
+backend/coverage/
+
+# Environment / secrets
+.env
+.env.*
+*.pem
+*.key
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

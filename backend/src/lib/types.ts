@@ -1,0 +1,91 @@
+// Mirrors the data model in docs/10-build-plan.md §2. Two fields below
+// (VaccinationRecord.costNaira, EggLog.revenueNaira) aren't in that doc's
+// entity list explicitly, but the doc's summary section says feed and
+// vaccination costs "derive from FeedLog/VaccinationRecord rather than
+// being re-entered" — that only works if the cost/revenue actually lives
+// on those records, so they're added here. Flagging as an assumption:
+// egg revenue in particular needs a real price-per-crate decision, not
+// made yet anywhere in the docs.
+
+export interface Farm {
+  farmId: string;
+  ownerEmail: string;
+  name: string;
+  location?: string;
+  createdAt: string;
+}
+
+export type BatchStatus = "active" | "closed";
+export type BatchType = "layer" | "broiler" | "other";
+
+export interface Batch {
+  farmId: string;
+  batchId: string;
+  name: string;
+  type: BatchType;
+  startDate: string;
+  birdCount: number;
+  status: BatchStatus;
+  createdAt: string;
+}
+
+export interface MortalityLog {
+  batchId: string;
+  entryId: string;
+  date: string;
+  count: number;
+  note?: string;
+  createdAt: string;
+}
+
+export interface FeedLog {
+  batchId: string;
+  entryId: string;
+  date: string;
+  feedType: string;
+  amountKg: number;
+  costNaira: number;
+  createdAt: string;
+}
+
+export interface EggLog {
+  batchId: string;
+  entryId: string;
+  date: string;
+  crates: number;
+  looseEggs: number;
+  /** Optional — see file header note. Omitted until a price-per-crate exists. */
+  revenueNaira?: number;
+  createdAt: string;
+}
+
+export interface VaccinationRecord {
+  batchId: string;
+  entryId: string;
+  vaccineName: string;
+  dateAdministered: string;
+  /** Optional — see file header note. */
+  costNaira?: number;
+  createdAt: string;
+}
+
+export type VaccinationScheduleStatus = "upcoming" | "done" | "missed";
+
+export interface VaccinationSchedule {
+  batchId: string;
+  scheduleId: string;
+  vaccineName: string;
+  dueDate: string;
+  status: VaccinationScheduleStatus;
+  createdAt: string;
+}
+
+export type TrialStatus = "trial" | "converted" | "expired";
+
+export interface User {
+  userId: string;
+  email: string;
+  farmId: string;
+  trialStatus: TrialStatus;
+  trialStartedAt: string;
+}

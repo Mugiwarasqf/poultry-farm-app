@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FarmBook</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">FarmBook <span class="badge">v1</span></div>
+  <div id="user-info" class="user-info hidden">
+    <span id="farm-id-label"></span>
+    <button id="logout-btn" class="btn-ghost">Log out</button>
+  </div>
+</header>
+
+<nav id="nav-bar" class="nav-bar hidden">
+  <button id="nav-home" class="nav-btn">Home</button>
+  <button id="nav-mortality" class="nav-btn">Birds Lost</button>
+  <button id="nav-feed" class="nav-btn">Feed</button>
+  <button id="nav-eggs" class="nav-btn">Eggs</button>
+  <button id="nav-vaccinations" class="nav-btn">Vaccination History</button>
+  <button id="nav-schedule" class="nav-btn">Vaccination Schedule</button>
+  <button id="nav-summary" class="nav-btn">Summary</button>
+  <button id="nav-sync" class="nav-btn">Offline Sync</button>
+</nav>
+
+<main id="app">
+
+  <section id="view-login" class="view">
+    <div class="card narrow">
+      <h1>Sign in</h1>
+      <p class="muted">This calls the real Cognito email/OTP flow. If SES is
+      still in its sandbox, only email addresses verified there will
+      actually receive a code.</p>
+
+      <label class="field-label">Email address</label>
+      <input id="email-input" type="email" placeholder="you@example.com" />
+      <button id="otp-request-btn" class="btn-primary">Send code</button>
+
+      <div id="otp-step" class="hidden">
+        <label class="field-label">Code from SMS</label>
+        <input id="otp-input" type="text" inputmode="numeric" maxlength="6" />
+        <button id="otp-verify-btn" class="btn-primary">Verify</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-home" class="view hidden">
+    <div class="card">
+      <h1>Batches</h1>
+      <div id="batch-list" class="list"></div>
+
+      <h2>New batch</h2>
+      <div class="form-grid">
+        <label class="field-label">Name<input id="batch-name" type="text" /></label>
+        <label class="field-label">Type
+          <select id="batch-type">
+            <option value="broiler">broiler</option>
+            <option value="layer">layer</option>
+            <option value="other">other</option>
+          </select>
+        </label>
+        <label class="field-label">Start date<input id="batch-start" type="date" /></label>
+        <label class="field-label">Bird count<input id="batch-count" type="number" /></label>
+      </div>
+      <button id="batch-create-btn" class="btn-primary">Create batch</button>
+    </div>
+  </section>
+
+  <section id="view-log" class="view hidden">
+    <div class="card">
+      <h1 id="log-title">—</h1>
+      <p class="muted">Batch: <span id="log-batch-label"></span></p>
+      <div id="log-form-fields" class="form-grid"></div>
+      <button id="log-submit-btn" class="btn-primary">Save entry</button>
+      <h2>Entries</h2>
+      <div id="log-entries" class="list mono"></div>
+    </div>
+  </section>
+
+  <section id="view-schedule" class="view hidden">
+    <div class="card">
+      <h1>Vaccination Schedule</h1>
+      <p class="muted">Batch: <span id="schedule-batch-label"></span></p>
+      <div class="form-grid">
+        <label class="field-label">Vaccine name<input id="schedule-vaccine" type="text" /></label>
+        <label class="field-label">Due date<input id="schedule-due" type="date" /></label>
+      </div>
+      <button id="schedule-create-btn" class="btn-primary">Add to schedule</button>
+      <h2>Upcoming / history</h2>
+      <div id="schedule-list" class="list"></div>
+    </div>
+  </section>
+
+  <section id="view-summary" class="view hidden">
+    <div class="card">
+      <h1>Money Summary</h1>
+      <p class="muted">Farm-level, per docs/10-build-plan.md §3.</p>
+      <div class="btn-row">
+        <button id="summary-week-btn" class="btn-secondary">This week</button>
+        <button id="summary-month-btn" class="btn-secondary">This month</button>
+      </div>
+      <pre id="summary-output" class="mono output-block"></pre>
+    </div>
+  </section>
+
+  <section id="view-sync" class="view hidden">
+    <div class="card">
+      <h1>Offline Sync (POST /sync/batch)</h1>
+      <p class="muted">One JSON object per line — resource, batchId, entryId
+      (you make one up), plus that resource's fields. See
+      backend/src/handlers/sync/index.ts for the exact shape.</p>
+      <textarea id="sync-input" rows="6" class="mono"
+        placeholder='{"resource":"mortality","batchId":"...","entryId":"test-1","date":"2026-08-31","count":2}'></textarea>
+      <button id="sync-submit-btn" class="btn-primary">Send batch</button>
+      <pre id="sync-output" class="mono output-block"></pre>
+    </div>
+  </section>
+
+</main>
+
+<footer class="debug-panel">
+  <div class="debug-header">
+    <span>Debug log — every API call this page makes, raw</span>
+    <button id="debug-clear-btn" class="btn-ghost">Clear</button>
+  </div>
+  <div id="debug-log"></div>
+</footer>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

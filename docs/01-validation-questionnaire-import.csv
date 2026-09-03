@@ -1,0 +1,28 @@
+Section,Question,Type,Options,Required
+About your farm,What is your role?,Multiple choice,Owner;Farm manager;Worker/staff;Other,Yes
+About your farm,What type of poultry operation do you run?,Checkboxes,Broilers;Layers (eggs);Breeders;Other,Yes
+About your farm,Roughly how many birds do you currently keep?,Multiple choice,Under 50 (backyard/hobby);50 - 199;200 - 499;500 - 1499;1500 - 2999;3000 - 9999;10000+,Yes
+About your farm,How many years has the farm been operating?,Multiple choice,Less than 1 year;1-3 years;4-10 years;10+ years,Yes
+About your farm,What state/region is the farm located in?,Short answer,,Yes
+Current record-keeping,How do you currently track bird deaths/mortality?,Multiple choice,Paper notebook/logbook;Excel/Google Sheets;WhatsApp notes to myself;I remember it, no written record;We don't track this;Other,Yes
+Current record-keeping,How do you currently track feed usage and cost?,Multiple choice,Paper notebook/logbook;Excel/Google Sheets;WhatsApp notes to myself;I remember it, no written record;We don't track this;Other,Yes
+Current record-keeping,How do you currently track egg production laying cycle or egg crate counts?,Multiple choice,Paper notebook/logbook;Excel/Google Sheets;WhatsApp notes to myself;I remember it, no written record;We don't track this;Not applicable I don't keep layers;Other,Yes
+Current record-keeping,How do you currently track vaccination schedules?,Multiple choice,Paper notebook/logbook;Excel/Google Sheets;I rely on the vet/supplier to remind me;I remember it, no written record;We don't track this;Other,Yes
+Current record-keeping,Have you ever lost track of something important (missed vaccination, unclear die-off cause, disputed feed or egg count) because records weren't kept well?,Multiple choice,Yes - caused real financial loss;Yes - not too costly;No;Not sure,Yes
+Current record-keeping,If yes above briefly describe what happened,Paragraph,,No
+Disease reporting and insurance,Do you currently carry avian flu (HPAI) or other poultry insurance?,Multiple choice,Yes;No;Not sure / not applicable to my farm size,Yes
+Disease reporting and insurance,If yes what documentation does your insurer ask for especially when filing a claim?,Paragraph,,No
+Disease reporting and insurance,Have you ever had to report a disease outbreak or health issue to a veterinary officer or government agency?,Multiple choice,Yes;No;Not sure how/where I'd do this,Yes
+Disease reporting and insurance,If yes how was that process? What made it easy or difficult?,Paragraph,,No
+Disease reporting and insurance,If you had exportable digital records ready at any time how much would that help with insurance claims or disease reporting?,Linear scale,1;2;3;4;5,Yes
+Access to credit/finance,Have you ever applied for an agricultural loan or grant (e.g. NIRSAL Bank of Agriculture a commercial bank's agric loan)?,Multiple choice,Yes - approved;Yes - rejected or delayed;No - haven't applied;No - didn't think I'd qualify,Yes
+Access to credit/finance,If you applied did lack of farm records or documentation ever hurt your application?,Multiple choice,Yes significantly;Yes a little;No;Not applicable,Yes
+Interest and willingness to pay,Rank your biggest current challenges (select top 3),Checkboxes,Tracking mortality/deaths;Tracking feed cost;Tracking egg production/laying cycle;Vaccination scheduling;Disease outbreak response;Insurance/compliance paperwork;Getting a loan or credit;Proving records to buyers;Something else,Yes
+Interest and willingness to pay,"If a simple mobile-friendly app could track mortality, feed, egg production, and vaccinations, and generate ready-to-submit reports for insurance/loans, how interested would you be?",Linear scale,1;2;3;4;5,Yes
+Interest and willingness to pay,What would you expect to pay per month for something like that?,Multiple choice,Nothing I wouldn't pay for this;Under N2000/month;N2000 - N5000/month;N5000 - N15000/month;N15000+/month;Not sure,Yes
+Interest and willingness to pay,Do you (or whoever runs day-to-day records) have a smartphone with reliable internet/data access?,Multiple choice,Yes reliable access;Yes but data/network is unreliable;No smartphone only basic phone;Not sure,Yes
+Contact and pilot interest,Would you be open to a free early trial in exchange for feedback?,Multiple choice,Yes;Maybe tell me more first;No,Yes
+Contact and pilot interest,Name,Short answer,,Yes
+Contact and pilot interest,Farm name / location,Short answer,,Yes
+Contact and pilot interest,Phone number or WhatsApp (for follow-up),Short answer,,Yes
+Contact and pilot interest,Anything else you'd want a farm record app to do?,Paragraph,,No
