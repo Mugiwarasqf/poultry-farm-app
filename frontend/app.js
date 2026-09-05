@@ -153,6 +153,11 @@ $('otp-verify-btn').addEventListener('click', async () => {
     localStorage.setItem('farmbook_farmid', state.farmId);
     enterApp();
   } catch (e) {
+    // A wrong code invalidates the old session — otp/verify hands back a
+    // fresh one to retry with, since resending the same session again
+    // fails with an unrelated-looking "Invalid session" error instead of
+    // just "incorrect code" a second time.
+    if (e.data && e.data.session) state.session = e.data.session;
     alert('Verify failed: ' + e.message);
   }
 });
