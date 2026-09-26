@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --color-brand-50: #fffbeb;
+  --color-brand-100: #fef3c7;
+  --color-brand-200: #fde68a;
+  --color-brand-300: #fcd34d;
+  --color-brand-400: #fbbf24;
+  --color-brand-500: #f59e0b;
+  --color-brand-600: #d97706;
+  --color-brand-700: #b45309;
+  --color-brand-800: #92400e;
+  --color-brand-900: #78350f;
+  --color-brand-950: #451a03;
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #faf8f5;
+    color: #292524;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.015em;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Tab panel enter — used when switching between Overview / Production / Feed
+   etc. so the content fades in rather than snapping. Kept short and with a
+   small rise so repeated tab clicks never feel sluggish. */
+@keyframes tabPanelIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.18s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.22s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideInRight 0.2s ease-out forwards;
+}
+
+.animate-tab-panel {
+  animation: tabPanelIn 0.2s ease-out forwards;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid #e7e5e4;
+  border-top-color: #d97706;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+}
+
+/* Hero Orchestrated Entrance Animation */
+@keyframes heroLineReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroCtaIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.hero-line {
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: heroLineReveal 440ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-line-1 {
+  animation-delay: 0ms;
+}
+
+.hero-line-2 {
+  animation-delay: 80ms;
+}
+
+.hero-subhead {
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: heroFadeUp 340ms cubic-bezier(0.16, 1, 0.3, 1) 670ms both;
+}
+
+.hero-cta {
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: heroCtaIn 300ms cubic-bezier(0.16, 1, 0.3, 1) 800ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-line,
+  .hero-subhead,
+  .hero-cta {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
