@@ -7,7 +7,7 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { ddb, tables } from "../../lib/dynamo";
-import { badRequest, ok } from "../../lib/http";
+import { badRequest, json, ok } from "../../lib/http";
 import { newId } from "../../lib/ids";
 
 const cognito = new CognitoIdentityProviderClient({});
@@ -36,9 +36,13 @@ export async function handler(event: APIGatewayProxyEventV2) {
   );
 
   if (!result.AuthenticationResult) {
-    // Wrong code: Cognito returns a fresh session instead of an error, so
-    // the client can retry against the same challenge.
-    return badRequest("incorrect code");
+    // Wrong code: Cognito issues a fresh session for the retry rather than
+    // just erroring — the *old* session is no longer valid at all, so it
+    // has to be handed back to the client here, or the next attempt fails
+    // with "Invalid session for the user" regardless of whether the code
+    // entered that time is correct. (This was a real bug, not a comment
+    // ahead of the code: the session was documented but never returned.)
+    return json(400, { error: "incorrect code", session: result.Session });
   }
 
   let idToken = result.AuthenticationResult.IdToken!;
