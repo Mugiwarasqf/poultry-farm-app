@@ -43,14 +43,14 @@ function Navbar() {
 
         <div className="hidden items-center gap-3 md:flex">
           <a
-            href="#login"
+            href="/login"
             className="text-[15px] font-medium text-neutral-700 hover:text-neutral-950"
           >
             Log in
           </a>
           <a
-            href="#signup"
-            className="rounded-full bg-[#0D5C3A] px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#094229]"
+            href="/signup"
+            className="rounded-full bg-black px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#094229]"
           >
             Get started
           </a>
@@ -85,7 +85,7 @@ function Navbar() {
               </a>
               <a
                 href="#signup"
-                className="rounded-full bg-[#0D5C3A] px-5 py-2.5 text-center text-[14px] font-semibold text-white"
+                className="rounded-full bg-black px-5 py-2.5 text-center text-[14px] font-semibold text-white"
               >
                 Get started
               </a>
@@ -130,7 +130,7 @@ function Hero() {
 
         <a
           href="/login"
-          className="hero-cta mt-9 inline-flex items-center gap-2 rounded-full bg-[#0D5C3A] py-3.5 pl-6 pr-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#094229]"
+          className="hero-cta mt-9 inline-flex items-center gap-2 rounded-full bg-black py-3.5 pl-6 pr-3 text-[15px] font-semibold text-white transition-colors hover:bg-coal-500"
         >
           Get started free
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-neutral-950">
