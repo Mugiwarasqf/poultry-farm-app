@@ -50,7 +50,7 @@ function Navbar() {
           </a>
           <a
             href="#signup"
-            className="rounded-full bg-neutral-950 px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-neutral-800"
+            className="rounded-full bg-[#0D5C3A] px-5 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#094229]"
           >
             Get started
           </a>
@@ -85,7 +85,7 @@ function Navbar() {
               </a>
               <a
                 href="#signup"
-                className="rounded-full bg-neutral-950 px-5 py-2.5 text-center text-[14px] font-semibold text-white"
+                className="rounded-full bg-[#0D5C3A] px-5 py-2.5 text-center text-[14px] font-semibold text-white"
               >
                 Get started
               </a>
@@ -130,7 +130,7 @@ function Hero() {
 
         <a
           href="/login"
-          className="hero-cta mt-9 inline-flex items-center gap-2 rounded-full bg-neutral-950 py-3.5 pl-6 pr-3 text-[15px] font-semibold text-white transition-colors hover:bg-neutral-800"
+          className="hero-cta mt-9 inline-flex items-center gap-2 rounded-full bg-[#0D5C3A] py-3.5 pl-6 pr-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#094229]"
         >
           Get started free
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-neutral-950">

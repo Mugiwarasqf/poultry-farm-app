@@ -25,12 +25,12 @@ import { DeleteBatchModal } from '../components/ui/DeleteBatchModal';
 import { useToast } from '../components/ui/Toast';
 // Bird imagery + the crate-to-egg factor are shared with History so the two
 // pages can't drift apart when a photo gets swapped.
-import { BATCH_IMAGES, EGGS_PER_CRATE, batchAge } from '../lib/batch';
+import { BATCH_IMAGES, EGGS_PER_CRATE, batchAge, birdTypeLabel, feedBags, formatBags } from '../lib/batch';
 import { BirdIcon } from '../components/ui/BirdIcon';
 
 // Farm cover & avatar
-const COVER_IMAGE = '/images/mikki-seifu-GYF0GAsUkYI-unsplash.jpg';
-const AVATAR_IMAGE = '/images/irvan-maulana-ENQIxReDFKE-unsplash.jpg';
+const COVER_IMAGE = '/images/gabriele-romano-5sBG1uTmV4o-unsplash';
+const AVATAR_IMAGE = '/images/hd.jpg';
 
 // Batch cards shown before the "create new" tile — 4 real batches + 1
 // create tile fills one row of 5 on the dashboard; the rest live on /batches.
@@ -153,7 +153,7 @@ export function DashboardPage() {
             type: 'feed',
             at: e.createdAt || e.date,
             title: 'Feed logged',
-            subtitle: `${e.amountKg ?? 0} kg – ${e.batchName}`,
+            subtitle: `${formatBags(feedBags(e))} – ${e.batchName}`,
           })),
           ...eggEntries.map((e) => ({
             type: 'eggs',
@@ -203,7 +203,8 @@ export function DashboardPage() {
   const totalBirds = activeBatches.reduce((sum, b) => sum + (Number(b.currentBirds ?? b.birdCount) || 0), 0);
   const layerBatches = activeBatches.filter(b => (b.type || '').toLowerCase() === 'layer');
   const broilerBatches = activeBatches.filter(b => (b.type || '').toLowerCase() === 'broiler');
-  const chickBatches = activeBatches.filter(b => (b.type || '').toLowerCase() === 'chick');
+  // Everything that isn't a layer or broiler: turkey, duck, cockerel, quail, older 'chick' batches.
+  const otherBatches = activeBatches.filter(b => !['layer', 'broiler'].includes((b.type || '').toLowerCase()));
   const housesCount = new Set(
     activeBatches.map((b) => (b.housing || '').trim()).filter(Boolean)
   ).size;
@@ -346,7 +347,7 @@ export function DashboardPage() {
                     : BATCH_IMAGES.default);
 
                 const birdCount = Number(batch.currentBirds ?? batch.birdCount ?? 0);
-                const breedDisplay = batch.breed || (isLayer ? 'Hisex Brown' : 'Ross 308');
+                const breedDisplay = batch.breed || birdTypeLabel(type);
                 const ageDisplay = batchAge(batch);
                 const placedDateDisplay = formatPlacedDate(batch.startDate || batch.createdAt);
 
@@ -482,7 +483,7 @@ export function DashboardPage() {
               <InsightTile icon={Banknote} value={formatNaira(summary?.netNaira)} label="Farm Profit" hint="This month" />
               <InsightTile icon={BirdIcon} value={layerBatches.length} label="Layer Batches" hint="Producing eggs" />
               <InsightTile icon={BirdIcon} value={broilerBatches.length} label="Broiler Batches" hint="Meat production" />
-              <InsightTile icon={BirdIcon} value={chickBatches.length} label="Chick Batches" hint="Growing stage" />
+              <InsightTile icon={BirdIcon} value={otherBatches.length} label="Other Batches" hint="Turkey, duck, cockerel…" />
               <InsightTile icon={Egg} value={`~${eggsPerDay}`} label="Egg Production" hint="pcs/day, 7d" />
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Pencil, Calendar, ArrowLeft, ArrowRight, Check } from 'lucide-react';
+import { User, Pencil, Calendar, ArrowLeft, ArrowRight, Check, Drumstick, Egg, Bird } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useBatches } from '../context/BatchContext';
 import { updateFarm } from '../api/farms';
@@ -207,7 +207,7 @@ export function OnboardingPage({ onComplete }) {
                     </label>
                     <input
                       type="text"
-                      className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-neutral-950/15 focus:border-neutral-950 transition-all placeholder:text-neutral-400"
+                      className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
                       placeholder="e.g. Adeola Poultry Farm"
                       value={farmName}
                       onChange={(e) => setFarmName(e.target.value)}
@@ -223,7 +223,7 @@ export function OnboardingPage({ onComplete }) {
                     </label>
                     <input
                       type="text"
-                      className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-neutral-950/15 focus:border-neutral-950 transition-all placeholder:text-neutral-400"
+                      className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
                       placeholder="e.g. Babatunde"
                       value={farmerName}
                       onChange={(e) => setFarmerName(e.target.value)}
@@ -235,7 +235,7 @@ export function OnboardingPage({ onComplete }) {
                     <button
                       type="submit"
                       disabled={!farmName.trim() || loading}
-                      className="px-9 py-3.5 bg-neutral-950 hover:bg-neutral-800 active:bg-neutral-900 text-white text-xs font-bold tracking-wider uppercase rounded-full shadow-sm transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                      className="px-9 py-3.5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white text-xs font-bold tracking-wider uppercase rounded-full shadow-sm transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
                     >
                       {loading ? 'SAVING…' : 'NEXT'}
                     </button>
@@ -258,9 +258,9 @@ export function OnboardingPage({ onComplete }) {
 
                 <div className="grid grid-cols-3 gap-3 pt-1">
                   {[
-                    { value: 'broiler', label: 'Broilers', icon: '🍗', desc: 'Meat production' },
-                    { value: 'layer', label: 'Layers', icon: '🥚', desc: 'Egg production' },
-                    { value: 'other', label: 'Other', icon: '🐔', desc: 'Cockerels / Mixed' },
+                    { value: 'broiler', label: 'Broilers', icon: Drumstick, desc: 'Meat production' },
+                    { value: 'layer', label: 'Layers', icon: Egg, desc: 'Egg production' },
+                    { value: 'other', label: 'Other', icon: Bird, desc: 'Turkey, duck, cockerel…' },
                   ].map((opt) => (
                     <button
                       key={opt.value}
@@ -268,13 +268,13 @@ export function OnboardingPage({ onComplete }) {
                       onClick={() => setBirdType(opt.value)}
                       className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all cursor-pointer ${
                         birdType === opt.value
-                          ? 'bg-neutral-950 text-white border-neutral-950 shadow-md ring-2 ring-neutral-950/20'
+                          ? 'bg-[#0D5C3A] text-white border-[#0D5C3A] shadow-md ring-2 ring-[#0D5C3A]/20'
                           : 'bg-white border-neutral-200 text-neutral-800 hover:border-neutral-300 hover:bg-neutral-50'
                       }`}
                     >
-                      <span className="text-2xl mb-1.5">{opt.icon}</span>
+                      <opt.icon size={24} strokeWidth={2} className="mb-1.5" />
                       <span className="text-xs font-bold">{opt.label}</span>
-                      <span className={`text-[10px] mt-1 text-center ${birdType === opt.value ? 'text-neutral-300' : 'text-neutral-400'}`}>
+                      <span className={`text-[10px] mt-1 text-center ${birdType === opt.value ? 'text-emerald-100' : 'text-neutral-400'}`}>
                         {opt.desc}
                       </span>
                     </button>
@@ -287,7 +287,7 @@ export function OnboardingPage({ onComplete }) {
                   </label>
                   <input
                     type="number"
-                    className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-neutral-950/15 focus:border-neutral-950 transition-all placeholder:text-neutral-400"
+                    className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
                     placeholder="e.g. 500"
                     value={birdCount}
                     onChange={(e) => setBirdCount(e.target.value)}
@@ -298,7 +298,7 @@ export function OnboardingPage({ onComplete }) {
                   <button
                     type="button"
                     onClick={next}
-                    className="px-9 py-3.5 bg-neutral-950 hover:bg-neutral-800 active:bg-neutral-900 text-white text-xs font-bold tracking-wider uppercase rounded-full shadow-sm transition-all duration-150 cursor-pointer inline-flex items-center justify-center gap-2"
+                    className="px-9 py-3.5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white text-xs font-bold tracking-wider uppercase rounded-full shadow-sm transition-all duration-150 cursor-pointer inline-flex items-center justify-center gap-2"
                   >
                     NEXT
                   </button>
@@ -332,7 +332,7 @@ export function OnboardingPage({ onComplete }) {
                     </label>
                     <input
                       type="text"
-                      className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-neutral-950/15 focus:border-neutral-950 transition-all placeholder:text-neutral-400"
+                      className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
                       placeholder="e.g. Oyo State, Nigeria"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
@@ -344,7 +344,7 @@ export function OnboardingPage({ onComplete }) {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-9 py-3.5 bg-neutral-950 hover:bg-neutral-800 active:bg-neutral-900 text-white text-xs font-bold tracking-wider uppercase rounded-full shadow-sm transition-all duration-150 cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="px-9 py-3.5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white text-xs font-bold tracking-wider uppercase rounded-full shadow-sm transition-all duration-150 cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {loading ? 'SAVING…' : 'NEXT'}
                     </button>
@@ -387,7 +387,7 @@ export function OnboardingPage({ onComplete }) {
                     </label>
                     <input
                       type="text"
-                      className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-neutral-950/15 focus:border-neutral-950 transition-all placeholder:text-neutral-400"
+                      className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
                       placeholder={`e.g. ${birdType === 'layer' ? 'Layer' : 'Broiler'} Batch 1`}
                       value={batchName}
                       onChange={(e) => setBatchName(e.target.value)}
@@ -403,7 +403,7 @@ export function OnboardingPage({ onComplete }) {
                       </label>
                       <input
                         type="date"
-                        className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-neutral-950/15 focus:border-neutral-950 transition-all"
+                        className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
                       />
@@ -416,7 +416,7 @@ export function OnboardingPage({ onComplete }) {
                       </label>
                       <input
                         type="number"
-                        className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-neutral-950/15 focus:border-neutral-950 transition-all placeholder:text-neutral-400"
+                        className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
                         placeholder="500"
                         value={birdCount}
                         onChange={(e) => setBirdCount(e.target.value)}
@@ -428,7 +428,7 @@ export function OnboardingPage({ onComplete }) {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-9 py-3.5 bg-neutral-950 hover:bg-neutral-800 active:bg-neutral-900 text-white text-xs font-bold tracking-wider uppercase rounded-full shadow-sm transition-all duration-150 cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="px-9 py-3.5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white text-xs font-bold tracking-wider uppercase rounded-full shadow-sm transition-all duration-150 cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {loading ? 'CREATING…' : 'COMPLETE SETUP'}
                     </button>
@@ -494,7 +494,7 @@ export function OnboardingPage({ onComplete }) {
                   type="button"
                   onClick={() => setStep(i)}
                   className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                    step === i ? 'w-8 bg-neutral-950' : 'w-2 bg-neutral-300 hover:bg-neutral-400'
+                    step === i ? 'w-8 bg-[#0D5C3A]' : 'w-2 bg-neutral-300 hover:bg-neutral-400'
                   }`}
                   aria-label={`Go to step ${i + 1}`}
                 />

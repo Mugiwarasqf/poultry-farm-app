@@ -132,7 +132,7 @@ export function LoginPage({ onBack }) {
                   </label>
                   <input
                     id="login-email"
-                    className="w-full px-4 py-3 bg-neutral-50 border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-neutral-950/15 focus:border-neutral-950 transition-all placeholder:text-neutral-400"
+                    className="w-full px-4 py-3 bg-neutral-50 border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
                     type="email"
                     placeholder="farmer@example.com"
                     value={email}
@@ -144,7 +144,7 @@ export function LoginPage({ onBack }) {
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 px-5 bg-neutral-950 hover:bg-neutral-800 active:bg-neutral-900 text-white font-semibold rounded-full shadow-sm text-sm transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full py-3.5 px-5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white font-semibold rounded-full shadow-sm text-sm transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   disabled={authLoading}
                 >
                   {authLoading ? (
@@ -191,7 +191,7 @@ export function LoginPage({ onBack }) {
                   </label>
                   <input
                     id="login-code"
-                    className="w-full px-4 py-3 bg-neutral-50 border border-neutral-300 rounded-xl text-neutral-900 text-lg font-mono tracking-[0.25em] text-center font-bold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-neutral-950/15 focus:border-neutral-950 transition-all placeholder:text-neutral-400 placeholder:tracking-normal placeholder:font-sans placeholder:text-sm"
+                    className="w-full px-4 py-3 bg-neutral-50 border border-neutral-300 rounded-xl text-neutral-900 text-lg font-mono tracking-[0.25em] text-center font-bold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400 placeholder:tracking-normal placeholder:font-sans placeholder:text-sm"
                     type="text"
                     inputMode="numeric"
                     maxLength={6}
@@ -205,7 +205,7 @@ export function LoginPage({ onBack }) {
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 px-5 bg-neutral-950 hover:bg-neutral-800 active:bg-neutral-900 text-white font-semibold rounded-full shadow-sm text-sm transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full py-3.5 px-5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white font-semibold rounded-full shadow-sm text-sm transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   disabled={authLoading}
                 >
                   {authLoading ? (

@@ -26,6 +26,9 @@ import {
   formatDate,
   formatPercent,
   typePillClass,
+  birdTypeLabel,
+  feedBags,
+  formatBags,
 } from '../../lib/batch';
 
 const TABS = ['Overview', 'Production', 'Feed', 'Health', 'Vaccination', 'Notes'];
@@ -88,7 +91,7 @@ function useBatchStats(batch, logs) {
 
     const birdsLost = logs.mortality.reduce((sum, e) => sum + (Number(e.count) || 0), 0);
     const totalEggs = logs.eggs.reduce((sum, e) => sum + eggCount(e), 0);
-    const totalFeedKg = logs.feed.reduce((sum, e) => sum + (Number(e.amountKg) || 0), 0);
+    const totalFeedBags = logs.feed.reduce((sum, e) => sum + feedBags(e), 0);
 
     // Peak day = the best single calendar day, so multiple entries logged on
     // the same day count together rather than competing with each other.
@@ -108,7 +111,7 @@ function useBatchStats(batch, logs) {
       lossPercent: formatPercent(birdsLost, totalBirds),
       totalEggs,
       avgEggsPerDay: isLayer && days ? Math.round(totalEggs / days) : null,
-      totalFeedKg,
+      totalFeedBags,
       peakEggDay,
       vaccinationCount: logs.vaccinations.length,
     };
@@ -213,7 +216,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
                   {batch.name}
                 </h2>
                 <span className={typePillClass(type)}>
-                  {type}
+                  {birdTypeLabel(type)}
                 </span>
               </div>
               <span className={`${COMPLETED_PILL_CLASS} shrink-0`}>
@@ -311,7 +314,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
                       key={entry.entryId}
                       primary={entry.feedType || 'Feed'}
                       secondary={formatDate(entry.date)}
-                      value={`${Number(entry.amountKg) || 0} kg`}
+                      value={formatBags(feedBags(entry))}
                     />
                   ))}
                 </div>
@@ -440,7 +443,7 @@ function OverviewTab({ batch, stats }) {
           <InsightRow
             icon={Wheat}
             label="Total feed used"
-            value={stats.totalFeedKg > 0 ? `${stats.totalFeedKg.toLocaleString()} kg` : '-'}
+            value={stats.totalFeedBags > 0 ? formatBags(stats.totalFeedBags) : '-'}
           />
           <InsightRow icon={Syringe} label="Total vaccination records" value={stats.vaccinationCount} />
         </div>

@@ -43,7 +43,7 @@ export function Field({ label, hint, children, className = '' }) {
 
 const CONTROL_BASE =
   'w-full bg-white border border-stone-200 rounded-lg px-3.5 py-2.5 text-sm text-stone-900 ' +
-  'placeholder:text-stone-400 transition-colors focus:outline-hidden focus:border-stone-400 ' +
+  'placeholder:text-stone-400 transition-colors focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15 ' +
   'disabled:bg-stone-50 disabled:text-stone-500 disabled:cursor-not-allowed';
 
 export function TextInput({ className = '', ...props }) {
@@ -68,13 +68,13 @@ export function SelectInput({ className = '', children, ...props }) {
   );
 }
 
-/** Solid dark action button — Edit Profile, Save, and friends. */
+/** Solid brand-green action button — Edit Profile, Save, and friends. */
 export function PrimaryButton({ icon: Icon, children, className = '', ...props }) {
   return (
     <button
       type="button"
       className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold
-        bg-stone-900 text-white hover:bg-stone-800 transition-colors cursor-pointer
+        bg-[#0D5C3A] text-white hover:bg-[#094229] transition-colors cursor-pointer
         disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
       {...props}
     >

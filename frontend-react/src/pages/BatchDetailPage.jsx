@@ -23,55 +23,41 @@ import {
 import { useBatches } from '../context/BatchContext';
 import { getLogs, createLog } from '../api/logs';
 import { QUEUED_SAVE_MESSAGE } from '../lib/offlineQueue';
-import { getSchedule, createSchedule, updateSchedule } from '../api/schedule';
+import { getSchedule } from '../api/schedule';
+import { getVaccinationRecords } from '../api/vaccinations';
+import { SupplementModal } from '../components/ui/SupplementModal';
+import { CalendarPicker } from '../components/ui/CalendarPicker';
+import { buildHealthEvents } from '../lib/healthEvents';
+import { ROUTES } from '../lib/vaccines';
+import { loadSupplements, describeDose, findSupplementType, toIso } from '../lib/supplements';
 import { Modal } from '../components/ui/Modal';
 import { VaccinationModal } from '../components/ui/VaccinationModal';
 import { DeleteBatchModal } from '../components/ui/DeleteBatchModal';
 import { useToast } from '../components/ui/Toast';
 import { PillIcon } from '../components/ui/PillIcon';
 import { BirdIcon } from '../components/ui/BirdIcon';
-import { EGGS_PER_CRATE, batchAge, batchImage, daysActive, formatDate, typePillClass } from '../lib/batch';
+import { EGGS_PER_CRATE, FEED_BAG_KG, batchAge, batchImage, daysActive, feedBags, formatBags, formatCrates, formatDate, typePillClass, birdTypeLabel, laysEggs } from '../lib/batch';
+import { downloadTableReport } from '../lib/report';
+import { FeedUsageModal } from '../components/ui/FeedUsageModal';
+import { FeedPurchaseModal } from '../components/ui/FeedPurchaseModal';
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'logs', label: 'Daily Logs' },
   { id: 'feed', label: 'Feed Record' },
   { id: 'vaccines', label: 'Vaccination' },
-  { id: 'multivitamins', label: 'Multivitamins' },
+  { id: 'multivitamins', label: 'Vitamins' },
   { id: 'mortality', label: 'Bird Lost' },
 ];
 
-/**
- * Reports are built in the browser from the rows already on screen. There is
- * no export endpoint on the backend (the S3 reports bucket exists but nothing
- * writes to it), so generating the file client-side is what makes the per-tab
- * download real rather than a button that does nothing.
- */
-function downloadCsv(filename, headers, rows) {
-  const escape = (value) => {
-    const text = value == null ? '' : String(value);
-    return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-  };
-  const csv = [headers.join(','), ...rows.map((row) => row.map(escape).join(','))].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
-
 function HeaderStat({ icon: Icon, label, value }) {
   return (
-    <div className="px-5 first:pl-0 last:pr-0">
-      <div className="flex items-center gap-2 text-stone-500">
-        <Icon size={16} strokeWidth={2.5} className="text-stone-700 shrink-0" />
-        <span className="text-xs whitespace-nowrap">{label}</span>
+    <div className="px-3 sm:px-5 first:pl-0 last:pr-0 min-w-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 text-stone-500">
+        <Icon size={15} strokeWidth={2.5} className="text-stone-700 shrink-0" />
+        <span className="text-[11px] sm:text-xs truncate">{label}</span>
       </div>
-      <div className="text-xl font-bold text-stone-950 font-heading mt-1">{value}</div>
+      <div className="text-lg sm:text-xl font-bold text-stone-950 font-heading mt-1 whitespace-nowrap">{value}</div>
     </div>
   );
 }
@@ -170,14 +156,11 @@ export function BatchDetailPage() {
   const [feedLogs, setFeedLogs] = useState([]);
   const [eggLogs, setEggLogs] = useState([]);
   const [scheduleList, setScheduleList] = useState([]);
-  const [multivitaminLogs, setMultivitaminLogs] = useState(() => {
-    try {
-      const stored = localStorage.getItem(`farmbook_multivitamins_${batchId}`);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [vaccRecords, setVaccRecords] = useState([]);
+  const [allSupplements, setAllSupplements] = useState(() => loadSupplements());
+  const multivitaminLogs = allSupplements.filter((s) => s.batchId === batchId);
+  const [vacPrefill, setVacPrefill] = useState(null);
+  const [calendarDate, setCalendarDate] = useState(() => toIso(new Date()));
 
   // Modal states for logging
   const [logModal, setLogModal] = useState(null); // 'mortality' | 'feed' | 'eggs' | 'vaccine' | 'multivitamin'
@@ -187,19 +170,9 @@ export function BatchDetailPage() {
   const [mortCount, setMortCount] = useState('');
   const [mortReason, setMortReason] = useState('');
 
-  const [feedType, setFeedType] = useState('Pellets');
-  const [feedKg, setFeedKg] = useState('');
-  const [feedCost, setFeedCost] = useState('');
 
   const [eggCrates, setEggCrates] = useState('');
   const [looseEggs, setLooseEggs] = useState('');
-
-  const [newVacName, setNewVacName] = useState('Newcastle (ND)');
-  const [newVacDate, setNewVacDate] = useState(new Date().toISOString().slice(0, 10));
-
-  const [multiName, setMultiName] = useState('Vitalyte / Amino Flash');
-  const [multiDose, setMultiDose] = useState('100g in 50L water');
-  const [multiNotes, setMultiNotes] = useState('');
 
   useEffect(() => {
     if (!batchId) return;
@@ -209,11 +182,12 @@ export function BatchDetailPage() {
     async function loadBatchData() {
       setLoading(true);
       try {
-        const [mRes, fRes, sRes, eRes] = await Promise.all([
+        const [mRes, fRes, sRes, eRes, vRes] = await Promise.all([
           getLogs(batchId, 'mortality').catch(() => ({ logs: [], entries: [] })),
           getLogs(batchId, 'feed').catch(() => ({ logs: [], entries: [] })),
           getSchedule(batchId).catch(() => ({ schedule: [] })),
           getLogs(batchId, 'eggs').catch(() => ({ logs: [], entries: [] })),
+          getVaccinationRecords(batchId).catch(() => ({ logs: [] })),
         ]);
 
         if (!cancelled) {
@@ -224,6 +198,7 @@ export function BatchDetailPage() {
           setFeedLogs(fList);
           setScheduleList(sRes?.schedule || []);
           setEggLogs(eList);
+          setVaccRecords(vRes?.logs || []);
         }
       } catch (err) {
         console.error('Error loading batch data:', err);
@@ -253,7 +228,7 @@ export function BatchDetailPage() {
 
   const totalMortality = mortalityLogs.reduce((acc, curr) => acc + (curr.count || 0), 0);
   const currentBirds = Math.max(0, (batch.birdCount || 0) - totalMortality);
-  const totalFeedKg = feedLogs.reduce((acc, curr) => acc + (curr.amountKg || 0), 0);
+  const totalFeedBags = feedLogs.reduce((acc, curr) => acc + feedBags(curr), 0);
 
   // Handlers for logging
   const handleLogMortality = async (e) => {
@@ -285,37 +260,10 @@ export function BatchDetailPage() {
     }
   };
 
-  const handleLogFeed = async (e) => {
-    e.preventDefault();
-    if (!feedKg || Number(feedKg) <= 0) return toast('Please enter kg amount', 'error');
-    try {
-      const createdItem = await createLog(batchId, 'feed', {
-        date: logDate,
-        feedType,
-        amountKg: Number(feedKg),
-        costNaira: feedCost ? Number(feedCost) : 0,
-      });
-      if (createdItem?.queued) {
-        toast(QUEUED_SAVE_MESSAGE, 'success');
-        setFeedLogs([createdItem, ...feedLogs]);
-      } else {
-        toast('Feed usage recorded', 'success');
-        const res = await getLogs(batchId, 'feed');
-        const items = res?.logs || res?.entries || (createdItem ? [createdItem, ...feedLogs] : feedLogs);
-        setFeedLogs(items);
-      }
-      setFeedKg('');
-      setFeedCost('');
-      setLogModal(null);
-    } catch (err) {
-      toast(err.message || 'Failed to record feed', 'error');
-    }
-  };
-
   const handleLogEggs = async (e) => {
     e.preventDefault();
     const batchType = (batch?.type || '').toLowerCase();
-    if (batchType !== 'layer') return toast('Only Layer batches produce eggs', 'error');
+    if (!laysEggs(batchType)) return toast('Only Layer batches produce eggs', 'error');
     if (!eggCrates && !looseEggs) return toast('Enter crates or loose eggs', 'error');
     try {
       const payload = {
@@ -341,46 +289,31 @@ export function BatchDetailPage() {
     }
   };
 
-  const handleAddVaccine = async ({ vaccineName, dueDate, reminderTiming }) => {
-    try {
-      await createSchedule(batchId, { vaccineName, dueDate });
-      toast('Vaccination scheduled!', 'success');
-      const res = await getSchedule(batchId);
-      setScheduleList(res.schedule || []);
-      setLogModal(null);
-    } catch (err) {
-      toast(err.message || 'Failed to add vaccination', 'error');
-      throw err;
+  const openVaccination = (prefill = null) => {
+    setVacPrefill(prefill);
+    setLogModal('vaccine');
+  };
+
+  // Put what the vaccination form saved straight into the lists.
+  const handleVaccinationSaved = ({ mode, item, scheduleId }) => {
+    if (mode === 'schedule') {
+      setScheduleList((prev) => [...prev, item]);
+      return;
+    }
+    setVaccRecords((prev) => [item, ...prev]);
+    if (scheduleId) {
+      setScheduleList((prev) => prev.map((s) => (s.scheduleId === scheduleId ? { ...s, status: 'done' } : s)));
     }
   };
 
-  const handleMarkVaccineDone = async (scheduleId) => {
-    try {
-      await updateSchedule(batchId, scheduleId, { status: 'done' });
-      toast('Marked as done', 'success');
-      const res = await getSchedule(batchId);
-      setScheduleList(res.schedule || []);
-    } catch (err) {
-      toast(err.message || 'Update failed', 'error');
-    }
-  };
-
-  const handleLogMultivitamin = (e) => {
-    e.preventDefault();
-    const entry = {
-      id: Date.now().toString(),
-      date: logDate,
-      product: multiName,
-      dosage: multiDose,
-      notes: multiNotes,
-    };
-    const updated = [entry, ...multivitaminLogs];
-    setMultivitaminLogs(updated);
-    localStorage.setItem(`farmbook_multivitamins_${batchId}`, JSON.stringify(updated));
-    toast('Multivitamin logged', 'success');
-    setMultiNotes('');
-    setLogModal(null);
-  };
+  const recordScheduled = (item) =>
+    openVaccination({
+      mode: 'record',
+      vaccineName: item.vaccineName,
+      doseNumber: item.doseNumber,
+      scheduleId: item.scheduleId,
+      date: toIso(new Date()),
+    });
 
   const handleDeleteBatch = async (id) => {
     await deleteBatch(id);
@@ -389,7 +322,7 @@ export function BatchDetailPage() {
   };
 
   const batchType = (batch?.type || '').toLowerCase();
-  const isLayer = batchType === 'layer';
+  const isLayer = laysEggs(batchType);
 
   const birdsSold = Math.max(0, (batch.birdCount || 0) - totalMortality);
   const totalEggs = eggLogs.reduce((sum, e) => sum + (Number(e.crates) || 0) * EGGS_PER_CRATE + (Number(e.looseEggs) || 0), 0);
@@ -401,7 +334,35 @@ export function BatchDetailPage() {
   const activeDays = closedDays != null ? closedDays : runningDays;
   const lossPercent = batch.birdCount ? Math.round((totalMortality / batch.birdCount) * 1000) / 10 : null;
   const avgEggsPerDay = isLayer && activeDays ? Math.round(totalEggs / activeDays) : null;
-  const doneVaccinations = scheduleList.filter((s) => s.status === 'done').length;
+
+  // Vaccination: the plan (schedule) and what was actually given (records).
+  const todayIso = toIso(new Date());
+  const linkedScheduleIds = new Set(vaccRecords.map((r) => r.scheduleId).filter(Boolean));
+  const dueVaccines = scheduleList
+    .filter((s) => s.status === 'upcoming' || s.status === 'missed')
+    .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+  // History = records, plus schedules marked done before recording existed.
+  const vaccinationHistory = [
+    ...vaccRecords.map((r) => ({
+      key: `r-${r.entryId}`,
+      date: r.dateAdministered,
+      vaccineName: r.vaccineName,
+      doseNumber: r.doseNumber,
+      route: r.route,
+      birds: r.birdsVaccinated,
+      administeredBy: r.administeredBy,
+      lotNumber: r.lotNumber,
+    })),
+    ...scheduleList
+      .filter((s) => s.status === 'done' && !linkedScheduleIds.has(s.scheduleId))
+      .map((s) => ({ key: `s-${s.scheduleId}`, date: s.dueDate, vaccineName: s.vaccineName, doseNumber: s.doseNumber, route: s.route })),
+  ].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const doneVaccinations = vaccinationHistory.length;
+  const healthEvents = buildHealthEvents({
+    schedules: scheduleList.map((s) => ({ ...s, batchId })),
+    records: vaccRecords.map((r) => ({ ...r, batchId })),
+    supplements: multivitaminLogs,
+  });
 
   // Best single day of egg collection, grouping entries logged on the same date.
   const eggsByDay = eggLogs.reduce((map, entry) => {
@@ -414,11 +375,12 @@ export function BatchDetailPage() {
 
   // Every log type merged for the Daily Logs tab, newest first.
   const dailyLogs = [
-    ...feedLogs.map((e) => ({ date: e.date, kind: 'Feed logged', detail: `${e.feedType || 'Feed'} - ${Number(e.amountKg) || 0} kg`, icon: Wheat })),
+    ...feedLogs.map((e) => ({ date: e.date, kind: 'Feed logged', detail: `${e.feedType || 'Feed'} - ${formatBags(feedBags(e))}`, icon: Wheat })),
     ...mortalityLogs.map((e) => ({ date: e.date, kind: 'Bird loss recorded', detail: `${Number(e.count) || 0} birds${e.note ? ` (${e.note})` : ''}`, icon: TrendingDown })),
     ...eggLogs.map((e) => ({ date: e.date, kind: 'Eggs recorded', detail: `${Number(e.crates) || 0} crates, ${Number(e.looseEggs) || 0} loose`, icon: Egg })),
-    ...multivitaminLogs.map((m) => ({ date: m.date, kind: 'Multivitamin added', detail: `${m.product || ''} ${m.dosage || ''}`.trim(), icon: PillIcon })),
-    ...scheduleList.map((s) => ({ date: s.dueDate, kind: 'Vaccination scheduled', detail: `${s.vaccineName || ''} (${s.status || 'upcoming'})`, icon: Syringe })),
+    ...multivitaminLogs.map((m) => ({ date: m.date, kind: `${findSupplementType(m.type)?.label || 'Vitamin'} given`, detail: [m.product, describeDose(m)].filter(Boolean).join(' - '), icon: PillIcon })),
+    ...vaccinationHistory.map((v) => ({ date: v.date, kind: 'Vaccination given', detail: [v.vaccineName, v.doseNumber, ROUTES[v.route]?.label].filter(Boolean).join(' - '), icon: Syringe })),
+    ...dueVaccines.map((s) => ({ date: s.dueDate, kind: 'Vaccination due', detail: [s.vaccineName, s.doseNumber].filter(Boolean).join(' - '), icon: Syringe })),
   ]
     .filter((item) => item.date)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -427,29 +389,30 @@ export function BatchDetailPage() {
   const safeName = (batch.name || 'batch').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
 
   // Each tab exports the rows it is showing, so the file always matches what
-  // is on screen.
+  // is on screen. `heading` is the title printed at the top of the PDF.
   const REPORTS = {
     overview: {
       title: 'Download Batch Report',
       subtitle: 'Get a complete summary of this batch',
       build: () => ({
-        filename: safeName + '-summary.csv',
-        headers: ['Metric', 'Value'],
+        heading: 'Batch Summary',
+        filename: safeName + '-summary.pdf',
+        headers: ['Item', 'Value'],
         rows: [
           ['Batch', batch.name],
-          ['Type', batchType],
+          ['Bird type', birdTypeLabel(batchType)],
           ['Status', closed ? 'Completed' : 'Active'],
-          ['Started', batch.startDate || ''],
-          ['Closed', batch.closedAt || ''],
+          ['Started', formatDate(batch.startDate)],
+          ['Closed', batch.closedAt ? formatDate(batch.closedAt) : '-'],
           ['Age', batchAge(batch)],
-          ['Total birds placed', batch.birdCount || 0],
-          ['Birds remaining', currentBirds],
-          ['Birds lost', totalMortality],
-          ['Days active', activeDays == null ? '' : activeDays],
-          ['Total feed used (kg)', totalFeedKg],
-          ['Total feed cost (NGN)', totalFeedCost],
-          ['Total eggs collected', totalEggs],
-          ['Vaccination records', doneVaccinations],
+          ['Total birds placed', Number(batch.birdCount || 0).toLocaleString()],
+          ['Birds remaining', currentBirds.toLocaleString()],
+          ['Birds lost', totalMortality.toLocaleString()],
+          ['Days active', activeDays == null ? '-' : activeDays],
+          ['Total feed used', formatBags(totalFeedBags)],
+          ['Total feed cost (NGN)', totalFeedCost.toLocaleString()],
+          ...(isLayer ? [['Total eggs collected', `${totalEggs.toLocaleString()} (${formatCrates(totalEggs)})`]] : []),
+          ['Vaccinations done', doneVaccinations],
         ],
       }),
     },
@@ -457,55 +420,103 @@ export function BatchDetailPage() {
       title: 'Download Daily Logs Report',
       subtitle: 'Every entry recorded for this batch',
       build: () => ({
-        filename: safeName + '-daily-logs.csv',
+        heading: 'Daily Logs',
+        filename: safeName + '-daily-logs.pdf',
         headers: ['Date', 'Type', 'Detail'],
-        rows: dailyLogs.map((item) => [item.date || '', item.kind, item.detail]),
+        rows: dailyLogs.map((item) => [formatDate(item.date), item.kind, item.detail]),
       }),
     },
     feed: {
       title: 'Download Feed Report',
       subtitle: 'All feed recorded for this batch',
       build: () => ({
-        filename: safeName + '-feed.csv',
-        headers: ['Date', 'Feed type', 'Amount (kg)', 'Cost (NGN)'],
-        rows: feedLogs.map((e) => [e.date || '', e.feedType || '', e.amountKg || 0, e.costNaira || 0]),
+        heading: 'Feed Record',
+        filename: safeName + '-feed.pdf',
+        headers: ['Date', 'Feed type', 'Bags', 'Bag size', 'Cost (NGN)'],
+        rows: feedLogs.map((e) => [
+          formatDate(e.date),
+          e.feedType || '',
+          formatBags(feedBags(e)),
+          `${Number(e.bagSizeKg) || FEED_BAG_KG}kg`,
+          (Number(e.costNaira) || 0).toLocaleString(),
+        ]),
       }),
     },
     vaccines: {
       title: 'Download Vaccination Report',
-      subtitle: 'Scheduled and completed vaccinations',
+      subtitle: 'Vaccinations given and still due',
       build: () => ({
-        filename: safeName + '-vaccinations.csv',
-        headers: ['Vaccine', 'Due date', 'Status'],
-        rows: scheduleList.map((s) => [s.vaccineName || '', s.dueDate || '', s.status || '']),
+        heading: 'Vaccinations',
+        filename: safeName + '-vaccinations.pdf',
+        headers: ['Date', 'Vaccine', 'Dose', 'Method', 'Birds', 'Given by', 'Status'],
+        rows: [
+          ...vaccinationHistory.map((v) => [
+            formatDate(v.date),
+            v.vaccineName || '',
+            v.doseNumber || '-',
+            ROUTES[v.route]?.label || '-',
+            v.birds ? Number(v.birds).toLocaleString() : '-',
+            v.administeredBy || '-',
+            'Given',
+          ]),
+          ...dueVaccines.map((s) => [
+            formatDate(s.dueDate),
+            s.vaccineName || '',
+            s.doseNumber || '-',
+            ROUTES[s.route]?.label || '-',
+            s.birdsToVaccinate ? Number(s.birdsToVaccinate).toLocaleString() : '-',
+            '-',
+            s.dueDate < todayIso || s.status === 'missed' ? 'Overdue' : 'Due',
+          ]),
+        ],
       }),
     },
     multivitamins: {
-      title: 'Download Multivitamin Report',
-      subtitle: 'Multivitamins recorded for this batch',
+      title: 'Download Vitamins Report',
+      subtitle: 'Vitamins and supplements given to this batch',
       build: () => ({
-        filename: safeName + '-multivitamins.csv',
-        headers: ['Date', 'Product', 'Dosage', 'Notes'],
-        rows: multivitaminLogs.map((m) => [m.date || '', m.product || '', m.dosage || '', m.notes || '']),
+        heading: 'Vitamins & Supplements',
+        filename: safeName + '-vitamins.pdf',
+        headers: ['Started', 'Type', 'Product', 'Dose', 'Reason', 'Withdrawal'],
+        rows: multivitaminLogs.map((m) => [
+          formatDate(m.date),
+          findSupplementType(m.type)?.label || 'Supplement',
+          m.product || '',
+          describeDose(m) || '-',
+          m.reason || m.notes || '-',
+          m.withdrawalDays ? `${m.withdrawalDays} days` : '-',
+        ]),
       }),
     },
     mortality: {
       title: 'Download Bird Loss Report',
       subtitle: 'Every bird loss recorded for this batch',
       build: () => ({
-        filename: safeName + '-bird-loss.csv',
+        heading: 'Bird Losses',
+        filename: safeName + '-bird-loss.pdf',
         headers: ['Date', 'Birds lost', 'Cause'],
-        rows: mortalityLogs.map((m) => [m.date || '', m.count || 0, m.note || '']),
+        rows: mortalityLogs.map((m) => [formatDate(m.date), m.count || 0, m.note || '']),
       }),
     },
   };
 
   const report = REPORTS[activeTab] || REPORTS.overview;
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const built = report.build();
     if (built.rows.length === 0) return toast('There is nothing to download on this tab yet', 'error');
-    downloadCsv(built.filename, built.headers, built.rows);
-    toast('Report downloaded', 'success');
+    try {
+      await downloadTableReport({
+        filename: built.filename,
+        title: built.heading,
+        subtitle: `${batch.name} (${birdTypeLabel(batchType)})`,
+        headers: built.headers,
+        rows: built.rows,
+      });
+      toast('Report downloaded', 'success');
+    } catch (err) {
+      console.error('Report generation failed:', err);
+      toast('Could not create the report. Please try again.', 'error');
+    }
   };
 
   return (
@@ -530,7 +541,7 @@ export function BatchDetailPage() {
             <div className="min-w-0 space-y-2">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-xl font-bold text-stone-950 font-heading truncate">{batch.name}</h1>
-                <span className={typePillClass(batchType)}>{batchType}</span>
+                <span className={typePillClass(batchType)}>{birdTypeLabel(batchType)}</span>
               </div>
               <div className="space-y-1.5 text-xs text-stone-600">
                 <div className="inline-flex items-center gap-1.5">
@@ -574,7 +585,7 @@ export function BatchDetailPage() {
               </button>
             </div>
 
-            <div className="flex items-stretch divide-x divide-stone-200">
+            <div className="grid grid-cols-3 sm:flex items-stretch divide-x divide-stone-200">
               <HeaderStat icon={BirdIcon} label="Total Birds" value={Number(batch.birdCount || 0).toLocaleString()} />
               <HeaderStat icon={ShoppingCart} label="Birds Sold" value={birdsSold.toLocaleString()} />
               <HeaderStat icon={Clock} label="Days Active" value={activeDays == null ? '-' : activeDays + ' days'} />
@@ -585,15 +596,19 @@ export function BatchDetailPage() {
 
       {/* Tabs */}
       <div className="border-b border-stone-200">
-        <div className="flex flex-wrap gap-1">
+        <div className="flex gap-1 overflow-x-auto scrollbar-none">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2.5 rounded-t-lg text-sm transition-colors cursor-pointer border-b-2 -mb-px ${
+                onClick={(e) => {
+                  setActiveTab(tab.id);
+                  // On phones the tab row scrolls sideways; keep the chosen tab fully in view.
+                  e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+                }}
+                className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2.5 rounded-t-lg text-sm transition-colors cursor-pointer border-b-2 ${
                   isActive
                     ? 'bg-[#EAF5EF] text-[#0D5C3A] font-semibold border-[#0D5C3A]'
                     : 'text-stone-500 border-transparent hover:text-stone-900 hover:bg-stone-50'
@@ -642,15 +657,15 @@ export function BatchDetailPage() {
                     <TrendingUp size={20} strokeWidth={2.5} className="text-emerald-700" />
                   </div>
                   <div className="min-w-0">
-                    {totalEggs > 0 || totalFeedKg > 0 ? (
+                    {totalEggs > 0 || totalFeedBags > 0 ? (
                       <>
                         <div className="text-sm font-semibold text-emerald-800">
                           {lossPercent != null && lossPercent <= 5 ? 'Good performance overall' : 'Performance summary'}
                         </div>
                         <div className="text-xs text-stone-500 mt-0.5">
                           {totalEggs > 0 && totalEggs.toLocaleString() + ' eggs collected'}
-                          {totalEggs > 0 && totalFeedKg > 0 && ' - '}
-                          {totalFeedKg > 0 && totalFeedKg.toLocaleString() + ' kg of feed used'}
+                          {totalEggs > 0 && totalFeedBags > 0 && ' - '}
+                          {totalFeedBags > 0 && formatBags(totalFeedBags) + ' of feed used'}
                           {lossPercent != null && ' - ' + lossPercent + '% loss rate'}
                         </div>
                       </>
@@ -678,7 +693,7 @@ export function BatchDetailPage() {
                   <InsightRow
                     icon={Wheat}
                     label="Total feed used"
-                    value={totalFeedKg > 0 ? totalFeedKg.toLocaleString() + ' kg' : '-'}
+                    value={totalFeedBags > 0 ? formatBags(totalFeedBags) : '-'}
                   />
                   <InsightRow icon={Syringe} label="Total vaccination records" value={doneVaccinations} />
                 </div>
@@ -727,9 +742,9 @@ export function BatchDetailPage() {
                     <LogRow
                       key={entry.entryId || index}
                       icon={Wheat}
-                      primary={entry.feedType || 'Feed'}
+                      primary={[entry.feedType || 'Feed', entry.brand].filter(Boolean).join(' · ')}
                       secondary={formatDate(entry.date)}
-                      value={(Number(entry.amountKg) || 0) + ' kg'}
+                      value={formatBags(feedBags(entry))}
                     />
                   ))}
                 </div>
@@ -738,72 +753,137 @@ export function BatchDetailPage() {
           )}
 
           {activeTab === 'vaccines' && (
-            <div className="bg-white rounded-xl shadow-sm p-5">
-              <div className="flex items-center justify-between gap-4 mb-2">
-                <h2 className="text-base font-bold text-stone-950 font-heading">Vaccination</h2>
-                <button
-                  type="button"
-                  onClick={() => setLogModal('vaccine')}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
-                >
-                  <Plus size={14} strokeWidth={2.5} /> Add Vaccination
-                </button>
-              </div>
-              {scheduleList.length === 0 ? (
-                <EmptyState icon={Syringe} title="No vaccinations scheduled for this batch yet." />
-              ) : (
-                <div>
-                  {scheduleList.map((item, index) => (
-                    <div
-                      key={item.scheduleId || index}
-                      className="flex items-center justify-between gap-4 py-3.5 border-b border-stone-100 last:border-0"
+            <>
+              <div className="bg-white rounded-xl shadow-sm p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                  <h2 className="text-base font-bold text-stone-950 font-heading">Vaccination Calendar</h2>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => openVaccination({ mode: 'record' })}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-stone-100 flex items-center justify-center shrink-0">
-                          <Syringe size={16} strokeWidth={2.5} className="text-stone-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-sm font-semibold text-stone-900 truncate">{item.vaccineName}</div>
-                          <div className="text-xs text-stone-500">Due {formatDate(item.dueDate)}</div>
-                        </div>
-                      </div>
-                      {item.status === 'done' ? (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                          Done
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleMarkVaccineDone(item.scheduleId)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-stone-200 text-stone-700 hover:bg-stone-50 transition-colors cursor-pointer shrink-0"
-                        >
-                          Mark done
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                      <CheckCircle2 size={14} strokeWidth={2.5} /> Record Given
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openVaccination({ mode: 'schedule' })}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
+                    >
+                      <Plus size={14} strokeWidth={2.5} /> Schedule
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
+                <CalendarPicker
+                  variant="full"
+                  value={calendarDate}
+                  onChange={setCalendarDate}
+                  events={healthEvents}
+                  onEventClick={(e) => {
+                    if (e.kind === 'vaccine' && e.status !== 'done' && e.source?.scheduleId) recordScheduled(e.source);
+                  }}
+                  agendaActions={(date) => (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => openVaccination({ mode: date > todayIso ? 'schedule' : 'record', date })}
+                        className="px-2.5 h-7 rounded-lg bg-[#0D5C3A] hover:bg-[#094229] text-white text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Syringe size={12} /> Vaccine
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLogModal('multivitamin')}
+                        className="px-2.5 h-7 rounded-lg border border-stone-200 hover:border-[#0D5C3A]/40 text-stone-700 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus size={12} /> Vitamin
+                      </button>
+                    </>
+                  )}
+                />
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm p-5">
+                <h2 className="text-base font-bold text-stone-950 font-heading mb-2">Due</h2>
+                {dueVaccines.length === 0 ? (
+                  <EmptyState icon={Syringe} title="No vaccinations due." description="Schedule the next one so you get a reminder." />
+                ) : (
+                  <div>
+                    {dueVaccines.map((item) => {
+                      const overdue = item.status === 'missed' || item.dueDate < todayIso;
+                      return (
+                        <div key={item.scheduleId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 py-3.5 border-b border-stone-100 last:border-0">
+                          <div className="flex items-start sm:items-center gap-3 min-w-0">
+                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${overdue ? 'bg-rose-50' : 'bg-[#EAF5EF]'}`}>
+                              <Syringe size={16} strokeWidth={2.5} className={overdue ? 'text-rose-600' : 'text-[#0D5C3A]'} />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-stone-900 break-words">
+                                {item.vaccineName}{item.doseNumber ? ` · ${item.doseNumber}` : ''}
+                              </div>
+                              <div className={`text-xs ${overdue ? 'text-rose-600 font-semibold' : 'text-stone-500'}`}>
+                                {overdue ? 'Overdue since ' : 'Due '}{formatDate(item.dueDate)}
+                                {ROUTES[item.route] && <span className="text-stone-500 font-normal"> · {ROUTES[item.route].label}</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => recordScheduled(item)}
+                            className="w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-lg text-xs font-semibold border border-[#0D5C3A]/30 text-[#0D5C3A] hover:bg-[#EAF5EF] transition-colors cursor-pointer shrink-0"
+                          >
+                            Record as given
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm p-5">
+                <h2 className="text-base font-bold text-stone-950 font-heading mb-2">Vaccination History</h2>
+                {vaccinationHistory.length === 0 ? (
+                  <EmptyState icon={Syringe} title="No vaccinations recorded for this batch yet." />
+                ) : (
+                  <div>
+                    {vaccinationHistory.map((v) => (
+                      <LogRow
+                        key={v.key}
+                        icon={Syringe}
+                        primary={`${v.vaccineName}${v.doseNumber ? ` · ${v.doseNumber}` : ''}`}
+                        secondary={[
+                          ROUTES[v.route]?.label,
+                          v.birds ? `${Number(v.birds).toLocaleString()} birds` : null,
+                          v.administeredBy ? `by ${v.administeredBy}` : null,
+                          v.lotNumber ? `Lot ${v.lotNumber}` : null,
+                        ].filter(Boolean).join(' · ') || 'Given'}
+                        value={formatDate(v.date)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
           {activeTab === 'multivitamins' && (
             <div className="bg-white rounded-xl shadow-sm p-5">
               <div className="flex items-center justify-between gap-4 mb-2">
-                <h2 className="text-base font-bold text-stone-950 font-heading">Multivitamins</h2>
+                <h2 className="text-base font-bold text-stone-950 font-heading">Vitamins &amp; Supplements</h2>
                 <button
                   type="button"
                   onClick={() => setLogModal('multivitamin')}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
                 >
-                  <Plus size={14} strokeWidth={2.5} /> Log Multivitamin
+                  <Plus size={14} strokeWidth={2.5} /> Record Vitamin
                 </button>
               </div>
               {multivitaminLogs.length === 0 ? (
                 <EmptyState
                   icon={PillIcon}
-                  title="No multivitamins recorded for this batch yet."
-                  description="These are saved on this device only. There is no multivitamin endpoint on the backend yet."
+                  title="No vitamins or supplements recorded for this batch yet."
+                  description="These are saved on this device only. There is no supplements endpoint on the backend yet."
                 />
               ) : (
                 <div>
@@ -811,8 +891,12 @@ export function BatchDetailPage() {
                     <LogRow
                       key={item.id}
                       icon={PillIcon}
-                      primary={item.product}
-                      secondary={item.dosage + (item.notes ? ' - ' + item.notes : '')}
+                      primary={`${item.product}${findSupplementType(item.type) ? ` · ${findSupplementType(item.type).label}` : ''}`}
+                      secondary={[
+                        describeDose(item),
+                        item.reason,
+                        item.withdrawalDays ? `${item.withdrawalDays}-day withdrawal` : null,
+                      ].filter(Boolean).join(' · ')}
                       value={formatDate(item.date)}
                     />
                   ))}
@@ -859,8 +943,8 @@ export function BatchDetailPage() {
             <h2 className="text-base font-bold text-stone-950 font-heading mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3">
               <QuickAction icon={Wheat} label="Log Feed" onClick={() => setLogModal('feed')} />
-              <QuickAction icon={PillIcon} label="Log Multivitamin" onClick={() => setLogModal('multivitamin')} />
-              <QuickAction icon={Syringe} label="Log Vaccination" onClick={() => setLogModal('vaccine')} />
+              <QuickAction icon={PillIcon} label="Log Vitamin" onClick={() => setLogModal('multivitamin')} />
+              <QuickAction icon={Syringe} label="Log Vaccination" onClick={() => openVaccination()} />
               <QuickAction icon={BirdIcon} label="Log Bird Lost" onClick={() => setLogModal('mortality')} />
               {isLayer && <QuickAction icon={Egg} label="Log Eggs" onClick={() => setLogModal('eggs')} />}
             </div>
@@ -891,56 +975,18 @@ export function BatchDetailPage() {
       </div>
 
       {/* LOG MODALS */}
-      {/* 1. Feed Modal */}
-      <Modal open={logModal === 'feed'} title={`Log Feed for ${batch.name}`} onClose={() => setLogModal(null)}>
-        <form onSubmit={handleLogFeed} className="space-y-4">
-          <div>
-            <label className="text-xs font-bold text-neutral-800 block mb-1">Date</label>
-            <input
-              type="date"
-              value={logDate}
-              onChange={e => setLogDate(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-neutral-800 block mb-1">Feed Type</label>
-            <input
-              type="text"
-              placeholder="e.g. Grower Mash, Layer Pellets"
-              value={feedType}
-              onChange={e => setFeedType(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-neutral-800 block mb-1">Amount Used (kg)</label>
-            <input
-              type="number"
-              placeholder="e.g. 50"
-              value={feedKg}
-              onChange={e => setFeedKg(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-neutral-800 block mb-1">Cost in Naira (optional)</label>
-            <input
-              type="number"
-              placeholder="e.g. 15000"
-              value={feedCost}
-              onChange={e => setFeedCost(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setLogModal(null)} className="px-4 py-2 text-xs font-bold text-neutral-600">Cancel</button>
-            <button type="submit" className="px-5 py-2 bg-neutral-950 text-white rounded-xl text-xs font-bold">Save</button>
-          </div>
-        </form>
-      </Modal>
+      {/* 1. Feed usage — taken from the farm's feed store */}
+      <FeedUsageModal
+        isOpen={logModal === 'feed'}
+        onClose={() => setLogModal(null)}
+        onSaved={(entry) => setFeedLogs((prev) => [entry, ...prev])}
+        defaultBatchId={batchId}
+        onAddStock={() => setLogModal('feedStock')}
+      />
+      <FeedPurchaseModal
+        isOpen={logModal === 'feedStock'}
+        onClose={() => setLogModal('feed')}
+      />
 
       {/* 2. Mortality Modal */}
       <Modal open={logModal === 'mortality'} title={`Log Birds Lost for ${batch.name}`} onClose={() => setLogModal(null)}>
@@ -979,7 +1025,7 @@ export function BatchDetailPage() {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setLogModal(null)} className="px-4 py-2 text-xs font-bold text-neutral-600">Cancel</button>
-            <button type="submit" className="px-5 py-2 bg-neutral-950 text-white rounded-xl text-xs font-bold">Save</button>
+            <button type="submit" className="px-5 py-2 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white rounded-xl text-xs font-bold cursor-pointer transition-colors">Save</button>
           </div>
         </form>
       </Modal>
@@ -1020,70 +1066,30 @@ export function BatchDetailPage() {
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={() => setLogModal(null)} className="px-4 py-2 text-xs font-bold text-neutral-600">Cancel</button>
-              <button type="submit" className="px-5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">Save Eggs</button>
+              <button type="submit" className="px-5 py-2 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white rounded-xl text-xs font-bold cursor-pointer transition-colors">Save Eggs</button>
             </div>
           </form>
         </Modal>
       )}
 
-      {/* 4. Vaccine Modal — Airbnb-style Calendar picker */}
+      {/* 4. Vaccination — schedule or record, with the appointment calendar */}
       <VaccinationModal
         isOpen={logModal === 'vaccine'}
         onClose={() => setLogModal(null)}
-        onConfirm={handleAddVaccine}
+        onSaved={handleVaccinationSaved}
         defaultBatchId={batchId}
-        title={`Schedule Vaccination${batch ? ` — ${batch.name}` : ''}`}
+        events={healthEvents}
+        prefill={vacPrefill}
       />
 
-      {/* 5. Multivitamin Modal */}
-      <Modal open={logModal === 'multivitamin'} title={`Record Multivitamin for ${batch.name}`} onClose={() => setLogModal(null)}>
-        <form onSubmit={handleLogMultivitamin} className="space-y-4">
-          <div>
-            <label className="text-xs font-bold text-neutral-800 block mb-1">Date</label>
-            <input
-              type="date"
-              value={logDate}
-              onChange={e => setLogDate(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-neutral-800 block mb-1">Product / Brand</label>
-            <input
-              type="text"
-              value={multiName}
-              onChange={e => setMultiName(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-neutral-800 block mb-1">Dosage / Administration</label>
-            <input
-              type="text"
-              value={multiDose}
-              onChange={e => setMultiDose(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-xs font-bold text-neutral-800 block mb-1">Notes</label>
-            <input
-              type="text"
-              placeholder="e.g. Post-vaccination stress boost"
-              value={multiNotes}
-              onChange={e => setMultiNotes(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setLogModal(null)} className="px-4 py-2 text-xs font-bold text-neutral-600">Cancel</button>
-            <button type="submit" className="px-5 py-2 bg-neutral-950 text-white rounded-xl text-xs font-bold">Save</button>
-          </div>
-        </form>
-      </Modal>
+      {/* 5. Vitamins & supplements */}
+      <SupplementModal
+        isOpen={logModal === 'multivitamin'}
+        onClose={() => setLogModal(null)}
+        onSaved={setAllSupplements}
+        defaultBatchId={batchId}
+        events={healthEvents}
+      />
 
       {/* Delete Batch Modal */}
       <DeleteBatchModal

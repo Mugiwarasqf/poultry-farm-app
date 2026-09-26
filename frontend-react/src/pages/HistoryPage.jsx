@@ -11,15 +11,8 @@ import {
 import { useBatches } from '../context/BatchContext';
 import { BirdIcon } from '../components/ui/BirdIcon';
 import { BatchHistoryDetail } from '../components/history/BatchHistoryDetail';
-import { COMPLETED_PILL_CLASS, batchImage, formatDate, typePillClass } from '../lib/batch';
+import { COMPLETED_PILL_CLASS, batchImage, formatDate, typePillClass, birdTypeLabel, TYPE_FILTER_OPTIONS } from '../lib/batch';
 import { useIsDesktop } from '../lib/useMediaQuery';
-
-const TYPE_FILTERS = [
-  { value: 'all', label: 'All Types' },
-  { value: 'layer', label: 'Layer' },
-  { value: 'broiler', label: 'Broiler' },
-  { value: 'chick', label: 'Chick' },
-];
 
 function BatchRow({ batch, selected, onSelect }) {
   const type = (batch.type || 'other').toLowerCase();
@@ -47,7 +40,7 @@ function BatchRow({ batch, selected, onSelect }) {
               {batch.name}
             </span>
             <span className={typePillClass(type)}>
-              {type}
+              {birdTypeLabel(type)}
             </span>
           </div>
           <span className={`${COMPLETED_PILL_CLASS} shrink-0`}>
@@ -154,7 +147,7 @@ export function HistoryPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search batches..."
-              className="w-full bg-white border border-stone-200 rounded-xl pl-10 pr-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-xs focus:outline-hidden focus:border-stone-400 transition-colors"
+              className="w-full bg-white border border-stone-200 rounded-xl pl-10 pr-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-xs focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15 transition-colors"
             />
           </div>
 
@@ -164,9 +157,9 @@ export function HistoryPage() {
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               aria-label="Filter batches by type"
-              className="appearance-none w-full sm:w-auto bg-white border border-stone-200 rounded-xl pl-10 pr-10 py-3 text-sm font-medium text-stone-700 shadow-xs cursor-pointer focus:outline-hidden focus:border-stone-400 transition-colors"
+              className="appearance-none w-full sm:w-auto bg-white border border-stone-200 rounded-xl pl-10 pr-10 py-3 text-sm font-medium text-stone-700 shadow-xs cursor-pointer focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15 transition-colors"
             >
-              {TYPE_FILTERS.map((option) => (
+              {TYPE_FILTER_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>

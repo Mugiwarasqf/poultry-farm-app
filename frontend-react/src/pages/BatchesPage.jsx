@@ -13,18 +13,12 @@ import {
   Wheat,
   TrendingUp,
   Layers,
+  Lock,
 } from 'lucide-react';
 import { useBatches } from '../context/BatchContext';
 import { getLogs } from '../api/logs';
 import { BirdIcon } from '../components/ui/BirdIcon';
-import { EGGS_PER_CRATE, batchAge, batchImage, daysActive, formatDate, typePillClass } from '../lib/batch';
-
-const TYPE_FILTERS = [
-  { value: 'all', label: 'All Types' },
-  { value: 'layer', label: 'Layer' },
-  { value: 'broiler', label: 'Broiler' },
-  { value: 'chick', label: 'Chick' },
-];
+import { EGGS_PER_CRATE, batchAge, batchImage, daysActive, formatDate, typePillClass, birdTypeLabel, TYPE_FILTER_OPTIONS, feedBags, formatBags } from '../lib/batch';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'All Statuses' },
@@ -56,7 +50,7 @@ function Dropdown({ value, onChange, options, ariaLabel }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={ariaLabel}
-        className="appearance-none w-full bg-white border border-stone-200 rounded-xl pl-4 pr-10 py-3 text-sm font-medium text-stone-700 shadow-xs cursor-pointer focus:outline-hidden focus:border-stone-400 transition-colors"
+        className="appearance-none w-full bg-white border border-stone-200 rounded-xl pl-4 pr-10 py-3 text-sm font-medium text-stone-700 shadow-xs cursor-pointer focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15 transition-colors"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>{option.label}</option>
@@ -102,34 +96,43 @@ function BatchCard({ batch, metric }) {
   const type = (batch.type || 'other').toLowerCase();
   const closed = isClosed(batch);
 
+  // A completed batch stays listed so its record is easy to find, but it is
+  // shown greyed out and opens the read-only record in History rather than
+  // the batch page, where feed, eggs and losses could still be logged to it.
   return (
-    <div className="bg-white rounded-xl border border-stone-200 shadow-xs flex flex-col">
-      <div className="p-4 sm:p-5 flex flex-col gap-4 flex-1">
+    <div
+      className={`rounded-xl border flex flex-col ${
+        closed ? 'bg-stone-50 border-stone-200/80' : 'bg-white border-stone-200 shadow-xs'
+      }`}
+      aria-disabled={closed || undefined}
+    >
+      <div className={`p-4 sm:p-5 flex flex-col gap-4 flex-1 ${closed ? 'opacity-70' : ''}`}>
         <div className="flex items-start gap-4">
           <img
             src={batchImage(batch)}
             alt={batch.name}
-            className="w-24 h-24 rounded-lg object-cover bg-stone-100 shrink-0"
+            className={`w-24 h-24 rounded-lg object-cover bg-stone-100 shrink-0 ${closed ? 'grayscale' : ''}`}
           />
 
           <div className="min-w-0 flex-1 space-y-2">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="text-base font-bold text-stone-950 font-heading truncate">
+              <h3 className={`text-base font-bold font-heading truncate ${closed ? 'text-stone-500' : 'text-stone-950'}`}>
                 {batch.name}
               </h3>
               <span
-                className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border shrink-0 ${
+                className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border shrink-0 inline-flex items-center gap-1 ${
                   closed
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    ? 'bg-stone-100 text-stone-500 border-stone-200'
                     : 'bg-sky-50 text-sky-700 border-sky-200'
                 }`}
               >
+                {closed && <Lock size={10} strokeWidth={2.5} />}
                 {closed ? 'Completed' : 'Active'}
               </span>
             </div>
 
             <div>
-              <span className={typePillClass(type)}>{type}</span>
+              <span className={typePillClass(type)}>{birdTypeLabel(type)}</span>
             </div>
 
             <div className="space-y-1.5 text-xs text-stone-600">
@@ -161,10 +164,14 @@ function BatchCard({ batch, metric }) {
       </div>
 
       <Link
-        to={`/batches/${batch.batchId}`}
-        className="border-t border-stone-100 px-4 sm:px-5 py-3.5 flex items-center justify-between text-sm font-semibold text-stone-900 hover:bg-stone-50 rounded-b-xl transition-colors"
+        to={closed ? `/history/${batch.batchId}` : `/batches/${batch.batchId}`}
+        className={`border-t px-4 sm:px-5 py-3.5 flex items-center justify-between text-sm font-semibold rounded-b-xl transition-colors ${
+          closed
+            ? 'border-stone-200/80 text-stone-500 hover:bg-stone-100'
+            : 'border-stone-100 text-stone-900 hover:bg-stone-50'
+        }`}
       >
-        <span>View Details</span>
+        <span>{closed ? 'View Record' : 'View Details'}</span>
         <ChevronRight size={16} strokeWidth={2.5} className="text-stone-400" />
       </Link>
     </div>
@@ -230,6 +237,8 @@ export function BatchesPage() {
 
     const sorted = [...filtered];
     sorted.sort((a, b) => {
+      // Active batches first; completed ones sink to the bottom.
+      if (isClosed(a) !== isClosed(b)) return isClosed(a) ? 1 : -1;
       if (sort === 'name') return (a.name || '').localeCompare(b.name || '');
       const aDate = new Date(a.startDate || a.createdAt || 0);
       const bDate = new Date(b.startDate || b.createdAt || 0);
@@ -264,12 +273,12 @@ export function BatchesPage() {
     }
 
     if (type === 'broiler') {
-      const totalKg = entries.reduce((sum, e) => sum + (Number(e.amountKg) || 0), 0);
+      const totalBags = entries.reduce((sum, e) => sum + feedBags(e), 0);
       return {
         icon: Wheat,
         label: 'Total Feed Used',
-        value: `${totalKg.toLocaleString()} kg`,
-        detail: birds ? `(avg. ${(totalKg / birds).toFixed(1)} kg/bird)` : null,
+        value: formatBags(totalBags),
+        detail: birds && totalBags ? `(about ${Math.round(birds / totalBags).toLocaleString()} birds per bag)` : null,
       };
     }
 
@@ -296,7 +305,7 @@ export function BatchesPage() {
 
         <Link
           to="/batches/new"
-          className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold bg-stone-900 text-white hover:bg-stone-800 transition-colors shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold bg-[#0D5C3A] text-white hover:bg-[#094229] transition-colors shrink-0"
         >
           <Plus size={16} strokeWidth={2.5} />
           <span>Create New Batch</span>
@@ -315,11 +324,11 @@ export function BatchesPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search batches..."
-            className="w-full bg-white border border-stone-200 rounded-xl pl-11 pr-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-xs focus:outline-hidden focus:border-stone-400 transition-colors"
+            className="w-full bg-white border border-stone-200 rounded-xl pl-11 pr-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-xs focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15 transition-colors"
           />
         </div>
 
-        <Dropdown value={typeFilter} onChange={setTypeFilter} options={TYPE_FILTERS} ariaLabel="Filter by type" />
+        <Dropdown value={typeFilter} onChange={setTypeFilter} options={TYPE_FILTER_OPTIONS} ariaLabel="Filter by type" />
         <Dropdown value={statusFilter} onChange={setStatusFilter} options={STATUS_FILTERS} ariaLabel="Filter by status" />
         <Dropdown value={sort} onChange={setSort} options={SORT_OPTIONS} ariaLabel="Sort batches" />
       </div>
@@ -349,7 +358,7 @@ export function BatchesPage() {
           {batches.length === 0 && (
             <Link
               to="/batches/new"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-stone-900 text-white hover:bg-stone-800 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#0D5C3A] text-white hover:bg-[#094229] transition-colors"
             >
               <Plus size={16} strokeWidth={2.5} />
               <span>Create New Batch</span>

@@ -3,69 +3,72 @@ import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
   Wheat,
-  ShieldCheck,
   Plus,
   Calendar,
   CheckCircle2,
   AlertTriangle,
   Clock,
-  ArrowRight,
-  TrendingDown,
+  Egg,
+  Package,
+  Banknote,
+  Syringe,
+  ClipboardCheck,
+  CircleMinus,
+  CirclePlus,
+  PackagePlus,
 } from 'lucide-react';
 import { useBatches } from '../context/BatchContext';
-import { getLogs, createLog } from '../api/logs';
-import { QUEUED_SAVE_MESSAGE } from '../lib/offlineQueue';
-import { getSchedule, createSchedule, updateSchedule } from '../api/schedule';
-import { Modal } from '../components/ui/Modal';
+import { getLogs } from '../api/logs';
+import { getSchedule } from '../api/schedule';
+import { getVaccinationRecords } from '../api/vaccinations';
 import { VaccinationModal } from '../components/ui/VaccinationModal';
-import { useToast } from '../components/ui/Toast';
+import { SupplementModal } from '../components/ui/SupplementModal';
+import { CalendarPicker } from '../components/ui/CalendarPicker';
+import { buildHealthEvents } from '../lib/healthEvents';
+import { ROUTES } from '../lib/vaccines';
+import { loadSupplements, describeDose, findSupplementType, supplementDates, toIso } from '../lib/supplements';
 import { PillIcon } from '../components/ui/PillIcon';
+import { FeedPurchaseModal } from '../components/ui/FeedPurchaseModal';
+import { FeedUsageModal } from '../components/ui/FeedUsageModal';
+import { useFeedStock } from '../lib/useFeedStock';
+import { formatNaira } from '../lib/feeds';
+import { eggCount, feedBags, formatBags, formatCrates, formatDate, laysEggs } from '../lib/batch';
+
+function StatCard({ icon: Icon, label, value, hint }) {
+  return (
+    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
+      <span className="text-xs font-semibold text-stone-500 flex items-center gap-1.5">
+        <Icon size={14} className="text-[#0D5C3A]" /> {label}
+      </span>
+      <span className="text-2xl sm:text-3xl font-extrabold text-stone-950 mt-1 block">{value}</span>
+      {hint && <span className="text-[11px] text-stone-500 mt-0.5 block">{hint}</span>}
+    </div>
+  );
+}
 
 export function InventoryPage() {
   const { batches } = useBatches();
-  const toast = useToast();
 
-  const [activeTab, setActiveTab] = useState('feed'); // 'feed' | 'vaccination' | 'multivitamins'
+  const [activeTab, setActiveTab] = useState('feed'); // 'feed' | 'eggs' | 'vaccination' | 'multivitamins'
   const [loading, setLoading] = useState(true);
 
   // Aggregated data across all batches
-  const [allFeedLogs, setAllFeedLogs] = useState([]);
+  const feedStore = useFeedStock();
+  const [allEggLogs, setAllEggLogs] = useState([]);
   const [allSchedules, setAllSchedules] = useState([]);
-  const [multivitaminLogs, setMultivitaminLogs] = useState(() => {
-    try {
-      const stored = localStorage.getItem('farmbook_inventory_multivitamins');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [allVaccRecords, setAllVaccRecords] = useState([]);
+  const [supplements, setSupplements] = useState(() => loadSupplements());
 
   // Modal states
-  const [showFeedModal, setShowFeedModal] = useState(false);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [showUsageModal, setShowUsageModal] = useState(false);
+  const [usagePreset, setUsagePreset] = useState('');
   const [showVacModal, setShowVacModal] = useState(false);
+  const [vacPrefill, setVacPrefill] = useState(null);
   const [showMultiModal, setShowMultiModal] = useState(false);
+  const [calendarDate, setCalendarDate] = useState(() => toIso(new Date()));
 
-  // Feed log form
-  const [selectedBatchId, setSelectedBatchId] = useState('');
-  const [feedDate, setFeedDate] = useState(new Date().toISOString().slice(0, 10));
-  const [feedType, setFeedType] = useState('Layer Feed (Pellets)');
-  const [feedKg, setFeedKg] = useState('');
-  const [feedCost, setFeedCost] = useState('');
-
-  // Vaccination form
-  const [vacBatchId, setVacBatchId] = useState('');
-  const [vacName, setVacName] = useState('Newcastle (ND)');
-  const [vacDate, setVacDate] = useState(new Date().toISOString().slice(0, 10));
-  const [vacReminder, setVacReminder] = useState('3 days before');
-
-  // Multivitamin form
-  const [multiBatchId, setMultiBatchId] = useState('');
-  const [multiDate, setMultiDate] = useState(new Date().toISOString().slice(0, 10));
-  const [multiProduct, setMultiProduct] = useState('Vitalyte Powder');
-  const [multiDose, setMultiDose] = useState('100g / 50L drinking water');
-  const [multiNotes, setMultiNotes] = useState('');
-
-  // Load feed and schedules across all batches
+  // Load eggs and vaccinations across all batches (feed comes from useFeedStock)
   useEffect(() => {
     let cancelled = false;
     async function loadAllInventory() {
@@ -75,15 +78,6 @@ export function InventoryPage() {
       }
       setLoading(true);
       try {
-        const feedPromises = batches.map(async b => {
-          try {
-            const res = await getLogs(b.batchId, 'feed');
-            return (res.logs || []).map(log => ({ ...log, batchName: b.name }));
-          } catch {
-            return [];
-          }
-        });
-
         const schedPromises = batches.map(async b => {
           try {
             const res = await getSchedule(b.batchId);
@@ -93,16 +87,37 @@ export function InventoryPage() {
           }
         });
 
-        const [feedsNested, schedsNested] = await Promise.all([
-          Promise.all(feedPromises),
+        // Every egg a layer batch records counts toward the farm's egg stock.
+        const eggPromises = batches.filter(b => laysEggs(b.type)).map(async b => {
+          try {
+            const res = await getLogs(b.batchId, 'eggs');
+            return (res.logs || []).map(log => ({ ...log, batchId: b.batchId, batchName: b.name }));
+          } catch {
+            return [];
+          }
+        });
+
+        const recordPromises = batches.map(async b => {
+          try {
+            const res = await getVaccinationRecords(b.batchId);
+            return (res.logs || []).map(r => ({ ...r, batchId: b.batchId, batchName: b.name }));
+          } catch {
+            return [];
+          }
+        });
+
+        const [schedsNested, eggsNested, recordsNested] = await Promise.all([
           Promise.all(schedPromises),
+          Promise.all(eggPromises),
+          Promise.all(recordPromises),
         ]);
 
         if (!cancelled) {
-          const flatFeeds = feedsNested.flat().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+          const byDateDesc = (a, b) => (b.date || '').localeCompare(a.date || '');
           const flatScheds = schedsNested.flat().sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
-          setAllFeedLogs(flatFeeds);
+          setAllEggLogs(eggsNested.flat().sort(byDateDesc));
           setAllSchedules(flatScheds);
+          setAllVaccRecords(recordsNested.flat());
         }
       } catch (err) {
         console.error('Inventory aggregate load error:', err);
@@ -115,106 +130,150 @@ export function InventoryPage() {
     return () => { cancelled = true; };
   }, [batches]);
 
-  // Feed Stock Calculations (Example data aligned with reference image)
-  const totalStockKg = 1250;
-  const usedThisMonthKg = allFeedLogs.reduce((sum, log) => {
-    const isThisMonth = log.date && log.date.startsWith(new Date().toISOString().slice(0, 7));
-    return isThisMonth ? sum + (Number(log.quantityKg ?? log.quantityBags * 25 ?? log.amountKg) || 0) : sum;
-  }, 750); // Fallback sample from reference image if empty
+  const today = toIso(new Date());
+  const thisMonth = today.slice(0, 7);
+  const batchNames = Object.fromEntries(batches.map(b => [b.batchId, b.name]));
 
-  const remainingKg = Math.max(0, totalStockKg - usedThisMonthKg);
-  const feedUsagePercent = Math.min(100, Math.round((usedThisMonthKg / totalStockKg) * 100));
+  // Feed store: purchases in, batch usage out.
+  const { lines: stockLines } = feedStore.stock;
+  const bagsInStore = stockLines.reduce((sum, l) => sum + Math.max(l.left, 0), 0);
+  const storeValue = stockLines.reduce((sum, l) => sum + l.value, 0);
+  const lowLines = stockLines.filter(l => l.status !== 'ok');
+  const bagsUsedThisMonth = feedStore.usage
+    .filter(u => (u.date || '').startsWith(thisMonth))
+    .reduce((sum, u) => sum + feedBags(u), 0);
+  const boughtThisMonth = feedStore.purchases.filter(p => (p.date || '').startsWith(thisMonth));
+  const bagsBoughtThisMonth = boughtThisMonth.reduce((sum, p) => sum + (Number(p.bags) || 0), 0);
+  const spentThisMonth = boughtThisMonth.reduce((sum, p) => sum + (Number(p.bags) || 0) * (Number(p.pricePerBagNaira) || 0), 0);
+  const feedActivity = [
+    ...feedStore.purchases.map(p => ({
+      key: `in-${p.entryId}`,
+      kind: 'in',
+      date: p.date,
+      feed: [p.feedType, p.brand].filter(Boolean).join(' · '),
+      who: p.supplier ? `Bought from ${p.supplier}` : 'Bought',
+      bags: Number(p.bags) || 0,
+      amount: (Number(p.bags) || 0) * (Number(p.pricePerBagNaira) || 0),
+    })),
+    ...feedStore.usage.map((u, i) => ({
+      key: `out-${u.entryId || i}`,
+      kind: 'out',
+      date: u.date,
+      feed: [u.feedType, u.brand].filter(Boolean).join(' · ') || 'Feed',
+      who: u.batchName || batchNames[u.batchId] || 'Batch',
+      bags: feedBags(u),
+      amount: Number(u.costNaira) || 0,
+    })),
+  ].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
-  // Vaccination categorization
-  const today = new Date().toISOString().slice(0, 10);
+  // Egg inventory — every egg a layer batch records is added here. Egg sales
+  // aren't tracked yet, so this is the total collected, not what's left.
+  const totalEggsStocked = allEggLogs.reduce((sum, log) => sum + eggCount(log), 0);
+  const eggsThisMonth = allEggLogs
+    .filter(log => (log.date || '').startsWith(thisMonth))
+    .reduce((sum, log) => sum + eggCount(log), 0);
+  const eggsToday = allEggLogs
+    .filter(log => log.date === today)
+    .reduce((sum, log) => sum + eggCount(log), 0);
+  const eggsByBatch = batches
+    .filter(b => laysEggs(b.type))
+    .map(b => ({
+      batchId: b.batchId,
+      name: b.name,
+      eggs: allEggLogs.filter(log => log.batchId === b.batchId).reduce((sum, log) => sum + eggCount(log), 0),
+    }));
+
+  // Vaccination: schedules are the plan, records are what was actually given.
   const upcomingVaccines = allSchedules.filter(s => s.status === 'upcoming' && s.dueDate >= today);
-  const overdueVaccines = allSchedules.filter(s => s.status === 'upcoming' && s.dueDate < today);
-  const completedVaccines = allSchedules.filter(s => s.status === 'done');
+  const overdueVaccines = allSchedules.filter(s => (s.status === 'upcoming' && s.dueDate < today) || s.status === 'missed');
+  const dueVaccines = [...overdueVaccines, ...upcomingVaccines];
+  const linkedScheduleIds = new Set(allVaccRecords.map(r => r.scheduleId).filter(Boolean));
+
+  // History = recorded vaccinations, plus schedules marked done before
+  // recording existed (those have no record to show instead).
+  const vaccinationHistory = [
+    ...allVaccRecords.map(r => ({
+      key: `r-${r.entryId}`,
+      date: r.dateAdministered,
+      batchName: r.batchName,
+      vaccineName: r.vaccineName,
+      doseNumber: r.doseNumber,
+      route: r.route,
+      birds: r.birdsVaccinated,
+      administeredBy: r.administeredBy,
+    })),
+    ...allSchedules
+      .filter(s => s.status === 'done' && !linkedScheduleIds.has(s.scheduleId))
+      .map(s => ({
+        key: `s-${s.scheduleId}`,
+        date: s.dueDate,
+        batchName: s.batchName,
+        vaccineName: s.vaccineName,
+        doseNumber: s.doseNumber,
+        route: s.route,
+      })),
+  ].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const givenThisMonth = vaccinationHistory.filter(v => (v.date || '').startsWith(thisMonth)).length;
+
+  // Supplements
+  const activeSupplements = supplements.filter(s => supplementDates(s).includes(today));
+  const supplementsThisMonth = supplements.filter(s => (s.date || '').startsWith(thisMonth)).length;
+  const withdrawalActive = supplements
+    .filter(s => s.withdrawalDays > 0)
+    .filter(s => {
+      const days = supplementDates(s);
+      const last = new Date((days[days.length - 1] || s.date) + 'T00:00:00');
+      last.setDate(last.getDate() + Number(s.withdrawalDays));
+      return toIso(last) >= today;
+    })
+    .map(s => ({ ...s, batchName: s.batchName || batchNames[s.batchId] || 'Batch' }));
+
+  const healthEvents = buildHealthEvents({
+    schedules: allSchedules,
+    records: allVaccRecords,
+    supplements,
+    batchNames,
+  });
 
   // Actions
-  const handleLogFeedUsage = async (e) => {
-    e.preventDefault();
-    if (!selectedBatchId) return toast('Please select a batch', 'error');
-    if (!feedKg || Number(feedKg) <= 0) return toast('Please enter a valid feed amount', 'error');
+  const openUsage = (presetKey = '') => {
+    setUsagePreset(presetKey);
+    setShowUsageModal(true);
+  };
 
-    try {
-      const created = await createLog(selectedBatchId, 'feed', {
-        date: feedDate,
-        amountKg: Number(feedKg),
-        costNaira: feedCost ? Number(feedCost) : 0,
-        feedType,
-      });
+  const openVaccination = (prefill = null) => {
+    setVacPrefill(prefill);
+    setShowVacModal(true);
+  };
 
-      const selectedBatch = batches.find(b => b.batchId === selectedBatchId);
-      const newEntry = {
-        batchId: selectedBatchId,
-        batchName: selectedBatch?.name || 'Batch',
-        date: feedDate,
-        feedType,
-        amountKg: Number(feedKg),
-      };
-      setAllFeedLogs([newEntry, ...allFeedLogs]);
-      toast(created?.queued ? QUEUED_SAVE_MESSAGE : 'Feed usage logged', 'success');
-      setFeedKg('');
-      setFeedCost('');
-      setShowFeedModal(false);
-    } catch (err) {
-      toast(err.message || 'Failed to log feed', 'error');
+  // Put what the vaccination form saved straight into the lists, so the
+  // calendar and tables update without refetching every batch.
+  const handleVaccinationSaved = ({ mode, item, batchId, scheduleId }) => {
+    const batchName = batchNames[batchId] || 'Batch';
+    if (mode === 'schedule') {
+      setAllSchedules(prev =>
+        [...prev, { ...item, batchId, batchName }].sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''))
+      );
+      return;
+    }
+    setAllVaccRecords(prev => [{ ...item, batchId, batchName }, ...prev]);
+    const fulfilled = scheduleId || item?.scheduleId;
+    if (fulfilled) {
+      setAllSchedules(prev => prev.map(s => (s.scheduleId === fulfilled ? { ...s, status: 'done' } : s)));
     }
   };
 
-  const handleAddVaccination = async ({ batchId, vaccineName, dueDate, reminderTiming }) => {
-    const targetBatchId = batchId || vacBatchId;
-    if (!targetBatchId) { toast('Select a batch', 'error'); throw new Error('No batch'); }
-    try {
-      await createSchedule(targetBatchId, { vaccineName, dueDate });
-      const targetBatch = batches.find(b => b.batchId === targetBatchId);
-      const newScheduleItem = {
-        scheduleId: Date.now().toString(),
-        batchId: targetBatchId,
-        batchName: targetBatch?.name || 'Batch',
-        vaccineName,
-        dueDate,
-        status: 'upcoming',
-        reminderTiming: reminderTiming || '3 days before',
-      };
-      setAllSchedules(prev => [newScheduleItem, ...prev]);
-      toast('Vaccination scheduled successfully!', 'success');
-    } catch (err) {
-      toast(err.message || 'Failed to schedule vaccination', 'error');
-      throw err;
-    }
-  };
-
-  const handleMarkVacDone = async (item) => {
-    try {
-      await updateSchedule(item.batchId, item.scheduleId, { status: 'done' });
-      setAllSchedules(allSchedules.map(s => s.scheduleId === item.scheduleId ? { ...s, status: 'done' } : s));
-      toast('Vaccination marked as completed', 'success');
-    } catch (err) {
-      toast(err.message || 'Failed to update schedule', 'error');
-    }
-  };
-
-  const handleLogMultivitamin = (e) => {
-    e.preventDefault();
-    if (!multiBatchId) return toast('Select a batch', 'error');
-    const targetBatch = batches.find(b => b.batchId === multiBatchId);
-    const entry = {
-      id: Date.now().toString(),
-      batchId: multiBatchId,
-      batchName: targetBatch?.name || 'Batch',
-      date: multiDate,
-      product: multiProduct,
-      dosage: multiDose,
-      notes: multiNotes,
-    };
-    const updated = [entry, ...multivitaminLogs];
-    setMultivitaminLogs(updated);
-    localStorage.setItem('farmbook_inventory_multivitamins', JSON.stringify(updated));
-    toast('Multivitamin usage recorded', 'success');
-    setMultiNotes('');
-    setShowMultiModal(false);
+  // Clicking a due vaccination on the calendar opens it ready to record.
+  const handleEventClick = (event) => {
+    if (event.kind !== 'vaccine' || event.status === 'done' || !event.source?.scheduleId) return;
+    openVaccination({
+      mode: 'record',
+      batchId: event.batchId,
+      vaccineName: event.title,
+      doseNumber: event.source.doseNumber,
+      scheduleId: event.source.scheduleId,
+      date: today,
+    });
   };
 
   return (
@@ -242,8 +301,9 @@ export function InventoryPage() {
       <div className="flex items-center gap-0 border-b border-stone-200 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
         {[
           { id: 'feed', label: 'Feed' },
+          { id: 'eggs', label: 'Eggs' },
           { id: 'vaccination', label: 'Vaccination' },
-          { id: 'multivitamins', label: 'Multivitamins' },
+          { id: 'multivitamins', label: 'Vitamins' },
         ].map(tab => (
           <button
             key={tab.id}
@@ -262,120 +322,255 @@ export function InventoryPage() {
       {/* ===================== TAB 1: FEED ===================== */}
       {activeTab === 'feed' && (
         <div className="space-y-6 animate-fade-in">
-          {/* Feed Stock Card (Matching Reference Screenshot Exactly) */}
           <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#EAF5EF] text-[#0D5C3A] flex items-center justify-center shadow-2xs shrink-0">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl text-[#0D5C3A] flex items-center justify-center shadow-2xs shrink-0">
                   <Wheat size={22} />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Feed Stock</h3>
-                  <p className="text-xs text-stone-500">Inventory balance and usage rate</p>
+                  <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Feed Store</h3>
+                  <p className="text-xs text-stone-500">Feed you bought, minus what your batches have used</p>
                 </div>
               </div>
-              <button
-                onClick={() => setShowFeedModal(true)}
-                className="w-full sm:w-auto px-5 py-2.5 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-sm font-bold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2"
-              >
-                Log Feed Usage
-              </button>
-            </div>
-
-            {/* Metrics Breakdown */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
-                <span className="text-xs font-semibold text-stone-500 block">Total Feed Available</span>
-                <span className="text-2xl sm:text-3xl font-extrabold text-stone-950 mt-1 block">
-                  {totalStockKg.toLocaleString()} kg
-                </span>
-              </div>
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
-                <span className="text-xs font-semibold text-stone-500 block">Feed Type</span>
-                <span className="text-xl sm:text-2xl font-bold text-stone-900 mt-1 block">
-                  Layer Feed (Pellets)
-                </span>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={() => openUsage()}
+                  className="w-full sm:w-auto px-4 py-2.5 border border-[#0D5C3A]/30 text-[#0D5C3A] hover:bg-[#EAF5EF] rounded-xl text-sm font-bold transition-all cursor-pointer inline-flex items-center justify-center gap-2"
+                >
+                  <CircleMinus size={16} /> Record Usage
+                </button>
+                <button
+                  onClick={() => setShowPurchaseModal(true)}
+                  className="w-full sm:w-auto px-5 py-2.5 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-sm font-bold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2"
+                >
+                  <PackagePlus size={16} /> Add Feed Stock
+                </button>
               </div>
             </div>
 
-            {/* Progress Bar: Feed Usage (This Month) matching image */}
-            <div className="space-y-2 pt-2">
-              <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-stone-800">Feed Usage (This Month)</span>
-                <span className="text-stone-500">
-                  {usedThisMonthKg.toLocaleString()} kg used / {totalStockKg.toLocaleString()} kg
-                </span>
-              </div>
-              <div className="w-full bg-stone-100 h-3 rounded-full overflow-hidden">
-                <div
-                  className="bg-[#0D5C3A] h-full rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${feedUsagePercent}%` }}
-                />
-              </div>
-              <div className="text-right text-[11px] text-stone-500 font-semibold">
-                {feedUsagePercent}%
-              </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <StatCard icon={Package} label="Bags in store" value={formatBags(bagsInStore)} hint={lowLines.length ? `${lowLines.length} running low` : 'Stock levels OK'} />
+              <StatCard icon={Banknote} label="Store value" value={formatNaira(storeValue)} hint="At the price you paid" />
+              <StatCard icon={CircleMinus} label="Used this month" value={formatBags(bagsUsedThisMonth)} />
+              <StatCard icon={CirclePlus} label="Bought this month" value={formatNaira(spentThisMonth)} hint={formatBags(bagsBoughtThisMonth)} />
             </div>
           </div>
 
-          {/* Recent Feed Logs — cards on mobile, table on larger screens */}
+          {/* One card per kind of feed in the store */}
+          {feedStore.loading && feedStore.purchases.length === 0 ? (
+            <p className="py-6 text-center text-xs text-stone-400 font-medium">Loading the feed store…</p>
+          ) : feedStore.stock.lines.length === 0 ? (
+            <div className="bg-white border border-dashed border-stone-300 rounded-3xl p-8 text-center space-y-3">
+              <p className="text-sm font-semibold text-stone-800">Your feed store is empty</p>
+              <p className="text-xs text-stone-500 max-w-md mx-auto">
+                {feedStore.error
+                  ? 'The feed store could not be loaded. It needs the latest backend deployed.'
+                  : 'Add the feed you buy here. When a batch records feed, it comes off this stock automatically.'}
+              </p>
+              <button
+                onClick={() => setShowPurchaseModal(true)}
+                className="px-5 py-2.5 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-sm font-bold cursor-pointer inline-flex items-center gap-2"
+              >
+                <PackagePlus size={16} /> Add Feed Stock
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {feedStore.stock.lines.map((line) => {
+                const pct = line.bought ? Math.max(0, Math.min(100, (line.left / line.bought) * 100)) : 0;
+                const badge = line.status === 'out'
+                  ? { text: 'Out of stock', cls: 'bg-rose-50 text-rose-700 border-rose-200' }
+                  : line.status === 'low'
+                  ? { text: 'Running low', cls: 'bg-amber-50 text-amber-800 border-amber-200' }
+                  : null;
+                return (
+                  <div key={line.key} className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs flex flex-col gap-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-stone-950 truncate">{line.feedType}</div>
+                        <div className="text-[11px] text-stone-500 truncate">
+                          {[line.brand, `${line.bagSizeKg}kg bags`].filter(Boolean).join(' · ')}
+                        </div>
+                      </div>
+                      {badge && <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold shrink-0 ${badge.cls}`}>{badge.text}</span>}
+                    </div>
+
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className={`text-3xl font-extrabold ${line.left <= 0 ? 'text-rose-600' : 'text-stone-950'}`}>
+                          {Math.max(line.left, 0).toLocaleString()}
+                        </span>
+                        <span className="text-xs text-stone-500">bag{line.left === 1 ? '' : 's'} left of {line.bought.toLocaleString()}</span>
+                      </div>
+                      <div className="w-full bg-stone-100 h-2 rounded-full overflow-hidden mt-2">
+                        <div
+                          className={`h-full rounded-full transition-all ${line.status === 'out' ? 'bg-rose-500' : line.status === 'low' ? 'bg-amber-500' : 'bg-[#0D5C3A]'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <div>
+                        <span className="text-stone-400 block">Lasts about</span>
+                        <span className="font-bold text-stone-800">
+                          {line.left <= 0 ? '—' : line.daysLeft == null ? 'No recent use' : `${line.daysLeft} day${line.daysLeft === 1 ? '' : 's'}`}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-stone-400 block">Average price</span>
+                        <span className="font-bold text-stone-800">{line.avgPrice ? `${formatNaira(line.avgPrice)}/bag` : '—'}</span>
+                      </div>
+                    </div>
+
+                    {line.bestBefore && (
+                      <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                        Use before {formatDate(line.bestBefore)}
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() => openUsage(line.key)}
+                      disabled={line.left <= 0}
+                      className="mt-auto w-full py-2 rounded-xl border border-stone-200 text-xs font-bold text-stone-700 hover:border-[#0D5C3A]/40 hover:text-[#0D5C3A] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Record usage from this feed
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Everything that went in and out */}
           <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
-            <h4 className="text-sm font-bold text-stone-950 font-heading">Recent Feed Logs</h4>
-
-            {/* Mobile card list */}
-            <div className="sm:hidden space-y-2">
-              {allFeedLogs.length === 0 ? (
-                [{ date: 'Sep 14, 2025', kg: 250, rem: 1250 }, { date: 'Sep 10, 2025', kg: 200, rem: 1500 }, { date: 'Sep 5, 2025', kg: 150, rem: 1700 }].map((r, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-200/80">
-                    <div>
-                      <div className="text-xs font-bold text-stone-900">{r.date}</div>
-                      <div className="text-[11px] text-stone-500 mt-0.5">Remaining: {r.rem.toLocaleString()} kg</div>
-                    </div>
-                    <div className="text-sm font-extrabold text-stone-950">{r.kg} kg</div>
-                  </div>
-                ))
-              ) : (
-                allFeedLogs.slice(0, 10).map((log, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-200/80">
-                    <div>
-                      <div className="text-xs font-bold text-stone-900">{log.date}</div>
-                      <div className="text-[11px] text-stone-500 mt-0.5">Batch: {log.batchName || '—'}</div>
-                    </div>
-                    <div className="text-sm font-extrabold text-stone-950">{log.amountKg || log.quantityKg || 50} kg</div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Desktop table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b border-stone-200 text-stone-400 uppercase text-[10px]">
-                  <tr>
-                    <th className="py-3 font-bold">Date</th>
-                    <th className="py-3 font-bold">Amount Used</th>
-                    <th className="py-3 font-bold">Remaining</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100 font-medium">
-                  {allFeedLogs.length === 0 ? (
-                    <>
-                      <tr><td className="py-3.5 text-stone-900 font-semibold">Sep 14, 2025</td><td className="py-3.5 font-bold text-stone-950">250 kg</td><td className="py-3.5 text-stone-600">1,250 kg</td></tr>
-                      <tr><td className="py-3.5 text-stone-900 font-semibold">Sep 10, 2025</td><td className="py-3.5 font-bold text-stone-950">200 kg</td><td className="py-3.5 text-stone-600">1,500 kg</td></tr>
-                      <tr><td className="py-3.5 text-stone-900 font-semibold">Sep 5, 2025</td><td className="py-3.5 font-bold text-stone-950">150 kg</td><td className="py-3.5 text-stone-600">1,700 kg</td></tr>
-                    </>
-                  ) : (
-                    allFeedLogs.slice(0, 10).map((log, idx) => (
-                      <tr key={idx} className="hover:bg-stone-50/60 transition-colors">
-                        <td className="py-3.5 text-stone-900 font-semibold">{log.date}</td>
-                        <td className="py-3.5 font-bold text-stone-950">{log.amountKg || log.quantityKg || 50} kg</td>
-                        <td className="py-3.5 text-stone-600">{Math.max(0, totalStockKg - (idx + 1) * Number(log.amountKg || 50)).toLocaleString()} kg</td>
+            <h4 className="text-sm font-bold text-stone-950 font-heading">Feed Activity</h4>
+            {feedActivity.length === 0 ? (
+              <p className="py-6 text-center text-xs text-stone-400 font-medium">No feed bought or used yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-stone-200 text-stone-400 uppercase text-[10px]">
+                    <tr>
+                      <th className="py-3 font-bold">Date</th>
+                      <th className="py-3 font-bold">Feed</th>
+                      <th className="py-3 font-bold hidden sm:table-cell">Batch / Supplier</th>
+                      <th className="py-3 font-bold text-right">Bags</th>
+                      <th className="py-3 font-bold text-right hidden sm:table-cell">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100 font-medium">
+                    {feedActivity.slice(0, 20).map((row) => (
+                      <tr key={row.key} className="hover:bg-stone-50/60 transition-colors">
+                        <td className="py-3 text-stone-700 whitespace-nowrap">{formatDate(row.date)}</td>
+                        <td className="py-3">
+                          <div className="font-semibold text-stone-900">{row.feed}</div>
+                          <div className="text-[11px] text-stone-400 sm:hidden">{row.who}</div>
+                        </td>
+                        <td className="py-3 text-stone-600 hidden sm:table-cell">{row.who}</td>
+                        <td className={`py-3 text-right font-bold whitespace-nowrap ${row.kind === 'in' ? 'text-[#0D5C3A]' : 'text-stone-900'}`}>
+                          {row.kind === 'in' ? '+' : '−'}{Math.round(row.bags * 100) / 100}
+                        </td>
+                        <td className="py-3 text-right text-stone-600 hidden sm:table-cell">{row.amount ? formatNaira(row.amount) : '—'}</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {feedStore.stock.untracked.length > 0 && (
+              <p className="text-[11px] text-stone-400">
+                {feedStore.stock.untracked.length} usage entr{feedStore.stock.untracked.length === 1 ? 'y was' : 'ies were'} recorded without matching feed in the store (for example, before the store existed), so they don't reduce the stock above.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ===================== TAB: EGGS ===================== */}
+      {activeTab === 'eggs' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl  text-[#0D5C3A] flex items-center justify-center shadow-2xs shrink-0">
+                <Egg size={22} />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Egg Inventory</h3>
+                <p className="text-xs text-stone-500">Every egg collection a layer batch records is added here automatically</p>
+              </div>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <StatCard
+                icon={Package}
+                label="Eggs in Inventory"
+                value={totalEggsStocked.toLocaleString()}
+                hint={formatCrates(totalEggsStocked)}
+              />
+              <StatCard icon={Calendar} label="Collected This Month" value={eggsThisMonth.toLocaleString()} hint={formatCrates(eggsThisMonth)} />
+              <StatCard icon={Clock} label="Collected Today" value={eggsToday.toLocaleString()} hint={formatCrates(eggsToday)} />
+            </div>
+
+            {eggsByBatch.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-stone-800 block">By batch</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {eggsByBatch.map(b => (
+                    <Link
+                      key={b.batchId}
+                      to={`/batches/${b.batchId}`}
+                      className="flex items-center justify-between p-3 rounded-xl border border-stone-200/80 hover:border-[#0D5C3A]/40 hover:bg-[#EAF5EF]/40 transition-colors"
+                    >
+                      <span className="text-xs font-bold text-stone-900 truncate">{b.name}</span>
+                      <span className="text-xs text-stone-600 shrink-0">
+                        <span className="font-extrabold text-stone-950">{b.eggs.toLocaleString()}</span> eggs
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
+            <h4 className="text-sm font-bold text-stone-950 font-heading">Recent Egg Collections</h4>
+
+            {allEggLogs.length === 0 ? (
+              <p className="py-6 text-center text-xs text-stone-400 font-medium">
+                {loading
+                  ? 'Loading egg records…'
+                  : eggsByBatch.length === 0
+                  ? 'No layer batches yet. Eggs appear here once a layer batch records production.'
+                  : 'No eggs recorded yet. Log eggs from a layer batch and they will be added here.'}
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-stone-200 text-stone-400 uppercase text-[10px]">
+                    <tr>
+                      <th className="py-3 font-bold">Date</th>
+                      <th className="py-3 font-bold">Batch</th>
+                      <th className="py-3 font-bold">Crates</th>
+                      <th className="py-3 font-bold">Loose</th>
+                      <th className="py-3 font-bold text-right">Total Eggs</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100 font-medium">
+                    {allEggLogs.slice(0, 15).map((log, idx) => (
+                      <tr key={log.entryId || idx} className="hover:bg-stone-50/60 transition-colors">
+                        <td className="py-3.5 text-stone-900 font-semibold">{formatDate(log.date)}</td>
+                        <td className="py-3.5 text-stone-700">{log.batchName}</td>
+                        <td className="py-3.5 text-stone-700">{Number(log.crates) || 0}</td>
+                        <td className="py-3.5 text-stone-700">{Number(log.looseEggs) || 0}</td>
+                        <td className="py-3.5 font-bold text-stone-950 text-right">{eggCount(log).toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -383,444 +578,279 @@ export function InventoryPage() {
       {/* ===================== TAB 2: VACCINATION ===================== */}
       {activeTab === 'vaccination' && (
         <div className="space-y-6 animate-fade-in">
-          {/* Header with Management Title & Add Button */}
           <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Vaccination Management</h3>
-                <p className="text-xs text-stone-500 mt-0.5">Manage vaccination records, check status and set reminders.</p>
+                <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Vaccination</h3>
+                <p className="text-xs text-stone-500 mt-0.5">Schedule upcoming vaccines and keep a record of every one given.</p>
               </div>
-              <button
-                onClick={() => setShowVacModal(true)}
-                className="w-full sm:w-auto px-5 py-2.5 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-sm font-bold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2"
-              >
-                + Add Vaccination
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={() => openVaccination({ mode: 'record' })}
+                  className="w-full sm:w-auto px-4 py-2.5 border border-[#0D5C3A]/30 text-[#0D5C3A] hover:bg-[#EAF5EF] rounded-xl text-sm font-bold transition-all cursor-pointer inline-flex items-center justify-center gap-2"
+                >
+                  <ClipboardCheck size={16} /> Record Given
+                </button>
+                <button
+                  onClick={() => openVaccination({ mode: 'schedule' })}
+                  className="w-full sm:w-auto px-5 py-2.5 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-sm font-bold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2"
+                >
+                  <Plus size={16} /> Schedule Vaccination
+                </button>
+              </div>
             </div>
 
-            {/* Status Counters (Matching Reference Screenshot Exactly) */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* Upcoming */}
-              <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/70 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
-                    <Calendar size={15} className="text-amber-600" /> Upcoming Vaccinations
-                  </span>
-                  <span className="text-2xl sm:text-3xl font-extrabold text-amber-950 mt-1 block">
-                    {upcomingVaccines.length > 0 ? upcomingVaccines.length : 2}
-                  </span>
-                </div>
+              <div className="p-4 rounded-2xl bg-[#EAF5EF]/70 border border-[#CFE8D9]">
+                <span className="text-xs font-bold text-[#0D472B] flex items-center gap-1.5">
+                  <Calendar size={15} className="text-[#0D5C3A]" /> Upcoming
+                </span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-[#0D472B] mt-1 block">{upcomingVaccines.length}</span>
               </div>
-
-              {/* Completed */}
-              <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/70 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
-                    <CheckCircle2 size={15} className="text-emerald-600" /> Completed (This month)
-                  </span>
-                  <span className="text-2xl sm:text-3xl font-extrabold text-emerald-950 mt-1 block">
-                    {completedVaccines.length > 0 ? completedVaccines.length : 3}
-                  </span>
-                </div>
+              <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/70">
+                <span className="text-xs font-bold text-rose-800 flex items-center gap-1.5">
+                  <AlertTriangle size={15} className="text-rose-600" /> Overdue
+                </span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-rose-950 mt-1 block">{overdueVaccines.length}</span>
               </div>
-
-              {/* Overdue */}
-              <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/70 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-rose-800 flex items-center gap-1.5">
-                    <AlertTriangle size={15} className="text-rose-600" /> Overdue
-                  </span>
-                  <span className="text-2xl sm:text-3xl font-extrabold text-rose-950 mt-1 block">
-                    {overdueVaccines.length}
-                  </span>
-                </div>
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
+                <span className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
+                  <CheckCircle2 size={15} className="text-stone-500" /> Given this month
+                </span>
+                <span className="text-2xl sm:text-3xl font-extrabold text-stone-950 mt-1 block">{givenThisMonth}</span>
               </div>
             </div>
           </div>
 
-          {/* Upcoming Vaccinations — cards on mobile, table on desktop */}
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold text-stone-950 font-heading">Upcoming Vaccinations</h4>
-            </div>
-
-            {/* Mobile cards */}
-            <div className="sm:hidden space-y-2">
-              {upcomingVaccines.length === 0 ? (
-                [
-                  { batch: 'Layer Batch 1', vaccine: 'Newcastle (ND)', date: 'Oct 5, 2025', reminder: '3 days before' },
-                  { batch: 'Chicks Batch A', vaccine: 'Gumboro', date: 'Oct 12, 2025', reminder: '5 days before' },
-                ].map((r, i) => (
-                  <div key={i} className="p-3 rounded-xl bg-stone-50 border border-stone-200/80 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-stone-900">{r.vaccine}</span>
-                      <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[10px] font-bold">{r.reminder}</span>
-                    </div>
-                    <div className="text-[11px] text-stone-500">{r.batch} &middot; Due: {r.date}</div>
-                  </div>
-                ))
-              ) : (
-                upcomingVaccines.map((item) => (
-                  <div key={item.scheduleId} className="p-3 rounded-xl bg-stone-50 border border-stone-200/80 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-stone-900">{item.vaccineName}</span>
-                      <button onClick={() => handleMarkVacDone(item)} className="text-[10px] font-bold text-[#0D5C3A] hover:underline cursor-pointer">Mark Done</button>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="text-[11px] text-stone-500">{item.batchName} &middot; Due: {item.dueDate}</div>
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-full text-[10px] font-bold">{item.reminderTiming || '3 days before'}</span>
-                    </div>
-                  </div>
-                ))
+          {/* Health calendar — every appointment in its date box */}
+          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs">
+            <CalendarPicker
+              variant="full"
+              value={calendarDate}
+              onChange={setCalendarDate}
+              events={healthEvents}
+              onEventClick={handleEventClick}
+              agendaActions={(date) => (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => openVaccination({ mode: date > today ? 'schedule' : 'record', date })}
+                    className="px-2.5 h-7 rounded-lg bg-[#0D5C3A] hover:bg-[#094229] text-white text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <Syringe size={12} /> Vaccine
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowMultiModal(true)}
+                    className="px-2.5 h-7 rounded-lg border border-stone-200 hover:border-[#0D5C3A]/40 text-stone-700 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus size={12} /> Vitamin
+                  </button>
+                </>
               )}
-            </div>
-
-            {/* Desktop table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b border-stone-200 text-stone-400 uppercase text-[10px]">
-                  <tr>
-                    <th className="py-3 font-bold">Batch</th>
-                    <th className="py-3 font-bold">Vaccine</th>
-                    <th className="py-3 font-bold">Date</th>
-                    <th className="py-3 font-bold">Reminder</th>
-                    <th className="py-3 text-right font-bold">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100">
-                  {upcomingVaccines.length === 0 ? (
-                    <>
-                      <tr className="hover:bg-stone-50/60"><td className="py-3.5 font-semibold text-stone-900">Layer Batch 1</td><td className="py-3.5 font-bold text-stone-950">Newcastle (ND)</td><td className="py-3.5 text-stone-700">Oct 5, 2025</td><td className="py-3.5"><span className="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full text-[10px] font-bold">3 days before</span></td><td className="py-3.5 text-right"><span className="text-xs font-bold text-[#0D5C3A] cursor-pointer hover:underline">Mark Done</span></td></tr>
-                      <tr className="hover:bg-stone-50/60"><td className="py-3.5 font-semibold text-stone-900">Chicks Batch A</td><td className="py-3.5 font-bold text-stone-950">Gumboro</td><td className="py-3.5 text-stone-700">Oct 12, 2025</td><td className="py-3.5"><span className="px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full text-[10px] font-bold">5 days before</span></td><td className="py-3.5 text-right"><span className="text-xs font-bold text-[#0D5C3A] cursor-pointer hover:underline">Mark Done</span></td></tr>
-                    </>
-                  ) : (
-                    upcomingVaccines.map((item) => (
-                      <tr key={item.scheduleId} className="hover:bg-stone-50/60 transition-colors">
-                        <td className="py-3.5 font-semibold text-stone-900">{item.batchName}</td>
-                        <td className="py-3.5 font-bold text-stone-950">{item.vaccineName}</td>
-                        <td className="py-3.5 text-stone-700">{item.dueDate}</td>
-                        <td className="py-3.5"><span className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-full text-[10px] font-bold">{item.reminderTiming || '3 days before'}</span></td>
-                        <td className="py-3.5 text-right"><button onClick={() => handleMarkVacDone(item)} className="text-xs font-bold text-[#0D5C3A] hover:underline cursor-pointer">Mark Done</button></td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+            />
           </div>
 
-          {/* Completed Vaccination Records — cards on mobile, table on desktop */}
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
-            <h4 className="text-sm font-bold text-stone-950 font-heading">Recent Vaccination Records</h4>
+          {/* Due and overdue */}
+          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-3">
+            <h4 className="text-sm font-bold text-stone-950 font-heading">Due Vaccinations</h4>
+            {dueVaccines.length === 0 ? (
+              <p className="py-4 text-center text-xs text-stone-400 font-medium">
+                {loading ? 'Loading…' : 'Nothing scheduled. Use "Schedule Vaccination" to plan the next one.'}
+              </p>
+            ) : (
+              <ul className="divide-y divide-stone-100">
+                {dueVaccines.map((item) => {
+                  const overdue = item.dueDate < today;
+                  return (
+                    <li key={item.scheduleId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 py-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-stone-900 break-words">
+                          {item.vaccineName}
+                          {item.doseNumber && <span className="font-medium text-stone-500"> · {item.doseNumber}</span>}
+                        </div>
+                        <div className="text-xs text-stone-500">
+                          {item.batchName} · {ROUTES[item.route]?.label ? `${ROUTES[item.route].label} · ` : ''}
+                          <span className={overdue ? 'text-rose-600 font-semibold' : ''}>
+                            {overdue ? 'Overdue since ' : 'Due '}{formatDate(item.dueDate)}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => openVaccination({
+                          mode: 'record',
+                          batchId: item.batchId,
+                          vaccineName: item.vaccineName,
+                          doseNumber: item.doseNumber,
+                          scheduleId: item.scheduleId,
+                          date: today,
+                        })}
+                        className="w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold border border-[#0D5C3A]/30 text-[#0D5C3A] hover:bg-[#EAF5EF] transition-colors cursor-pointer shrink-0"
+                      >
+                        Record as given
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
 
-            {/* Mobile cards */}
-            <div className="sm:hidden space-y-2">
-              {completedVaccines.length === 0 ? (
-                [
-                  { date: 'Sep 10, 2025', batch: 'Layer Batch 1', vaccine: 'Newcastle (ND)' },
-                  { date: 'Sep 5, 2025', batch: 'Chicks Batch A', vaccine: 'Gumboro' },
-                  { date: 'Aug 25, 2025', batch: 'Broiler Batch 1', vaccine: 'Newcastle (ND)' },
-                ].map((r, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-200/80">
-                    <div>
-                      <div className="text-xs font-bold text-stone-900">{r.vaccine}</div>
-                      <div className="text-[11px] text-stone-500 mt-0.5">{r.batch} &middot; {r.date}</div>
-                    </div>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" /> Done
-                    </span>
-                  </div>
-                ))
-              ) : (
-                completedVaccines.map((item) => (
-                  <div key={item.scheduleId} className="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-200/80">
-                    <div>
-                      <div className="text-xs font-bold text-stone-900">{item.vaccineName}</div>
-                      <div className="text-[11px] text-stone-500 mt-0.5">{item.batchName} &middot; {item.dueDate}</div>
-                    </div>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" /> Done
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Desktop table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b border-stone-200 text-stone-400 uppercase text-[10px]">
-                  <tr>
-                    <th className="py-3 font-bold">Date</th>
-                    <th className="py-3 font-bold">Batch</th>
-                    <th className="py-3 font-bold">Vaccine</th>
-                    <th className="py-3 font-bold">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100">
-                  {completedVaccines.length === 0 ? (
-                    <>
-                      <tr className="hover:bg-stone-50/60"><td className="py-3.5 text-stone-700">Sep 10, 2025</td><td className="py-3.5 font-semibold text-stone-900">Layer Batch 1</td><td className="py-3.5 font-bold text-stone-950">Newcastle (ND)</td><td className="py-3.5"><span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800"><span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />Completed</span></td></tr>
-                      <tr className="hover:bg-stone-50/60"><td className="py-3.5 text-stone-700">Sep 5, 2025</td><td className="py-3.5 font-semibold text-stone-900">Chicks Batch A</td><td className="py-3.5 font-bold text-stone-950">Gumboro</td><td className="py-3.5"><span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800"><span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />Completed</span></td></tr>
-                    </>
-                  ) : (
-                    completedVaccines.map((item) => (
-                      <tr key={item.scheduleId} className="hover:bg-stone-50/60 transition-colors">
-                        <td className="py-3.5 text-stone-700">{item.dueDate}</td>
-                        <td className="py-3.5 font-semibold text-stone-900">{item.batchName}</td>
-                        <td className="py-3.5 font-bold text-stone-950">{item.vaccineName}</td>
-                        <td className="py-3.5"><span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200"><span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />Completed</span></td>
+          {/* History */}
+          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-3">
+            <h4 className="text-sm font-bold text-stone-950 font-heading">Vaccination History</h4>
+            {vaccinationHistory.length === 0 ? (
+              <p className="py-4 text-center text-xs text-stone-400 font-medium">
+                {loading ? 'Loading…' : 'No vaccinations recorded yet.'}
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-stone-200 text-stone-400 uppercase text-[10px]">
+                    <tr>
+                      <th className="py-3 font-bold">Date</th>
+                      <th className="py-3 font-bold">Batch</th>
+                      <th className="py-3 font-bold">Vaccine</th>
+                      <th className="py-3 font-bold hidden sm:table-cell">Method</th>
+                      <th className="py-3 font-bold hidden sm:table-cell">Birds</th>
+                      <th className="py-3 font-bold hidden md:table-cell">Given by</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {vaccinationHistory.map((r) => (
+                      <tr key={r.key} className="hover:bg-stone-50/60 transition-colors">
+                        <td className="py-3 text-stone-700 whitespace-nowrap">{formatDate(r.date)}</td>
+                        <td className="py-3 font-semibold text-stone-900">{r.batchName}</td>
+                        <td className="py-3 font-bold text-stone-950">
+                          {r.vaccineName}
+                          {r.doseNumber && <span className="font-medium text-stone-500"> · {r.doseNumber}</span>}
+                        </td>
+                        <td className="py-3 text-stone-600 hidden sm:table-cell">{ROUTES[r.route]?.label || '—'}</td>
+                        <td className="py-3 text-stone-600 hidden sm:table-cell">{r.birds ? Number(r.birds).toLocaleString() : '—'}</td>
+                        <td className="py-3 text-stone-600 hidden md:table-cell">{r.administeredBy || '—'}</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* ===================== TAB 3: MULTIVITAMINS ===================== */}
+      {/* ===================== TAB 3: VITAMINS & SUPPLEMENTS ===================== */}
       {activeTab === 'multivitamins' && (
         <div className="space-y-6 animate-fade-in">
           <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#EAF5EF] text-[#0D5C3A] flex items-center justify-center shadow-2xs shrink-0">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl  text-[#0D5C3A] flex items-center justify-center shadow-2xs shrink-0">
                   <PillIcon size={22} />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Multivitamin Supplements</h3>
-                  <p className="text-xs text-stone-500">Track anti-stress, growth boosters, and electrolyte usage</p>
+                  <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Vitamins &amp; Supplements</h3>
+                  <p className="text-xs text-stone-500">Multivitamins, anti-stress, calcium, dewormers and more</p>
                 </div>
               </div>
-
               <button
                 onClick={() => setShowMultiModal(true)}
-                className="px-6 py-2.5 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer inline-flex items-center gap-2 self-start sm:self-auto"
+                className="w-full sm:w-auto px-5 py-2.5 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-sm font-bold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2"
               >
-                + Record Dosage
+                <Plus size={16} /> Record Vitamin
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
-                <span className="text-xs font-semibold text-stone-500 block">Active Supplements</span>
-                <span className="text-xl sm:text-2xl font-extrabold text-stone-950 mt-1 block">
-                  Vitalyte / Aminovital
-                </span>
-              </div>
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
-                <span className="text-xs font-semibold text-stone-500 block">Total Doses Given</span>
-                <span className="text-2xl sm:text-3xl font-extrabold text-[#0D5C3A] mt-1 block">
-                  {multivitaminLogs.length}
-                </span>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <StatCard icon={Clock} label="Running now" value={activeSupplements.length} hint={activeSupplements.map(s => s.product).slice(0, 3).join(', ') || 'No course running today'} />
+              <StatCard icon={Calendar} label="Given this month" value={supplementsThisMonth} />
+              <StatCard
+                icon={AlertTriangle}
+                label="Withdrawal in force"
+                value={withdrawalActive.length}
+                hint={withdrawalActive.length ? `Don't sell eggs/meat from: ${withdrawalActive.map(w => w.batchName).join(', ')}` : 'All batches clear'}
+              />
             </div>
           </div>
 
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-6 shadow-xs space-y-4">
-            <h4 className="text-sm font-bold text-stone-950 font-heading">Recent Multivitamin Logs</h4>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b border-stone-200 text-stone-400 uppercase text-[10px]">
-                  <tr>
-                    <th className="py-3 font-bold">Date</th>
-                    <th className="py-3 font-bold">Batch</th>
-                    <th className="py-3 font-bold">Supplement</th>
-                    <th className="py-3 font-bold">Dosage</th>
-                    <th className="py-3 font-bold">Notes</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100">
-                  {multivitaminLogs.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-6 text-center text-stone-400 font-medium">
-                        No multivitamin logs recorded yet. Click "+ Record Dosage" to log.
-                      </td>
-                    </tr>
-                  ) : (
-                    multivitaminLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-stone-50/60 transition-colors">
-                        <td className="py-3.5 text-stone-900 font-semibold">{log.date}</td>
-                        <td className="py-3.5 text-stone-700">{log.batchName}</td>
-                        <td className="py-3.5 font-bold text-stone-950">{log.product}</td>
-                        <td className="py-3.5 text-stone-600">{log.dosage}</td>
-                        <td className="py-3.5 text-stone-500">{log.notes || '—'}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h4 className="text-sm font-bold text-stone-950 font-heading">Recent Records</h4>
+              <span className="text-[11px] text-stone-400">Saved on this device only</span>
             </div>
+            {supplements.length === 0 ? (
+              <p className="py-6 text-center text-xs text-stone-400 font-medium">
+                No vitamins or supplements recorded yet. Click "Record Vitamin" to add one.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-stone-200 text-stone-400 uppercase text-[10px]">
+                    <tr>
+                      <th className="py-3 font-bold">Started</th>
+                      <th className="py-3 font-bold">Batch</th>
+                      <th className="py-3 font-bold">Product</th>
+                      <th className="py-3 font-bold hidden sm:table-cell">Dose</th>
+                      <th className="py-3 font-bold hidden md:table-cell">Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {supplements.map((s) => (
+                      <tr key={s.id} className="hover:bg-stone-50/60 transition-colors align-top">
+                        <td className="py-3 text-stone-700 whitespace-nowrap">{formatDate(s.date)}</td>
+                        <td className="py-3 text-stone-700">{s.batchName || batchNames[s.batchId] || '—'}</td>
+                        <td className="py-3">
+                          <div className="font-bold text-stone-950">{s.product}</div>
+                          <div className="text-[11px] text-stone-500">{findSupplementType(s.type)?.label || 'Supplement'}</div>
+                          {s.withdrawalDays > 0 && (
+                            <div className="text-[11px] text-amber-700 font-semibold">{s.withdrawalDays}-day withdrawal</div>
+                          )}
+                        </td>
+                        <td className="py-3 text-stone-600 hidden sm:table-cell">{describeDose(s) || '—'}</td>
+                        <td className="py-3 text-stone-500 hidden md:table-cell">{s.reason || s.notes || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Modal 1: Log Feed */}
-      <Modal isOpen={showFeedModal} onClose={() => setShowFeedModal(false)} title="Log Feed Usage">
-        <form onSubmit={handleLogFeedUsage} className="space-y-4">
-          <div>
-            <label className="text-xs font-bold text-stone-800 block mb-1">Select Batch</label>
-            <select
-              value={selectedBatchId}
-              onChange={e => setSelectedBatchId(e.target.value)}
-              className="w-full px-3 py-2.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-900 focus:outline-hidden"
-              required
-            >
-              <option value="">-- Choose Batch --</option>
-              {batches.map(b => (
-                <option key={b.batchId} value={b.batchId}>
-                  {b.name} ({b.type})
-                </option>
-              ))}
-            </select>
-          </div>
+      <FeedPurchaseModal
+        isOpen={showPurchaseModal}
+        onClose={() => setShowPurchaseModal(false)}
+        onSaved={feedStore.addPurchase}
+      />
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-bold text-stone-800 block mb-1">Date</label>
-              <input
-                type="date"
-                value={feedDate}
-                onChange={e => setFeedDate(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs"
-                required
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-stone-800 block mb-1">Amount Used (kg)</label>
-              <input
-                type="number"
-                placeholder="e.g. 50"
-                value={feedKg}
-                onChange={e => setFeedKg(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-stone-800 block mb-1">Feed Type</label>
-            <input
-              type="text"
-              value={feedType}
-              onChange={e => setFeedType(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs"
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-3">
-            <button
-              type="button"
-              onClick={() => setShowFeedModal(false)}
-              className="px-4 py-2 border border-stone-300 rounded-xl text-xs font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-xs font-bold"
-            >
-              Save Usage
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-
-      {/* Modal 2: Schedule Vaccination — Airbnb-style calendar picker */}
-      <VaccinationModal
-        isOpen={showVacModal}
-        onClose={() => setShowVacModal(false)}
-        onConfirm={handleAddVaccination}
-        batches={batches}
-        title="Schedule Vaccination"
+      <FeedUsageModal
+        isOpen={showUsageModal}
+        onClose={() => setShowUsageModal(false)}
+        onSaved={feedStore.addUsage}
+        presetKey={usagePreset}
+        onAddStock={() => {
+          setShowUsageModal(false);
+          setShowPurchaseModal(true);
+        }}
       />
 
 
-      {/* Modal 3: Add Multivitamin */}
-      <Modal isOpen={showMultiModal} onClose={() => setShowMultiModal(false)} title="Record Multivitamin Dosage">
-        <form onSubmit={handleLogMultivitamin} className="space-y-4">
-          <div>
-            <label className="text-xs font-bold text-stone-800 block mb-1">Select Batch</label>
-            <select
-              value={multiBatchId}
-              onChange={e => setMultiBatchId(e.target.value)}
-              className="w-full px-3 py-2.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-900 focus:outline-hidden"
-              required
-            >
-              <option value="">-- Choose Batch --</option>
-              {batches.map(b => (
-                <option key={b.batchId} value={b.batchId}>
-                  {b.name} ({b.type})
-                </option>
-              ))}
-            </select>
-          </div>
+      <VaccinationModal
+        isOpen={showVacModal}
+        onClose={() => setShowVacModal(false)}
+        onSaved={handleVaccinationSaved}
+        batches={batches}
+        events={healthEvents}
+        prefill={vacPrefill}
+      />
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-bold text-stone-800 block mb-1">Date</label>
-              <input
-                type="date"
-                value={multiDate}
-                onChange={e => setMultiDate(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs"
-                required
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-stone-800 block mb-1">Product</label>
-              <input
-                type="text"
-                value={multiProduct}
-                onChange={e => setMultiProduct(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-stone-800 block mb-1">Dosage</label>
-            <input
-              type="text"
-              value={multiDose}
-              onChange={e => setMultiDose(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-stone-800 block mb-1">Notes</label>
-            <input
-              type="text"
-              placeholder="e.g. Post-vaccination boost, heat stress..."
-              value={multiNotes}
-              onChange={e => setMultiNotes(e.target.value)}
-              className="w-full px-3 py-2 bg-white border border-stone-300 rounded-xl text-xs"
-            />
-          </div>
-
-          <div className="flex justify-end gap-2 pt-3">
-            <button
-              type="button"
-              onClick={() => setShowMultiModal(false)}
-              className="px-4 py-2 border border-stone-300 rounded-xl text-xs font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-xs font-bold"
-            >
-              Save Record
-            </button>
-          </div>
-        </form>
-      </Modal>
+      <SupplementModal
+        isOpen={showMultiModal}
+        onClose={() => setShowMultiModal(false)}
+        onSaved={setSupplements}
+        batches={batches}
+        events={healthEvents}
+      />
     </div>
   );
 }

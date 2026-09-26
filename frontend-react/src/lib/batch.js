@@ -4,7 +4,47 @@
 // imagery and type-pill colours, and having two copies means the next time
 // one of the photos is swapped the two pages silently drift apart.
 
-// Real bird images from public/birds/
+/**
+ * Bird types a farmer can pick when creating a batch. One list, shared by the
+ * create form and every filter, so adding a type here adds it everywhere.
+ * Only layers get egg tracking — eggs are logged in 30-egg crates, which is
+ * how chicken eggs are sold, not duck or quail eggs.
+ */
+export const BIRD_TYPES = [
+  { value: 'layer', label: 'Layer', laysEggs: true },
+  { value: 'broiler', label: 'Broiler' },
+  { value: 'cockerel', label: 'Cockerel' },
+  { value: 'noiler', label: 'Noiler' },
+  { value: 'turkey', label: 'Turkey' },
+  { value: 'duck', label: 'Duck' },
+  { value: 'guinea_fowl', label: 'Guinea Fowl' },
+  { value: 'quail', label: 'Quail' },
+];
+
+// "chick" was offered before the list above existed. Batches created with it
+// still need a readable label and a filter entry, but it is no longer offered
+// on the create form.
+const LEGACY_TYPES = [{ value: 'chick', label: 'Chick' }];
+
+export function birdTypeLabel(type) {
+  const key = (type || '').toLowerCase();
+  const match = [...BIRD_TYPES, ...LEGACY_TYPES].find((t) => t.value === key);
+  return match ? match.label : type || 'Other';
+}
+
+export function laysEggs(type) {
+  return (type || '').toLowerCase() === 'layer';
+}
+
+/** Filter options for list pages: "All Types" + every type, legacy included. */
+export const TYPE_FILTER_OPTIONS = [
+  { value: 'all', label: 'All Types' },
+  ...BIRD_TYPES.map(({ value, label }) => ({ value, label })),
+  ...LEGACY_TYPES,
+];
+
+// Real bird images from public/birds/. Types without their own photo (turkey,
+// duck, etc.) fall back to `default` until one is added.
 export const BATCH_IMAGES = {
   layer: '/birds/jaclou-dl-hens-3420126_1920.jpg',
   broiler: '/birds/browlers.jpg',
@@ -15,10 +55,51 @@ export const BATCH_IMAGES = {
 // A crate is 30 eggs — used to turn logged crates into a raw egg count.
 export const EGGS_PER_CRATE = 30;
 
+export function eggCount(entry) {
+  return (Number(entry?.crates) || 0) * EGGS_PER_CRATE + (Number(entry?.looseEggs) || 0);
+}
+
+/** 1,234 eggs → "41 crates, 4 eggs". */
+export function formatCrates(totalEggs) {
+  const crates = Math.floor(totalEggs / EGGS_PER_CRATE);
+  const loose = totalEggs % EGGS_PER_CRATE;
+  const parts = [`${crates.toLocaleString()} crate${crates === 1 ? '' : 's'}`];
+  if (loose) parts.push(`${loose} egg${loose === 1 ? '' : 's'}`);
+  return parts.join(', ');
+}
+
+/**
+ * Feed is bought and counted in bags in Nigeria — every major brand (Chikun,
+ * Top Feeds, Hybrid, Vital) sells 25kg bags — so the forms take bags, not kg.
+ * Each entry still stores amountKg (bags × bag size) because the backend and
+ * the summary endpoint are built on it, plus `bags` and `bagSizeKg` so the
+ * farmer's own number is shown back exactly as they entered it.
+ */
+export const FEED_BAG_KG = 25;
+export const FEED_BAG_SIZES = [25, 50, 15];
+
+/** Bags in a feed entry. Older entries only have amountKg; assume 25kg bags. */
+export function feedBags(entry) {
+  if (entry?.bags != null) return Number(entry.bags) || 0;
+  return (Number(entry?.amountKg) || 0) / (Number(entry?.bagSizeKg) || FEED_BAG_KG);
+}
+
+/** 1 → "1 bag", 2.5 → "2.5 bags", 0.333 → "0.33 bags". */
+export function formatBags(bags) {
+  const rounded = Math.round(bags * 100) / 100;
+  return `${rounded.toLocaleString()} bag${rounded === 1 ? '' : 's'}`;
+}
+
 export const TYPE_PILL_STYLES = {
   layer: 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]',
   chick: 'bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE]',
   broiler: 'bg-[#F3E8FF] text-[#7E22CE] border-[#E9D5FF]',
+  cockerel: 'bg-[#FEE2E2] text-[#B91C1C] border-[#FECACA]',
+  noiler: 'bg-[#FFEDD5] text-[#C2410C] border-[#FED7AA]',
+  turkey: 'bg-[#EAF5EF] text-[#0D5C3A] border-[#CFE8D9]',
+  duck: 'bg-[#CCFBF1] text-[#0F766E] border-[#99F6E4]',
+  guinea_fowl: 'bg-[#E7E5E4] text-[#44403C] border-[#D6D3D1]',
+  quail: 'bg-[#FCE7F3] text-[#BE185D] border-[#FBCFE8]',
 };
 
 // Pill sizing lives here so every screen stays in step. The type pill

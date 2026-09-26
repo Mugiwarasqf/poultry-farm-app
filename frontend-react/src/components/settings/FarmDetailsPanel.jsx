@@ -13,11 +13,10 @@ import {
   SecondaryButton,
   DetailRow,
 } from './ui';
+import { BIRD_TYPES } from '../../lib/batch';
 
-const BIRD_TYPES = [
-  { value: 'layer', label: 'Layers' },
-  { value: 'broiler', label: 'Broilers' },
-  { value: 'chick', label: 'Chicks' },
+const FARM_BIRD_TYPES = [
+  ...BIRD_TYPES.map(({ value, label }) => ({ value, label })),
   { value: 'mixed', label: 'Mixed flock' },
 ];
 
@@ -123,7 +122,7 @@ export function FarmDetailsPanel() {
               onChange={(e) => setBirdType(e.target.value)}
               disabled={!editing}
             >
-              {BIRD_TYPES.map((option) => (
+              {FARM_BIRD_TYPES.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </SelectInput>

@@ -5,6 +5,7 @@ import { BirdIcon } from '../components/ui/BirdIcon';
 import { useBatches } from '../context/BatchContext';
 import { createSchedule } from '../api/schedule';
 import { useToast } from '../components/ui/Toast';
+import { BIRD_TYPES, birdTypeLabel, laysEggs } from '../lib/batch';
 
 const STEPS = [
   { id: 1, label: 'Basic Info' },
@@ -34,7 +35,7 @@ export function CreateBatchPage() {
 
   // Step 1: Basic Info
   const [name, setName] = useState('');
-  const [birdType, setBirdType] = useState('layer'); // 'layer' | 'broiler' | 'chick'
+  const [birdType, setBirdType] = useState('layer'); // one of BIRD_TYPES
   const [birdCount, setBirdCount] = useState('');
   const [breed, setBreed] = useState('');
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
@@ -198,19 +199,19 @@ export function CreateBatchPage() {
                   onChange={e => setBirdType(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm font-semibold text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all cursor-pointer"
                 >
-                  <option value="layer">Layer</option>
-                  <option value="broiler">Broiler</option>
-                  <option value="chick">Chick</option>
+                  {BIRD_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
                 </select>
 
                 <div className="flex items-center gap-2 pt-1 text-xs">
-                  {birdType === 'layer' ? (
+                  {laysEggs(birdType) ? (
                     <span className="text-[#0D5C3A] font-semibold flex items-center gap-1">
                       <Check size={14} /> Egg production available
                     </span>
                   ) : (
                     <span className="text-stone-500 flex items-center gap-1">
-                      <Info size={14} /> No egg tracking for {birdType}s
+                      <Info size={14} /> No egg tracking for {birdTypeLabel(birdType)} batches
                     </span>
                   )}
                 </div>
@@ -224,7 +225,7 @@ export function CreateBatchPage() {
                 <div>
                   <h4 className="text-xs font-bold text-stone-950">Only Layers produce eggs</h4>
                   <p className="text-[11px] text-stone-600 mt-1 leading-relaxed">
-                    Egg production is only available for Layer batches. Broilers and Chicks do not lay eggs.
+                    Egg production is only available for Layer batches. Other bird types are tracked for feed, health and bird losses.
                   </p>
                 </div>
               </div>
@@ -551,7 +552,7 @@ export function CreateBatchPage() {
               </div>
               <div>
                 <span className="text-stone-400 block font-medium">Bird Type</span>
-                <span className="text-stone-900 font-bold text-sm uppercase">{birdType}</span>
+                <span className="text-stone-900 font-bold text-sm uppercase">{birdTypeLabel(birdType)}</span>
               </div>
               <div>
                 <span className="text-stone-400 block font-medium">Flock Size</span>
