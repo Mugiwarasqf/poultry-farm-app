@@ -31,6 +31,11 @@ output "functions" {
       arn        = aws_lambda_function.eggs.arn
       invoke_arn = aws_lambda_function.eggs.invoke_arn
     }
+    weight = {
+      name       = aws_lambda_function.weight.function_name
+      arn        = aws_lambda_function.weight.arn
+      invoke_arn = aws_lambda_function.weight.invoke_arn
+    }
     vaccinations = {
       name       = aws_lambda_function.vaccinations.function_name
       arn        = aws_lambda_function.vaccinations.arn

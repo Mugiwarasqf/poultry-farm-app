@@ -30,7 +30,7 @@ const MAX_ATTEMPTS = 5;
 // against API Gateway, and so partial progress survives a mid-flush failure.
 const FLUSH_CHUNK_SIZE = 50;
 
-export const QUEUEABLE_RESOURCES = ['mortality', 'feed', 'eggs', 'vaccinations'];
+export const QUEUEABLE_RESOURCES = ['mortality', 'feed', 'eggs', 'vaccinations', 'weight'];
 
 /**
  * Confirmation shown when an entry went to the queue instead of the server.

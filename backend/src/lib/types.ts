@@ -71,6 +71,24 @@ export interface VaccinationRecord {
   createdAt: string;
 }
 
+// Not in docs/10-build-plan.md's original data model — added to back Feed
+// Conversion Ratio (feed consumed ÷ weight gained), which frontend-react's
+// LoginPage.jsx and BatchDetailPage.jsx/BatchHistoryDetail.jsx already
+// advertised and had a UI slot for, but that was never wired to a real
+// calculation (hardcoded to "-"). FCR itself is computed client-side in
+// frontend-react/src/lib/batch.js's computeFCR, combining this with
+// FeedLog — this table only stores the raw weight samples, same
+// "derive, don't duplicate" principle as FeedPurchase/summary.
+export interface WeightLog {
+  batchId: string;
+  entryId: string;
+  date: string;
+  averageWeightKg: number;
+  /** How many birds the average was taken from — context only, not used in the FCR math. */
+  sampleSize?: number;
+  createdAt: string;
+}
+
 export type VaccinationScheduleStatus = "upcoming" | "done" | "missed";
 
 export interface VaccinationSchedule {

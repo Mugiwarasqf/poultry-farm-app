@@ -104,6 +104,22 @@ resource "aws_dynamodb_table" "egg_logs" {
   }
 }
 
+resource "aws_dynamodb_table" "weight_logs" {
+  name         = "${var.project_name}-${var.environment}-weight-logs"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "batchId"
+  range_key    = "entryId"
+
+  attribute {
+    name = "batchId"
+    type = "S"
+  }
+  attribute {
+    name = "entryId"
+    type = "S"
+  }
+}
+
 resource "aws_dynamodb_table" "vaccination_records" {
   name         = "${var.project_name}-${var.environment}-vaccination-records"
   billing_mode = "PAY_PER_REQUEST"

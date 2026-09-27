@@ -24,6 +24,7 @@ locals {
     VACCINATION_RECORDS_TABLE   = var.table_names["vaccination_records"]
     VACCINATION_SCHEDULES_TABLE = var.table_names["vaccination_schedules"]
     FEED_PURCHASES_TABLE        = var.table_names["feed_purchases"]
+    WEIGHT_LOGS_TABLE           = var.table_names["weight_logs"]
     COGNITO_USER_POOL_ID        = var.cognito_user_pool_id
     COGNITO_CLIENT_ID           = var.cognito_client_id
     SES_SENDER_EMAIL            = var.ses_sender_email
@@ -167,6 +168,11 @@ data "archive_file" "eggs" {
   source_dir  = "${var.backend_dist}/eggs"
   output_path = "${path.module}/.build/eggs.zip"
 }
+data "archive_file" "weight" {
+  type        = "zip"
+  source_dir  = "${var.backend_dist}/weight"
+  output_path = "${path.module}/.build/weight.zip"
+}
 data "archive_file" "vaccinations" {
   type        = "zip"
   source_dir  = "${var.backend_dist}/vaccinations"
@@ -273,6 +279,17 @@ resource "aws_lambda_function" "eggs" {
   timeout          = 10
   filename         = data.archive_file.eggs.output_path
   source_code_hash = data.archive_file.eggs.output_base64sha256
+  environment { variables = local.common_env }
+}
+
+resource "aws_lambda_function" "weight" {
+  function_name    = "${var.project_name}-${var.environment}-weight"
+  role             = aws_iam_role.dynamo.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  timeout          = 10
+  filename         = data.archive_file.weight.output_path
+  source_code_hash = data.archive_file.weight.output_base64sha256
   environment { variables = local.common_env }
 }
 

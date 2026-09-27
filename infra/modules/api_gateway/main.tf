@@ -12,7 +12,7 @@ locals {
   # routes share one integration (batches has 3, vaccination_schedule
   # has 3).
   api_lambda_keys = [
-    "batches", "farms", "feed_stock", "mortality", "feed", "eggs", "vaccinations",
+    "batches", "farms", "feed_stock", "mortality", "feed", "eggs", "weight", "vaccinations",
     "vaccination_schedule", "summary", "sync",
     "auth_otp_request", "auth_otp_verify",
   ]
@@ -170,6 +170,21 @@ resource "aws_apigatewayv2_route" "eggs_create" {
   api_id             = aws_apigatewayv2_api.main.id
   route_key          = "POST /batches/{id}/eggs"
   target             = "integrations/${aws_apigatewayv2_integration.this["eggs"].id}"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "weight_list" {
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "GET /batches/{id}/weight"
+  target             = "integrations/${aws_apigatewayv2_integration.this["weight"].id}"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+  authorization_type = "JWT"
+}
+resource "aws_apigatewayv2_route" "weight_create" {
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "POST /batches/{id}/weight"
+  target             = "integrations/${aws_apigatewayv2_integration.this["weight"].id}"
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
   authorization_type = "JWT"
 }

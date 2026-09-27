@@ -16,6 +16,7 @@ import {
   ShoppingCart,
   Syringe,
   Percent,
+  Scale,
   Package,
   FileText,
   Download,
@@ -36,7 +37,7 @@ import { DeleteBatchModal } from '../components/ui/DeleteBatchModal';
 import { useToast } from '../components/ui/Toast';
 import { PillIcon } from '../components/ui/PillIcon';
 import { BirdIcon } from '../components/ui/BirdIcon';
-import { EGGS_PER_CRATE, FEED_BAG_KG, batchAge, batchImage, daysActive, feedBags, formatBags, formatCrates, formatDate, typePillClass, birdTypeLabel, laysEggs } from '../lib/batch';
+import { EGGS_PER_CRATE, FEED_BAG_KG, batchAge, batchImage, computeFCR, daysActive, feedBags, formatBags, formatCrates, formatDate, typePillClass, birdTypeLabel, laysEggs } from '../lib/batch';
 import { downloadTableReport } from '../lib/report';
 import { FeedUsageModal } from '../components/ui/FeedUsageModal';
 import { FeedPurchaseModal } from '../components/ui/FeedPurchaseModal';
@@ -155,6 +156,7 @@ export function BatchDetailPage() {
   const [mortalityLogs, setMortalityLogs] = useState([]);
   const [feedLogs, setFeedLogs] = useState([]);
   const [eggLogs, setEggLogs] = useState([]);
+  const [weightLogs, setWeightLogs] = useState([]);
   const [scheduleList, setScheduleList] = useState([]);
   const [vaccRecords, setVaccRecords] = useState([]);
   const [allSupplements, setAllSupplements] = useState(() => loadSupplements());
@@ -174,6 +176,9 @@ export function BatchDetailPage() {
   const [eggCrates, setEggCrates] = useState('');
   const [looseEggs, setLooseEggs] = useState('');
 
+  const [avgWeightKg, setAvgWeightKg] = useState('');
+  const [weightSampleSize, setWeightSampleSize] = useState('');
+
   useEffect(() => {
     if (!batchId) return;
     selectBatch(batchId);
@@ -182,23 +187,26 @@ export function BatchDetailPage() {
     async function loadBatchData() {
       setLoading(true);
       try {
-        const [mRes, fRes, sRes, eRes, vRes] = await Promise.all([
+        const [mRes, fRes, sRes, eRes, vRes, wRes] = await Promise.all([
           getLogs(batchId, 'mortality').catch(() => ({ logs: [], entries: [] })),
           getLogs(batchId, 'feed').catch(() => ({ logs: [], entries: [] })),
           getSchedule(batchId).catch(() => ({ schedule: [] })),
           getLogs(batchId, 'eggs').catch(() => ({ logs: [], entries: [] })),
           getVaccinationRecords(batchId).catch(() => ({ logs: [] })),
+          getLogs(batchId, 'weight').catch(() => ({ logs: [], entries: [] })),
         ]);
 
         if (!cancelled) {
           const mList = mRes?.logs || mRes?.entries || [];
           const fList = fRes?.logs || fRes?.entries || [];
           const eList = eRes?.logs || eRes?.entries || [];
+          const wList = wRes?.logs || wRes?.entries || [];
           setMortalityLogs(mList);
           setFeedLogs(fList);
           setScheduleList(sRes?.schedule || []);
           setEggLogs(eList);
           setVaccRecords(vRes?.logs || []);
+          setWeightLogs(wList);
         }
       } catch (err) {
         console.error('Error loading batch data:', err);
@@ -229,6 +237,9 @@ export function BatchDetailPage() {
   const totalMortality = mortalityLogs.reduce((acc, curr) => acc + (curr.count || 0), 0);
   const currentBirds = Math.max(0, (batch.birdCount || 0) - totalMortality);
   const totalFeedBags = feedLogs.reduce((acc, curr) => acc + feedBags(curr), 0);
+  // null until there are 2+ weight samples to compute a gain from — see
+  // lib/batch.js's computeFCR for why, and the approximation it makes.
+  const fcr = computeFCR(feedLogs, weightLogs, currentBirds);
 
   // Handlers for logging
   const handleLogMortality = async (e) => {
@@ -286,6 +297,32 @@ export function BatchDetailPage() {
       setLogModal(null);
     } catch (err) {
       toast(err.message || 'Failed to log eggs', 'error');
+    }
+  };
+
+  const handleLogWeight = async (e) => {
+    e.preventDefault();
+    if (!avgWeightKg || Number(avgWeightKg) <= 0) return toast('Enter the average bird weight', 'error');
+    try {
+      const createdItem = await createLog(batchId, 'weight', {
+        date: logDate,
+        averageWeightKg: Number(avgWeightKg),
+        sampleSize: weightSampleSize ? Number(weightSampleSize) : undefined,
+      });
+      if (createdItem?.queued) {
+        toast(QUEUED_SAVE_MESSAGE, 'success');
+        setWeightLogs([createdItem, ...weightLogs]);
+      } else {
+        toast('Weight sample recorded', 'success');
+        const res = await getLogs(batchId, 'weight');
+        const items = res?.logs || res?.entries || (createdItem ? [createdItem, ...weightLogs] : weightLogs);
+        setWeightLogs(items);
+      }
+      setAvgWeightKg('');
+      setWeightSampleSize('');
+      setLogModal(null);
+    } catch (err) {
+      toast(err.message || 'Failed to record weight', 'error');
     }
   };
 
@@ -689,7 +726,7 @@ export function BatchDetailPage() {
                     label="Peak egg production (if applicable)"
                     value={peakEggDay == null ? '-' : peakEggDay.toLocaleString() + ' eggs'}
                   />
-                  <InsightRow icon={Percent} label="Best feed conversion rate" value="-" />
+                  <InsightRow icon={Percent} label="Feed conversion ratio" value={fcr != null ? `${fcr} : 1` : 'Log 2+ weight samples'} />
                   <InsightRow
                     icon={Wheat}
                     label="Total feed used"
@@ -947,6 +984,7 @@ export function BatchDetailPage() {
               <QuickAction icon={Syringe} label="Log Vaccination" onClick={() => openVaccination()} />
               <QuickAction icon={BirdIcon} label="Log Bird Lost" onClick={() => setLogModal('mortality')} />
               {isLayer && <QuickAction icon={Egg} label="Log Eggs" onClick={() => setLogModal('eggs')} />}
+              <QuickAction icon={Scale} label="Log Weight" onClick={() => setLogModal('weight')} />
             </div>
           </div>
 
@@ -1071,6 +1109,53 @@ export function BatchDetailPage() {
           </form>
         </Modal>
       )}
+
+      {/* Weight Modal — sample-based, feeds the Feed Conversion Ratio insight */}
+      <Modal open={logModal === 'weight'} title={`Log Bird Weight for ${batch.name}`} onClose={() => setLogModal(null)}>
+        <form onSubmit={handleLogWeight} className="space-y-4">
+          <p className="text-xs text-neutral-500 -mt-1">
+            Weigh a few birds and enter the average — this is what Feed Conversion Ratio is calculated from.
+          </p>
+          <div>
+            <label className="text-xs font-bold text-neutral-800 block mb-1">Date</label>
+            <input
+              type="date"
+              value={logDate}
+              onChange={e => setLogDate(e.target.value)}
+              className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-neutral-800 block mb-1">Average Weight per Bird (kg)</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="e.g. 1.8"
+              value={avgWeightKg}
+              onChange={e => setAvgWeightKg(e.target.value)}
+              className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-neutral-800 block mb-1">Birds Weighed (optional)</label>
+            <input
+              type="number"
+              min="1"
+              placeholder="e.g. 10"
+              value={weightSampleSize}
+              onChange={e => setWeightSampleSize(e.target.value)}
+              className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setLogModal(null)} className="px-4 py-2 text-xs font-bold text-neutral-600">Cancel</button>
+            <button type="submit" className="px-5 py-2 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white rounded-xl text-xs font-bold cursor-pointer transition-colors">Save Weight</button>
+          </div>
+        </form>
+      </Modal>
 
       {/* 4. Vaccination — schedule or record, with the appointment calendar */}
       <VaccinationModal

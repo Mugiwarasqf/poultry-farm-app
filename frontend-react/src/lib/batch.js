@@ -187,3 +187,33 @@ export function formatPercent(part, whole) {
   const rounded = Math.round(pct * 10) / 10;
   return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}%`;
 }
+
+/**
+ * Feed Conversion Ratio: kg of feed consumed per kg of live weight gained.
+ * Needs at least two weight samples — an earliest and a most recent — to
+ * have a "gain" to divide by; with zero or one sample there's nothing to
+ * compute yet, so this returns null rather than a misleading number.
+ *
+ * A deliberate simplification, not the precise formula a feed-mill
+ * nutritionist would use: weight gain is (latest avg - first avg) × the
+ * batch's *current* live bird count, which doesn't account for birds that
+ * died partway through (their own gain up to death isn't separately
+ * counted, only the feed they ate is, via the unfiltered feed total).
+ * Good enough for a farmer comparing batches against each other; not
+ * precise enough for a research paper.
+ */
+export function computeFCR(feedLogs = [], weightLogs = [], currentBirdCount = 0) {
+  if (weightLogs.length < 2 || !currentBirdCount) return null;
+
+  const sorted = [...weightLogs].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
+  const gainPerBirdKg = Number(last.averageWeightKg) - Number(first.averageWeightKg);
+  if (!(gainPerBirdKg > 0)) return null;
+
+  const totalWeightGainKg = gainPerBirdKg * currentBirdCount;
+  const totalFeedKg = feedLogs.reduce((sum, f) => sum + (Number(f.amountKg) || 0), 0);
+  if (!(totalFeedKg > 0)) return null;
+
+  return Math.round((totalFeedKg / totalWeightGainKg) * 100) / 100;
+}

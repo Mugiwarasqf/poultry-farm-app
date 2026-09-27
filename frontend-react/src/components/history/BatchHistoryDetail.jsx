@@ -22,6 +22,7 @@ import {
   COMPLETED_PILL_CLASS,
   EGGS_PER_CRATE,
   batchImage,
+  computeFCR,
   daysActive,
   formatDate,
   formatPercent,
@@ -53,14 +54,16 @@ function useBatchHistoryDetail(batchId) {
       getLogs(batchId, 'feed').catch(() => ({ entries: [] })),
       getLogs(batchId, 'eggs').catch(() => ({ entries: [] })),
       getLogs(batchId, 'vaccinations').catch(() => ({ entries: [] })),
+      getLogs(batchId, 'weight').catch(() => ({ entries: [] })),
     ])
-      .then(([mortality, feed, eggs, vaccinations]) => {
+      .then(([mortality, feed, eggs, vaccinations, weight]) => {
         if (cancelled) return;
         setLogs({
           mortality: mortality.entries || [],
           feed: feed.entries || [],
           eggs: eggs.entries || [],
           vaccinations: vaccinations.entries || [],
+          weight: weight.entries || [],
         });
       })
       .finally(() => {
@@ -101,19 +104,23 @@ function useBatchStats(batch, logs) {
       eggsByDay.set(entry.date, (eggsByDay.get(entry.date) || 0) + eggCount(entry));
     }
     const peakEggDay = eggsByDay.size > 0 ? Math.max(...eggsByDay.values()) : null;
+    const birdsSold = Math.max(0, totalBirds - birdsLost);
 
     return {
       totalBirds,
       days,
       isLayer,
       birdsLost,
-      birdsSold: Math.max(0, totalBirds - birdsLost),
+      birdsSold,
       lossPercent: formatPercent(birdsLost, totalBirds),
       totalEggs,
       avgEggsPerDay: isLayer && days ? Math.round(totalEggs / days) : null,
       totalFeedBags,
       peakEggDay,
       vaccinationCount: logs.vaccinations.length,
+      // Uses the batch's final bird count (post-mortality) as the gain
+      // multiplier — see lib/batch.js's computeFCR for the approximation.
+      fcr: computeFCR(logs.feed, logs.weight || [], birdsSold),
     };
   }, [batch, logs]);
 }
@@ -439,7 +446,11 @@ function OverviewTab({ batch, stats }) {
             label="Peak egg production (if applicable)"
             value={stats.peakEggDay != null ? `${stats.peakEggDay.toLocaleString()} eggs` : '-'}
           />
-          <InsightRow icon={Percent} label="Best feed conversion rate" value="-" />
+          <InsightRow
+            icon={Percent}
+            label="Feed conversion ratio"
+            value={stats.fcr != null ? `${stats.fcr} : 1` : 'No weight samples logged'}
+          />
           <InsightRow
             icon={Wheat}
             label="Total feed used"
