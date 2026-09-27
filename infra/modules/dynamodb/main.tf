@@ -150,3 +150,23 @@ resource "aws_dynamodb_table" "vaccination_schedules" {
     projection_type = "ALL"
   }
 }
+
+# Farm-level feed purchases ("received" side of feed stock) — not in
+# docs/10-build-plan.md's original data model, added to back
+# frontend-react's already-built feed-stock UI. See
+# backend/src/lib/types.ts's FeedPurchase for the full reasoning.
+resource "aws_dynamodb_table" "feed_purchases" {
+  name         = "${var.project_name}-${var.environment}-feed-purchases"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "farmId"
+  range_key    = "entryId"
+
+  attribute {
+    name = "farmId"
+    type = "S"
+  }
+  attribute {
+    name = "entryId"
+    type = "S"
+  }
+}

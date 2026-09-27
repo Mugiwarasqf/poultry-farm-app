@@ -82,6 +82,31 @@ export interface VaccinationSchedule {
   createdAt: string;
 }
 
+// Farm-level, not batch-level — feed bought into the farm's store, as
+// distinct from FeedLog (feed a batch consumes). Not in docs/10-build-plan.md's
+// original data model; added because frontend-react's api/feedStock.js and
+// lib/feeds.js already ship a working stock-on-hand calculation
+// (purchases in, batch FeedLog usage out) that just needs this table to
+// stop 404ing — see backend/src/handlers/feedStock/index.ts. This is the
+// "feed received vs. consumed vs. balance" pattern flagged from the real
+// farm-record sample: consumed already existed as FeedLog, this table is
+// the missing "received" side, and balance stays derived client-side
+// rather than stored.
+export interface FeedPurchase {
+  farmId: string;
+  entryId: string;
+  date: string;
+  feedType: string;
+  bags: number;
+  bagSizeKg: number;
+  brand?: string;
+  pricePerBagNaira?: number;
+  supplier?: string;
+  bestBefore?: string;
+  notes?: string;
+  createdAt: string;
+}
+
 export type TrialStatus = "trial" | "converted" | "expired";
 
 export interface User {

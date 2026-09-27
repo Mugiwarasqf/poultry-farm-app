@@ -12,7 +12,7 @@ locals {
   # routes share one integration (batches has 3, vaccination_schedule
   # has 3).
   api_lambda_keys = [
-    "batches", "farms", "mortality", "feed", "eggs", "vaccinations",
+    "batches", "farms", "feed_stock", "mortality", "feed", "eggs", "vaccinations",
     "vaccination_schedule", "summary", "sync",
     "auth_otp_request", "auth_otp_verify",
   ]
@@ -110,6 +110,21 @@ resource "aws_apigatewayv2_route" "farms_update" {
   api_id             = aws_apigatewayv2_api.main.id
   route_key          = "PATCH /farms/{id}"
   target             = "integrations/${aws_apigatewayv2_integration.this["farms"].id}"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+  authorization_type = "JWT"
+}
+
+resource "aws_apigatewayv2_route" "feed_stock_list" {
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "GET /feed-stock"
+  target             = "integrations/${aws_apigatewayv2_integration.this["feed_stock"].id}"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+  authorization_type = "JWT"
+}
+resource "aws_apigatewayv2_route" "feed_stock_create" {
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "POST /feed-stock"
+  target             = "integrations/${aws_apigatewayv2_integration.this["feed_stock"].id}"
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
   authorization_type = "JWT"
 }

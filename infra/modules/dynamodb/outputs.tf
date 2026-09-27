@@ -9,6 +9,7 @@ output "table_names" {
     egg_logs              = aws_dynamodb_table.egg_logs.name
     vaccination_records   = aws_dynamodb_table.vaccination_records.name
     vaccination_schedules = aws_dynamodb_table.vaccination_schedules.name
+    feed_purchases        = aws_dynamodb_table.feed_purchases.name
   }
 }
 
@@ -25,5 +26,6 @@ output "table_arns" {
     aws_dynamodb_table.vaccination_records.arn,
     aws_dynamodb_table.vaccination_schedules.arn,
     "${aws_dynamodb_table.vaccination_schedules.arn}/index/*",
+    aws_dynamodb_table.feed_purchases.arn,
   ]
 }

@@ -23,6 +23,7 @@ locals {
     EGG_LOGS_TABLE              = var.table_names["egg_logs"]
     VACCINATION_RECORDS_TABLE   = var.table_names["vaccination_records"]
     VACCINATION_SCHEDULES_TABLE = var.table_names["vaccination_schedules"]
+    FEED_PURCHASES_TABLE        = var.table_names["feed_purchases"]
     COGNITO_USER_POOL_ID        = var.cognito_user_pool_id
     COGNITO_CLIENT_ID           = var.cognito_client_id
     SES_SENDER_EMAIL            = var.ses_sender_email
@@ -146,6 +147,11 @@ data "archive_file" "farms" {
   source_dir  = "${var.backend_dist}/farms"
   output_path = "${path.module}/.build/farms.zip"
 }
+data "archive_file" "feed_stock" {
+  type        = "zip"
+  source_dir  = "${var.backend_dist}/feed-stock"
+  output_path = "${path.module}/.build/feed-stock.zip"
+}
 data "archive_file" "mortality" {
   type        = "zip"
   source_dir  = "${var.backend_dist}/mortality"
@@ -223,6 +229,17 @@ resource "aws_lambda_function" "farms" {
   timeout          = 10
   filename         = data.archive_file.farms.output_path
   source_code_hash = data.archive_file.farms.output_base64sha256
+  environment { variables = local.common_env }
+}
+
+resource "aws_lambda_function" "feed_stock" {
+  function_name    = "${var.project_name}-${var.environment}-feed-stock"
+  role             = aws_iam_role.dynamo.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  timeout          = 10
+  filename         = data.archive_file.feed_stock.output_path
+  source_code_hash = data.archive_file.feed_stock.output_base64sha256
   environment { variables = local.common_env }
 }
 

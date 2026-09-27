@@ -11,6 +11,11 @@ output "functions" {
       arn        = aws_lambda_function.farms.arn
       invoke_arn = aws_lambda_function.farms.invoke_arn
     }
+    feed_stock = {
+      name       = aws_lambda_function.feed_stock.function_name
+      arn        = aws_lambda_function.feed_stock.arn
+      invoke_arn = aws_lambda_function.feed_stock.invoke_arn
+    }
     mortality = {
       name       = aws_lambda_function.mortality.function_name
       arn        = aws_lambda_function.mortality.arn

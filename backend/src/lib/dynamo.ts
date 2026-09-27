@@ -18,4 +18,5 @@ export const tables = {
   eggLogs: process.env.EGG_LOGS_TABLE!,
   vaccinationRecords: process.env.VACCINATION_RECORDS_TABLE!,
   vaccinationSchedules: process.env.VACCINATION_SCHEDULES_TABLE!,
+  feedPurchases: process.env.FEED_PURCHASES_TABLE!,
 };

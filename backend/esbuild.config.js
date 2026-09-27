@@ -10,6 +10,7 @@ const entries = {
   mortality: "src/handlers/mortality/index.ts",
   feed: "src/handlers/feed/index.ts",
   eggs: "src/handlers/eggs/index.ts",
+  "feed-stock": "src/handlers/feedStock/index.ts",
   vaccinations: "src/handlers/vaccinations/index.ts",
   "vaccination-schedule": "src/handlers/vaccinationSchedule/index.ts",
   summary: "src/handlers/summary/index.ts",
