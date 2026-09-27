@@ -100,11 +100,10 @@ function Navbar() {
 function Hero() {
   return (
     <section className="relative isolate overflow-hidden">
-      {/* Drop your poultry/farm photo in as the background image on this div. */}
       <div
         className="absolute inset-0 -z-10 bg-neutral-100"
         style={{
-          backgroundImage: "url('/images/quaritsch-photography-N8A0Dwp9_CI-unsplash.jpg')",
+          backgroundImage: "url('/images/hero-chickens-field.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
