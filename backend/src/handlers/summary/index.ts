@@ -1,7 +1,7 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer } from "aws-lambda";
 import { QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { ddb, tables } from "../../lib/dynamo";
-import { badRequest, ok } from "../../lib/http";
+import { farmIdFromEvent, ok } from "../../lib/http";
 
 // GET /farms/{id}/summary?period=week|month — docs/10-build-plan.md §3 and §5.
 // Elizabeth's interview (docs/05-interview-elizabeth.txt) is why this is a
@@ -18,8 +18,14 @@ import { badRequest, ok } from "../../lib/http";
 // would want a date GSI before this needs to run at real volume.
 
 export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
-  const farmId = event.pathParameters?.id;
-  if (!farmId) return badRequest("farm id is required in the path");
+  // farmId comes from the caller's own JWT claim, never the {id} in the
+  // path — the path segment is kept for a RESTful URL shape but is
+  // otherwise ignored. This was a real bug until now: trusting the path
+  // parameter meant any authenticated user could read any OTHER farm's
+  // financial summary just by changing the URL. See lib/http.ts's
+  // farmIdFromEvent doc comment for the same principle applied everywhere
+  // else in this API.
+  const farmId = farmIdFromEvent(event);
 
   const period = event.queryStringParameters?.period === "month" ? "month" : "week";
   const days = period === "month" ? 30 : 7;

@@ -6,6 +6,7 @@ const path = require("path");
 
 const entries = {
   batches: "src/handlers/batches/index.ts",
+  farms: "src/handlers/farms/index.ts",
   mortality: "src/handlers/mortality/index.ts",
   feed: "src/handlers/feed/index.ts",
   eggs: "src/handlers/eggs/index.ts",

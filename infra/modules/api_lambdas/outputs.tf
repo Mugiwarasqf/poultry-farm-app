@@ -6,6 +6,11 @@ output "functions" {
       arn        = aws_lambda_function.batches.arn
       invoke_arn = aws_lambda_function.batches.invoke_arn
     }
+    farms = {
+      name       = aws_lambda_function.farms.function_name
+      arn        = aws_lambda_function.farms.arn
+      invoke_arn = aws_lambda_function.farms.invoke_arn
+    }
     mortality = {
       name       = aws_lambda_function.mortality.function_name
       arn        = aws_lambda_function.mortality.arn

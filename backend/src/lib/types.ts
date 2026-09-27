@@ -11,6 +11,8 @@ export interface Farm {
   farmId: string;
   ownerEmail: string;
   name: string;
+  /** The person, not the farm — frontend-react's onboarding/account settings collect this separately from `name`. */
+  farmerName?: string;
   location?: string;
   createdAt: string;
 }

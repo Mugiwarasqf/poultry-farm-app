@@ -141,6 +141,11 @@ data "archive_file" "batches" {
   source_dir  = "${var.backend_dist}/batches"
   output_path = "${path.module}/.build/batches.zip"
 }
+data "archive_file" "farms" {
+  type        = "zip"
+  source_dir  = "${var.backend_dist}/farms"
+  output_path = "${path.module}/.build/farms.zip"
+}
 data "archive_file" "mortality" {
   type        = "zip"
   source_dir  = "${var.backend_dist}/mortality"
@@ -207,6 +212,17 @@ resource "aws_lambda_function" "batches" {
   timeout          = 10
   filename         = data.archive_file.batches.output_path
   source_code_hash = data.archive_file.batches.output_base64sha256
+  environment { variables = local.common_env }
+}
+
+resource "aws_lambda_function" "farms" {
+  function_name    = "${var.project_name}-${var.environment}-farms"
+  role             = aws_iam_role.dynamo.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  timeout          = 10
+  filename         = data.archive_file.farms.output_path
+  source_code_hash = data.archive_file.farms.output_base64sha256
   environment { variables = local.common_env }
 }
 
