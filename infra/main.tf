@@ -15,7 +15,10 @@
 
 locals {
   backend_dist = "${path.module}/../backend/dist"
-  frontend_dir = "${path.module}/../frontend"
+  # frontend-react's *built* output — run `npm run build` in
+  # frontend-react/ before `terraform apply`, Terraform does not build it.
+  frontend_dir    = "${path.module}/../frontend-react/dist"
+  frontend_config = "${path.module}/../frontend-react/config.js.tftpl"
 }
 
 module "dynamodb" {
@@ -109,9 +112,10 @@ module "notifications" {
 module "frontend" {
   source = "./modules/frontend"
 
-  project_name = var.project_name
-  environment  = var.environment
-  site_dir     = local.frontend_dir
+  project_name    = var.project_name
+  environment     = var.environment
+  site_dir        = local.frontend_dir
+  config_template = local.frontend_config
 
   api_base          = module.api_gateway.api_endpoint
   cognito_client_id = module.cognito.client_id

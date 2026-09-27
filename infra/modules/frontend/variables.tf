@@ -7,7 +7,12 @@ variable "environment" {
 }
 
 variable "site_dir" {
-  description = "Path to frontend/ — the plain HTML/CSS/JS v1 frontend."
+  description = "Path to frontend-react/dist — the built output of `npm run build`, not the source tree."
+  type        = string
+}
+
+variable "config_template" {
+  description = "Path to config.js.tftpl — lives at frontend-react/'s root, not inside dist/, since it's a Terraform input, not something Vite should copy into the build."
   type        = string
 }
 

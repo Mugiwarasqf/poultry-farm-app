@@ -50,19 +50,20 @@ comparison.
   testing; check `terraform plan` for current drift before assuming
   either state. See "Infrastructure & backend" below for the real
   module-by-module detail.
-- **Frontend: real, in `frontend-react/`, replacing the static `frontend/`
-  test console this project started with.** Built by a friend of the
-  founder (ownership settled 31/08/2026) — a genuinely substantial React
-  app (Vite), not a stub: batches, logging, schedule, inventory,
-  settings, offline queue, the works. Its own API client code is what
-  surfaced several real backend gaps this session (`GET`/`PATCH
+- **Frontend: real, in `frontend-react/`.** The static `frontend/` test
+  console this project started with has been retired (27/09/2026) — it's
+  fully removed from the repo, and `infra/modules/frontend/` now hosts
+  `frontend-react/`'s built output instead. `frontend-react/` was built
+  by a friend of the founder (ownership settled 31/08/2026) — a genuinely
+  substantial React app (Vite), not a stub: batches, logging, schedule,
+  inventory, settings, offline queue, the works. Its own API client code
+  is what surfaced several real backend gaps this session (`GET`/`PATCH
   /farms/{id}`, `/feed-stock`, `/batches/{id}/weight` for Feed Conversion
   Ratio, an authorization bug in the summary endpoint) — all now built.
   The original FarmBook mockups
   (https://claude.ai/code/artifact/f771d22f-4184-4d2e-8ae8-f60f578d2858)
-  and the static `frontend/` console remain as historical reference for
-  the "simple, minimalistic, farm-oriented" design direction, but
-  `frontend-react/` is the one going forward.
+  remain as historical reference for the "simple, minimalistic,
+  farm-oriented" design direction that shaped it.
 
 ## Key validated findings
 
@@ -262,8 +263,7 @@ diagram.
 | `docs/10-build-plan.md` | Living beta build plan — data model, API shape, build sequence, open decisions |
 | `infra/` | Terraform, modular (`infra/main.tf` + `infra/modules/*`) — Cognito (email/OTP), API Gateway, ~18 Lambdas, 10 DynamoDB tables, S3, SES/EventBridge. Deploy state varies, check `terraform plan` |
 | `backend/` | TypeScript Lambda source, one handler per API resource. Typechecks + bundles clean |
-| `frontend-react/` | The real product frontend (Vite + React), built by the founder's friend. Source of truth for what the backend needs to support |
-| `frontend/` | Superseded static test console — retire along with its `infra/modules/frontend/` hosting (see Next steps) |
+| `frontend-react/` | The real product frontend (Vite + React), built by the founder's friend. Source of truth for what the backend needs to support. `infra/modules/frontend/` now hosts its built `dist/` output |
 | `README.md` | Shorter orientation doc, same information at a glance |
 | `docs/` | Folder holding all numbered research/planning files above; `CLAUDE.md` and `README.md` stay at the project root |
 
@@ -277,11 +277,15 @@ diagram.
    describe intent, `frontend-react/src/api/*.js` describes what's
    actually being called. Worth a periodic sweep of that directory for
    anything else that 404s.
-2. **Retire the static `frontend/` test console** now that
-   `frontend-react` is the real, actively-developed frontend — including
-   `infra/modules/frontend/`'s S3 hosting of it, which currently serves
-   no purpose once `frontend-react` is deployed somewhere. Not done yet
-   as of this writing.
+2. **Done (27/09/2026): retired the static `frontend/` test console.**
+   `infra/modules/frontend/` now dynamically uploads `frontend-react/dist/`
+   (run `npm run build` in `frontend-react/` before `terraform apply` —
+   Terraform doesn't build it) instead of four hardcoded files, generates
+   `config.js` from the relocated `frontend-react/config.js.tftpl`, and
+   adds an S3 website `error_document` fallback to `index.html` for
+   react-router-dom's client-side routes. `terraform plan` confirmed a
+   clean diff before this was committed, but **not yet `apply`'d** — do
+   that to actually put `frontend-react` live.
 3. Confirm current deployment state before assuming anything — this infra
    has been applied, destroyed, and reapplied multiple times during
    testing (email/SES vs. the original phone/SNS in particular). Run
