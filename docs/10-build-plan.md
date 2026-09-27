@@ -61,6 +61,28 @@ design constraint, not an add-on.
   rather than being re-entered — avoid double entry.
 - **User** — email (Cognito identity), farmId, trial/subscription status.
 
+**Added after this doc was written, once `frontend-react` (§8) turned up
+already expecting them — not interview-validated, added to match a real,
+already-built frontend rather than invented speculatively:**
+
+- **FeedPurchase** — `farmId` (not batchId — farm-level, feed is bought
+  for the whole farm's store), feed type/brand/bag size, bags,
+  price/bag, supplier, best-before, date. The "received" side of feed
+  stock; FeedLog stays the "consumed" side, and stock-on-hand is derived
+  client-side from both (`frontend-react/src/lib/feeds.js`), not stored.
+- **WeightLog** — `batchId`, date, average bird weight (kg), optional
+  sample size. Exists solely to make Feed Conversion Ratio (feed
+  consumed ÷ weight gained) computable — `frontend-react`'s login page
+  advertised FCR and two screens had a UI slot for it, but neither the
+  calculation nor the weight data it needs existed until this was added.
+  FCR itself is derived client-side
+  (`frontend-react/src/lib/batch.js`'s `computeFCR`), not stored,
+  same principle as feed stock and the profit summary.
+- **Farm** gained an optional `farmerName` field (the person, distinct
+  from the farm's own name) — `frontend-react`'s onboarding/account
+  settings collect it separately and were sending it before the field
+  existed to receive it.
+
 Weekly/monthly summaries (#5) are computed from MortalityLog, FeedLog,
 EggLog, ExpenseEntry, and VaccinationRecord rather than stored separately —
 Elizabeth specifically asked for cumulative running totals, not a
@@ -77,9 +99,19 @@ except signup/login.
 - `POST /auth/otp/request`, `POST /auth/otp/verify` — email login.
 - `POST /batches`, `GET /batches`, `PATCH /batches/{id}` — create/list/
   close a batch.
+- `GET /farms/{id}`, `PATCH /farms/{id}` — farm profile (name, farmerName,
+  location). farmId always comes from the caller's JWT claim, never the
+  `{id}` path segment (kept only for a RESTful URL shape) — added after
+  `GET /farms/{id}/summary` (below) was found trusting that path segment,
+  a real authorization bug fixed at the same time this was added.
 - `POST /batches/{id}/mortality`, `GET /batches/{id}/mortality`
 - `POST /batches/{id}/feed`, `GET /batches/{id}/feed`
 - `POST /batches/{id}/eggs`, `GET /batches/{id}/eggs`
+- `POST /batches/{id}/weight`, `GET /batches/{id}/weight` — periodic
+  average bird weight samples; the input Feed Conversion Ratio is
+  computed from (see §2).
+- `POST /feed-stock`, `GET /feed-stock` — farm-level feed purchases (see
+  §2's FeedPurchase).
 - `POST /batches/{id}/vaccinations`, `GET /batches/{id}/vaccinations` —
   the backward-looking log.
 - `POST /batches/{id}/vaccination-schedule`,

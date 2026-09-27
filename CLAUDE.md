@@ -4,12 +4,13 @@
 
 A record-keeping app for Nigerian poultry farmers — mortality, feed, egg
 production, and vaccination tracking, replacing the paper notebook most
-farmers currently use. Validation drove the scope; the backend
-infrastructure and API are now scaffolded in code (31/08/2026) but not
-deployed anywhere — see "Current status" below. The founder has direct
-personal connections in the poultry industry (heavily Lagos/Ikorodu-based
-so far) that sourced the real survey responses and follow-up interviews
-the scope and build plan are built on.
+farmers currently use. Validation drove the original scope; there's now a
+real, working full-stack build (backend + a friend-built React frontend,
+see "Current status" below) that's grown somewhat beyond that original
+scope in the process — flagged where that happened. The founder has
+direct personal connections in the poultry industry (heavily
+Lagos/Ikorodu-based so far) that sourced the real survey responses and
+follow-up interviews the original scope and build plan are built on.
 
 **This is an independent project.** It is unrelated to any other project
 that might exist elsewhere in this Documents\Cloud directory (e.g.
@@ -39,26 +40,29 @@ comparison.
 - **Build plan written** (`docs/10-build-plan.md`, started 30/08/2026): turns
   the locked feature scope and proposed AWS direction into a concrete data
   model, API shape, and build sequence.
-- **Backend + infra scaffolded in code (31/08/2026), not deployed.** `infra/`
-  is a validated, modular Terraform stack (`terraform validate` and
-  `terraform plan` both pass clean against the connected AWS account,
-  543613943899 — nothing has been `apply`'d) covering Cognito email/OTP
-  auth, API Gateway, 15 Lambda functions, 8 DynamoDB tables, S3, and daily
-  EventBridge schedules for the two notification jobs. `backend/` is the
-  TypeScript Lambda source (typechecks and bundles clean via `npm run
-  build`). A git repo was initialized (31/08/2026) but nothing has been
-  committed yet — see "Infrastructure & backend" below for what's real vs.
-  still a stub, and its "Module structure" note for how `infra/` is laid
-  out.
-- **Frontend ownership settled (31/08/2026): a friend of the founder is
-  building it.** Framework choice is theirs to make (`docs/10-build-plan.md`
-  §8), doesn't block the backend work above. Design direction given to
-  them: simple, minimalistic, farm-oriented — an interim v1 "face" for the
-  app, expected to be replaced by something more sophisticated once
-  there's real usage to design around. The FarmBook mockups
+- **Backend + infra: real, code-complete, git-tracked, deployed on and off
+  during testing.** `infra/` is a modular Terraform stack (validates and
+  plans clean against AWS account 543613943899) covering Cognito
+  email/OTP auth, API Gateway, ~18 Lambda functions, 10 DynamoDB tables,
+  S3, SES, and daily EventBridge notification schedules. `backend/` is
+  the TypeScript Lambda source. Whether it's *currently* applied varies —
+  it's been deployed, torn down, and redeployed multiple times during
+  testing; check `terraform plan` for current drift before assuming
+  either state. See "Infrastructure & backend" below for the real
+  module-by-module detail.
+- **Frontend: real, in `frontend-react/`, replacing the static `frontend/`
+  test console this project started with.** Built by a friend of the
+  founder (ownership settled 31/08/2026) — a genuinely substantial React
+  app (Vite), not a stub: batches, logging, schedule, inventory,
+  settings, offline queue, the works. Its own API client code is what
+  surfaced several real backend gaps this session (`GET`/`PATCH
+  /farms/{id}`, `/feed-stock`, `/batches/{id}/weight` for Feed Conversion
+  Ratio, an authorization bug in the summary endpoint) — all now built.
+  The original FarmBook mockups
   (https://claude.ai/code/artifact/f771d22f-4184-4d2e-8ae8-f60f578d2858)
-  already match that brief and are the starting visual reference to hand
-  over, not a from-scratch design task.
+  and the static `frontend/` console remain as historical reference for
+  the "simple, minimalistic, farm-oriented" design direction, but
+  `frontend-react/` is the one going forward.
 
 ## Key validated findings
 
@@ -256,51 +260,48 @@ diagram.
 | `docs/04-v1-feature-scope.md` | Canonical, living product spec |
 | `docs/05-interview-elizabeth.txt`, `docs/06-interview-juliana.txt`, `docs/07-interview-banjo.txt`, `docs/08-interview-ruth.txt`, `docs/09-interview-toluwase.txt`, etc. | Raw transcripts of follow-ups, one file each (Banjo's is incomplete — he stopped replying) |
 | `docs/10-build-plan.md` | Living beta build plan — data model, API shape, build sequence, open decisions |
-| `infra/` | Terraform, modular (`infra/main.tf` + `infra/modules/*`) — Cognito (email/OTP), API Gateway, Lambda, DynamoDB, S3, SES/EventBridge. Validated + planned, not applied |
+| `infra/` | Terraform, modular (`infra/main.tf` + `infra/modules/*`) — Cognito (email/OTP), API Gateway, ~18 Lambdas, 10 DynamoDB tables, S3, SES/EventBridge. Deploy state varies, check `terraform plan` |
 | `backend/` | TypeScript Lambda source, one handler per API resource. Typechecks + bundles clean |
+| `frontend-react/` | The real product frontend (Vite + React), built by the founder's friend. Source of truth for what the backend needs to support |
+| `frontend/` | Superseded static test console — retire along with its `infra/modules/frontend/` hosting (see Next steps) |
 | `README.md` | Shorter orientation doc, same information at a glance |
 | `docs/` | Folder holding all numbered research/planning files above; `CLAUDE.md` and `README.md` stay at the project root |
 
 ## Next steps
 
-1. **The phone/SNS version of this infra was actually deployed** (to
-   543613943899) and tested working end to end before the email/SES
-   switch — real Cognito pool, real API responses. The email/SES version
-   is scaffolded and `terraform plan`-verified but **not yet applied** —
-   applying it replaces the Cognito pool (username attribute is immutable
-   in AWS, so this isn't optional) and any test users/sessions from the
-   phone version are lost. To actually deploy it: set a real
-   `ses_sender_email` in `infra/terraform.tfvars` (gitignored, copy from
-   `terraform.tfvars.example`), run `terraform apply`, then check that
-   inbox for SES's confirmation email and click the link — nothing sends
-   until that's done. SES has its own sandbox restriction on top of that
-   (recipients need verifying too until the account leaves sandbox), same
-   shape as the SNS SMS one that triggered this whole switch.
-2. Frontend build is now the founder's friend's responsibility — hand them
-   the FarmBook mockups
-   (https://claude.ai/code/artifact/f771d22f-4184-4d2e-8ae8-f60f578d2858),
-   the design direction note in `docs/10-build-plan.md` §8, and
-   `infra/modules/api_gateway/main.tf`'s route list so they can build
-   against the scaffolded API. Framework choice is theirs. Note the auth
-   payload shape changed from `{phone, ...}` to `{email, ...}` on both
-   `/auth/otp/request` and `/auth/otp/verify` — make sure whatever they
-   build reflects that.
-3. Worth reconsidering the email/SNS reversal (item 1's "⚠" note above)
-   once the underlying SNS account issue is understood or resolved —
-   it was a pragmatic call, not new evidence that email fits this
-   audience better than phone.
-4. Pricing structure is decided (free trial → paid subscription); use
+1. **Keep `frontend-react`'s API client code as the source of truth for
+   what the backend actually needs to support.** Every real backend gap
+   found so far (`/farms/{id}`, `/feed-stock`, `/batches/{id}/weight`,
+   the summary IDOR bug) was found by reading their code, not by
+   re-deriving requirements from the original docs — this project's docs
+   describe intent, `frontend-react/src/api/*.js` describes what's
+   actually being called. Worth a periodic sweep of that directory for
+   anything else that 404s.
+2. **Retire the static `frontend/` test console** now that
+   `frontend-react` is the real, actively-developed frontend — including
+   `infra/modules/frontend/`'s S3 hosting of it, which currently serves
+   no purpose once `frontend-react` is deployed somewhere. Not done yet
+   as of this writing.
+3. Confirm current deployment state before assuming anything — this infra
+   has been applied, destroyed, and reapplied multiple times during
+   testing (email/SES vs. the original phone/SNS in particular). Run
+   `terraform plan` in `infra/` to see drift before deploying blind.
+4. Worth reconsidering the phone→email auth switch (flagged with "⚠" in
+   "Infrastructure & backend" below) once the underlying SNS account
+   issue is understood or resolved — it was a pragmatic call, not new
+   evidence that email fits this audience better than phone.
+5. Pricing structure is decided (free trial → paid subscription); use
    placeholder trial length/price for the beta (`docs/10-build-plan.md` §7,
    `infra/variables.tf`'s `trial_length_days`) — the real numbers come from
    a second, dedicated payment survey once the trial phase has real
    traction (time-in-trial threshold or registered-to-active-user ratio,
    exact trigger TBD), not before launch.
-5. Banjo and Lateef are both now unreachable (confirmed 31/08 — Banjo
-   stopped replying, Lateef's number isn't on WhatsApp) — the interview
-   phase is closed, don't keep trying either unless one of them reaches
-   out first. Any remaining pricing/segment questions get answered by the
-   later payment survey instead (see item 4).
-6. First git commit hasn't happened yet — the repo is initialized
-   (`git init`, 31/08/2026) with a `.gitignore` covering `node_modules/`,
-   `dist/`, Terraform state/build artifacts, and secrets, but nothing is
-   committed. Do that whenever the founder wants a checkpoint.
+6. Banjo and Lateef are both unreachable (confirmed 31/08 — Banjo stopped
+   replying, Lateef's number isn't on WhatsApp) — the interview phase is
+   closed, don't keep trying either unless one of them reaches out first.
+   Any remaining pricing/segment questions get answered by the later
+   payment survey instead (see item 5).
+7. Feed inventory and Feed Conversion Ratio (`docs/04-v1-feature-scope.md`
+   §6) were added to match a frontend that already assumed them, not from
+   farmer research — worth a real question in the next farmer
+   conversation about whether either is actually wanted.

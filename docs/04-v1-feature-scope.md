@@ -175,6 +175,32 @@ pre-launch, hypothetical survey answers.
 
 ---
 
+## 6. Feed inventory + Feed Conversion Ratio (founder-directed, not interview-validated)
+
+Added 17/09/2026, after a working `frontend-react` build (see
+`docs/10-build-plan.md` §8) turned up already advertising and half-building
+these — not from a new farmer interview. Flagged here explicitly because
+this project's own working preference is to ground features in real data,
+not generic feature-completeness, and this is the one exception so far:
+
+- **Farm-level feed inventory** (`FeedPurchase`): what was bought into the
+  farm's store, separate from what a batch consumes (`FeedLog`, already
+  locked under #2). Stock-on-hand is derived from both, not stored.
+- **Feed Conversion Ratio**: feed consumed ÷ weight gained. Needed a new
+  input this project never asked a farmer about — periodic bird-weight
+  sampling — since nothing tracked bird weight at all before this.
+
+Neither of Elizabeth's, Juliana's, Toluwase's, or Ruth's interviews
+mentioned feed inventory tracking or FCR as a pain point. This isn't
+disqualifying — a working frontend already assuming these exist is its
+own kind of signal — but it means these two shouldn't be cited as
+validated findings the way #1-5 can be. Worth a real question in any
+future farmer conversation: do farmers actually want FCR, or was it
+built because it's a familiar poultry-industry metric rather than
+something a farmer asked for?
+
+---
+
 ## Explicitly out of scope for v1
 
 Insurance/compliance export, loan/credit documentation, voice-based data
