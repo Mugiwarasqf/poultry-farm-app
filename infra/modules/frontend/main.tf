@@ -112,6 +112,14 @@ resource "aws_s3_object" "dist" {
   source       = "${var.site_dir}/${each.value}"
   etag         = filemd5("${var.site_dir}/${each.value}")
   content_type = lookup(local.content_types, lower(element(split(".", each.value), length(split(".", each.value)) - 1)), "application/octet-stream")
+  # index.html is the one dist file whose content changes on every deploy
+  # without its filename changing (unlike the content-hashed assets/*.js
+  # and .css Vite emits) — CloudFront's CachingOptimized policy defaults to
+  # a long TTL for anything with no explicit Cache-Control, which left a
+  # stale index.html (pointing at a since-deleted JS bundle) being served
+  # for hours after a deploy. no-cache doesn't disable caching, it just
+  # forces a conditional revalidation against S3's ETag on every request.
+  cache_control = each.value == "index.html" ? "no-cache" : null
 }
 
 # Not part of dist_files above — this one's content is generated from
@@ -121,6 +129,10 @@ resource "aws_s3_object" "config" {
   bucket       = aws_s3_bucket.site.id
   key          = "config.js"
   content_type = "application/javascript"
+  # Same non-hashed-filename problem as index.html above — this changes
+  # value (api_base, client_id) across deploys without its key ever
+  # changing, so it needs the same revalidate-on-every-request treatment.
+  cache_control = "no-cache"
   content = templatefile(var.config_template, {
     api_base  = var.api_base
     client_id = var.cognito_client_id
