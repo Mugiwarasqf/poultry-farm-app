@@ -1,6 +1,6 @@
-output "test_recipient_identity_arn" {
-  description = "Not used for the app's own SendEmail permission (see domain_identity_arn below for that) — only relevant if something needs to reference the test recipient identity directly."
-  value       = aws_ses_email_identity.test_recipient.arn
+output "test_recipient_identity_arns" {
+  description = "Not used for the app's own SendEmail permission (see domain_identity_arn below for that) — only relevant if something needs to reference a test recipient identity directly. Keyed by email."
+  value       = { for email, identity in aws_ses_email_identity.test_recipient : email => identity.arn }
 }
 
 output "sender_email" {

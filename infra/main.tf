@@ -42,11 +42,11 @@ module "s3" {
 module "ses" {
   source = "./modules/ses"
 
-  sender_email         = var.ses_sender_email
-  test_recipient_email = var.ses_test_recipient_email
-  domain_name          = var.domain_name
-  project_name         = var.project_name
-  environment          = var.environment
+  sender_email          = var.ses_sender_email
+  test_recipient_emails = var.ses_test_recipient_emails
+  domain_name           = var.domain_name
+  project_name          = var.project_name
+  environment           = var.environment
 }
 
 module "auth_triggers" {

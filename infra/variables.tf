@@ -37,15 +37,16 @@ variable "ses_sender_email" {
   type        = string
 }
 
-# Independent of ses_sender_email above — this one DOES need to be a real,
-# checkable inbox, since it's verified as its own SES identity purely so
-# it can receive mail while this AWS account is in the SES sandbox (every
-# recipient needs a verified identity, regardless of which verified
-# identity sent it). Set it in terraform.tfvars (gitignored) rather than
-# committing a real address here.
-variable "ses_test_recipient_email" {
-  description = "A real inbox to verify as its own SES identity for sandbox testing — see infra/modules/ses/main.tf."
-  type        = string
+# Independent of ses_sender_email above — each of these DOES need to be a
+# real, checkable inbox, since it's verified as its own SES identity
+# purely so it can receive mail while this AWS account is in the SES
+# sandbox (every recipient needs a verified identity, regardless of which
+# verified identity sent it). A list, not one address, since more than
+# one person tests this app. Set it in terraform.tfvars (gitignored)
+# rather than committing real addresses here.
+variable "ses_test_recipient_emails" {
+  description = "Real inboxes to verify as their own SES identities for sandbox testing — see infra/modules/ses/main.tf."
+  type        = list(string)
 }
 
 # Bought on Namecheap (04/10/2026), DNS kept there rather than migrated to

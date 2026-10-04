@@ -14,11 +14,14 @@
 # (SES sandbox requires every *recipient* to be a separately verified
 # identity too, regardless of which verified identity sends). Fixed
 # 04/10/2026 by splitting the two concerns: var.sender_email is now just a
-# string, and var.test_recipient_email below is its own, independent
-# identity that stays verified no matter what the app's sending address is.
-
+# string, and var.test_recipient_emails below are their own, independent
+# identities that stay verified no matter what the app's sending address
+# is. A set, not a single address, since more than one person tests this
+# app (the founder, plus a friend building the frontend) and each needs
+# their own verified recipient identity under SES sandbox rules.
 resource "aws_ses_email_identity" "test_recipient" {
-  email = var.test_recipient_email
+  for_each = toset(var.test_recipient_emails)
+  email    = each.value
 }
 
 # Domain identity (added 04/10/2026, once trackfarm.cc was bought) — AWS's

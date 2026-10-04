@@ -11,12 +11,15 @@ project_name = "poultry-farm-app"
 # infra/modules/ses/main.tf's header comment.
 ses_sender_email = "noreply@trackfarm.cc"
 
-# Required, no default — a DIFFERENT, real inbox you can actually check.
-# Verified as its own SES identity purely so it can receive mail while
-# this account is in the SES sandbox. Keep this separate from
-# ses_sender_email above — see infra/modules/ses/main.tf's header comment
-# for the bug that happens if these two ever get collapsed into one again.
-ses_test_recipient_email = "you@example.com"
+# Required, no default — real, checkable inboxes (everyone who needs to
+# test-login to this app), each verified as its own SES identity so it
+# can receive mail while this account is in the SES sandbox. Keep these
+# separate from ses_sender_email above — see infra/modules/ses/main.tf's
+# header comment for the bug that happens if these two ever get collapsed
+# into one again.
+ses_test_recipient_emails = [
+  "you@example.com",
+]
 
 # Required, no default — the bare apex serves the frontend, api.<this>
 # serves the backend. See acm.tf's header comment for the two-step

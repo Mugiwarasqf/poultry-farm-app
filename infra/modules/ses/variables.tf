@@ -3,9 +3,9 @@ variable "sender_email" {
   type        = string
 }
 
-variable "test_recipient_email" {
-  description = "A real inbox, separate from sender_email, verified as its own SES identity purely so it can receive mail while this account is in the SES sandbox (every recipient needs a verified identity until production access is granted) — independent of whatever sender_email is set to. Must be an inbox someone can actually check — SES emails it a confirmation link that has to be clicked."
-  type        = string
+variable "test_recipient_emails" {
+  description = "Real inboxes, separate from sender_email, each verified as its own SES identity purely so they can receive mail while this account is in the SES sandbox (every recipient needs a verified identity until production access is granted) — independent of whatever sender_email is set to. Each must be an inbox someone can actually check — SES emails it a confirmation link that has to be clicked."
+  type        = list(string)
 }
 
 variable "domain_name" {
