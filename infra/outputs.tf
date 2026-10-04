@@ -66,3 +66,16 @@ output "ses_sender_email" {
   description = "Check this inbox for SES's confirmation email after applying — it has to be clicked before OTP codes or notifications can send. See infra/modules/ses/main.tf."
   value       = module.ses.sender_email
 }
+
+# --- SES domain identity (trackfarm.cc) — same two-phase apply shape as
+# the ACM/CloudFront outputs above. ---
+
+output "domain_verification_record" {
+  description = "Phase 1: add as a TXT record in Namecheap."
+  value       = module.ses.domain_verification_record
+}
+
+output "dkim_records" {
+  description = "Phase 1: add each as a CNAME record in Namecheap, alongside the TXT record above. Once both are live and propagated, re-run terraform apply (no -target) to finish verification."
+  value       = module.ses.dkim_records
+}
