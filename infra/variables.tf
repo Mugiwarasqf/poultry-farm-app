@@ -35,3 +35,15 @@ variable "ses_sender_email" {
   description = "Email address to verify as the SES sender identity for OTP codes and notifications."
   type        = string
 }
+
+# Bought on Namecheap (04/10/2026), DNS kept there rather than migrated to
+# Route 53 — see acm.tf's header comment for what that means for the
+# apply workflow. The bare apex serves the app itself (not a separate
+# marketing subdomain like app.<domain>) — deliberate, per this project's
+# own validated low-digital-literacy finding: less for a farmer to type
+# or get wrong than remembering an "app." prefix. api.<domain> serves the
+# backend.
+variable "domain_name" {
+  description = "Registered domain (e.g. trackfarm.cc) — the bare apex serves the frontend, api.<domain_name> serves the backend. No default: only set this once the domain's ACM certificates are ready to be requested, see acm.tf."
+  type        = string
+}

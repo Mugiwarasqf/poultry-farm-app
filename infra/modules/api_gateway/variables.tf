@@ -26,3 +26,13 @@ variable "cognito_user_pool_id" {
 variable "cognito_client_id" {
   type = string
 }
+
+variable "domain_name" {
+  description = "api.<this> becomes the backend's custom domain name."
+  type        = string
+}
+
+variable "acm_certificate_arn" {
+  description = "ARN of the validated (ISSUED) regional (var.aws_region) ACM certificate for api.<domain_name> — see infra/acm.tf's aws_acm_certificate_validation.api. Must be regional, not the us-east-1 one used for CloudFront."
+  type        = string
+}

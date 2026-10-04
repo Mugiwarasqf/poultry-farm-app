@@ -9,3 +9,10 @@ project_name = "poultry-farm-app"
 # emails this address a confirmation link that has to be clicked before
 # it can send OTP codes or notifications. See infra/modules/ses/main.tf.
 ses_sender_email = "you@example.com"
+
+# Required, no default — the bare apex serves the frontend, api.<this>
+# serves the backend. See acm.tf's header comment for the two-step
+# `terraform apply` this requires (DNS is kept on the registrar, not
+# migrated to Route 53, so the ACM validation CNAME records have to be
+# added by hand).
+domain_name = "trackfarm.cc"

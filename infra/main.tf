@@ -95,6 +95,9 @@ module "api_gateway" {
 
   cognito_user_pool_id = module.cognito.user_pool_id
   cognito_client_id    = module.cognito.client_id
+
+  domain_name         = var.domain_name
+  acm_certificate_arn = aws_acm_certificate_validation.api.certificate_arn
 }
 
 module "notifications" {
@@ -117,6 +120,13 @@ module "frontend" {
   site_dir        = local.frontend_dir
   config_template = local.frontend_config
 
-  api_base          = module.api_gateway.api_endpoint
+  # The custom domain, not the raw execute-api endpoint — so a future
+  # infra rebuild (this account has had several) regenerates the backend
+  # behind api.<domain_name> without the frontend needing a rebuild/
+  # redeploy just to point at a new URL.
+  api_base          = module.api_gateway.custom_domain_url
   cognito_client_id = module.cognito.client_id
+
+  domain_name         = var.domain_name
+  acm_certificate_arn = aws_acm_certificate_validation.frontend.certificate_arn
 }
