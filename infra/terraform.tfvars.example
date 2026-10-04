@@ -5,10 +5,18 @@ aws_region   = "eu-west-1"
 environment  = "beta"
 project_name = "poultry-farm-app"
 
-# Required, no default — must be an inbox you can actually check. SES
-# emails this address a confirmation link that has to be clicked before
-# it can send OTP codes or notifications. See infra/modules/ses/main.tf.
-ses_sender_email = "you@example.com"
+# Required, no default — the literal From address the app sends with.
+# Not an inbox anyone needs to check; authorized by the domain identity
+# below once that's verified, not by its own SES identity. See
+# infra/modules/ses/main.tf's header comment.
+ses_sender_email = "noreply@trackfarm.cc"
+
+# Required, no default — a DIFFERENT, real inbox you can actually check.
+# Verified as its own SES identity purely so it can receive mail while
+# this account is in the SES sandbox. Keep this separate from
+# ses_sender_email above — see infra/modules/ses/main.tf's header comment
+# for the bug that happens if these two ever get collapsed into one again.
+ses_test_recipient_email = "you@example.com"
 
 # Required, no default — the bare apex serves the frontend, api.<this>
 # serves the backend. See acm.tf's header comment for the two-step

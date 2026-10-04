@@ -1,13 +1,15 @@
-output "identity_arn" {
-  value = aws_ses_email_identity.sender.arn
+output "test_recipient_identity_arn" {
+  description = "Not used for the app's own SendEmail permission (see domain_identity_arn below for that) — only relevant if something needs to reference the test recipient identity directly."
+  value       = aws_ses_email_identity.test_recipient.arn
 }
 
 output "sender_email" {
-  value = aws_ses_email_identity.sender.email
+  description = "Plain pass-through of var.sender_email — the app's From address, authorized by domain_identity_arn below, not by its own identity resource."
+  value       = var.sender_email
 }
 
 output "domain_identity_arn" {
-  description = "ARN covering any address @domain_name — use this (not identity_arn above) once sender_email is switched to a trackfarm.cc address."
+  description = "ARN covering any address @domain_name — this is what actually has to be granted ses:SendEmail (see infra/main.tf's module \"auth_triggers\"/\"api_lambdas\" calls), since sender_email isn't its own identity."
   value       = aws_ses_domain_identity.domain.arn
 }
 

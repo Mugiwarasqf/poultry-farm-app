@@ -27,12 +27,24 @@ variable "trial_length_days" {
   default     = 30
 }
 
-# No default on purpose — this has to be an inbox whoever runs `apply`
-# actually controls, since SES emails it a confirmation link to click
-# before it can send anything (see infra/modules/ses/main.tf). Set it in
-# terraform.tfvars (gitignored) rather than committing a real address here.
+# The app's actual From address (e.g. noreply@trackfarm.cc) — not its own
+# SES identity, authorized by the domain identity (var.domain_name) once
+# that's verified. Not an inbox anyone needs to check; see
+# infra/modules/ses/main.tf's header comment for the bug this caused when
+# it used to double as the one below's value too.
 variable "ses_sender_email" {
-  description = "Email address to verify as the SES sender identity for OTP codes and notifications."
+  description = "Literal From address the app sends OTP codes/notifications with."
+  type        = string
+}
+
+# Independent of ses_sender_email above — this one DOES need to be a real,
+# checkable inbox, since it's verified as its own SES identity purely so
+# it can receive mail while this AWS account is in the SES sandbox (every
+# recipient needs a verified identity, regardless of which verified
+# identity sent it). Set it in terraform.tfvars (gitignored) rather than
+# committing a real address here.
+variable "ses_test_recipient_email" {
+  description = "A real inbox to verify as its own SES identity for sandbox testing — see infra/modules/ses/main.tf."
   type        = string
 }
 
