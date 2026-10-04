@@ -26,6 +26,7 @@ locals {
     FEED_PURCHASES_TABLE        = var.table_names["feed_purchases"]
     WEIGHT_LOGS_TABLE           = var.table_names["weight_logs"]
     SICK_BAY_TABLE              = var.table_names["sick_bay"]
+    SUPPRESSED_EMAILS_TABLE     = var.table_names["suppressed_emails"]
     COGNITO_USER_POOL_ID        = var.cognito_user_pool_id
     COGNITO_CLIENT_ID           = var.cognito_client_id
     SES_SENDER_EMAIL            = var.ses_sender_email
@@ -396,4 +397,40 @@ resource "aws_lambda_function" "scheduled_entry_nudges" {
   filename         = data.archive_file.scheduled_entry_nudges.output_path
   source_code_hash = data.archive_file.scheduled_entry_nudges.output_base64sha256
   environment { variables = local.common_env }
+}
+
+# Subscribes to the ses module's SNS topic and writes any permanently
+# bounced or complained-about address to suppressed_emails, so the three
+# sending handlers above stop emailing it — see
+# backend/src/handlers/sesEvents/index.ts. Uses the plain "dynamo" role
+# (no SES access needed, this function only ever writes to one table).
+data "archive_file" "ses_events" {
+  type        = "zip"
+  source_dir  = "${var.backend_dist}/ses-events"
+  output_path = "${path.module}/.build/ses-events.zip"
+}
+
+resource "aws_lambda_function" "ses_events" {
+  function_name    = "${var.project_name}-${var.environment}-ses-events"
+  role             = aws_iam_role.dynamo.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  timeout          = 10
+  filename         = data.archive_file.ses_events.output_path
+  source_code_hash = data.archive_file.ses_events.output_base64sha256
+  environment { variables = local.common_env }
+}
+
+resource "aws_sns_topic_subscription" "ses_events" {
+  topic_arn = var.ses_events_topic_arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.ses_events.arn
+}
+
+resource "aws_lambda_permission" "ses_events_sns" {
+  statement_id  = "AllowSNSInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.ses_events.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = var.ses_events_topic_arn
 }

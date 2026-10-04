@@ -12,6 +12,7 @@ output "table_names" {
     feed_purchases        = aws_dynamodb_table.feed_purchases.name
     weight_logs           = aws_dynamodb_table.weight_logs.name
     sick_bay              = aws_dynamodb_table.sick_bay.name
+    suppressed_emails     = aws_dynamodb_table.suppressed_emails.name
   }
 }
 
@@ -31,5 +32,11 @@ output "table_arns" {
     aws_dynamodb_table.feed_purchases.arn,
     aws_dynamodb_table.weight_logs.arn,
     aws_dynamodb_table.sick_bay.arn,
+    aws_dynamodb_table.suppressed_emails.arn,
   ]
+}
+
+output "suppressed_emails_table_arn" {
+  description = "Broken out on its own (also present in table_arns above) so auth_triggers — which otherwise has no DynamoDB access at all — can be granted read on just this one table instead of the general dynamo_rw policy the rest of the stack uses."
+  value       = aws_dynamodb_table.suppressed_emails.arn
 }

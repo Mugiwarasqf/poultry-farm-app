@@ -21,4 +21,5 @@ export const tables = {
   feedPurchases: process.env.FEED_PURCHASES_TABLE!,
   weightLogs: process.env.WEIGHT_LOGS_TABLE!,
   sickBay: process.env.SICK_BAY_TABLE!,
+  suppressedEmails: process.env.SUPPRESSED_EMAILS_TABLE!,
 };

@@ -4,12 +4,16 @@
 # Cognito trigger Lambdas are their own module instead of living in
 # api_lambdas alongside the other 16:
 #
-#   dynamodb, s3, ses, auth_triggers  (no dependencies, can build in any order —
-#            |                         auth_triggers needs ses's identity for
-#            |                         create_challenge's IAM + env var)
-#         cognito                     (needs auth_triggers' 3 function ARNs)
+#   dynamodb, s3, ses  (no dependencies, can build in any order)
+#       \      |
+#      auth_triggers    (needs ses's identity for create_challenge's IAM +
+#            |           env var, and dynamodb's suppressed_emails table so
+#            |           create_challenge can skip a bounced/complained
+#            |           address — still no dependency on cognito, so the
+#            |           cycle below stays broken)
+#         cognito        (needs auth_triggers' 3 function ARNs)
 #            |
-#        api_lambdas                  (needs dynamodb + cognito + ses outputs)
+#        api_lambdas     (needs dynamodb + cognito + ses outputs)
 #          /      \                 \
 #   api_gateway   notifications      frontend  (each needs api_lambdas/cognito/api_gateway outputs)
 
@@ -39,6 +43,9 @@ module "ses" {
   source = "./modules/ses"
 
   sender_email = var.ses_sender_email
+  domain_name  = var.domain_name
+  project_name = var.project_name
+  environment  = var.environment
 }
 
 module "auth_triggers" {
@@ -50,6 +57,9 @@ module "auth_triggers" {
 
   ses_identity_arn = module.ses.identity_arn
   ses_sender_email = module.ses.sender_email
+
+  suppressed_emails_table_name = module.dynamodb.table_names["suppressed_emails"]
+  suppressed_emails_table_arn  = module.dynamodb.suppressed_emails_table_arn
 }
 
 module "cognito" {
@@ -80,8 +90,9 @@ module "api_lambdas" {
   cognito_user_pool_arn = module.cognito.user_pool_arn
   cognito_client_id     = module.cognito.client_id
 
-  ses_identity_arn = module.ses.identity_arn
-  ses_sender_email = module.ses.sender_email
+  ses_identity_arn     = module.ses.identity_arn
+  ses_sender_email     = module.ses.sender_email
+  ses_events_topic_arn = module.ses.events_topic_arn
 }
 
 module "api_gateway" {

@@ -2,6 +2,7 @@ import type { ScheduledHandler } from "aws-lambda";
 import { QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
 import { ddb, tables } from "../../lib/dynamo";
+import { isSuppressed } from "../../lib/suppression";
 
 const ses = new SESClient({});
 const SENDER_EMAIL = process.env.SES_SENDER_EMAIL!;
@@ -54,7 +55,7 @@ export const handler: ScheduledHandler = async () => {
       }
     }
 
-    if (!mostRecentDate || mostRecentDate < cutoff) {
+    if ((!mostRecentDate || mostRecentDate < cutoff) && !(await isSuppressed(farm.ownerEmail))) {
       await ses.send(
         new SendEmailCommand({
           Source: SENDER_EMAIL,

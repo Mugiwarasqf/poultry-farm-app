@@ -2,6 +2,7 @@ import type { ScheduledHandler } from "aws-lambda";
 import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
 import { ddb, tables } from "../../lib/dynamo";
+import { isSuppressed } from "../../lib/suppression";
 
 const ses = new SESClient({});
 const SENDER_EMAIL = process.env.SES_SENDER_EMAIL!;
@@ -60,6 +61,7 @@ export const handler: ScheduledHandler = async () => {
     const farm = await ddb.send(new GetCommand({ TableName: tables.farms, Key: { farmId } }));
     const email = farm.Item?.ownerEmail;
     if (!email) continue;
+    if (await isSuppressed(email)) continue;
 
     const dueToday = item.dueDate === today;
     const message = dueToday

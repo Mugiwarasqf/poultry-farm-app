@@ -42,3 +42,8 @@ variable "ses_sender_email" {
   description = "The verified sender address itself, passed to the notification Lambdas as SES_SENDER_EMAIL."
   type        = string
 }
+
+variable "ses_events_topic_arn" {
+  description = "The ses module's SNS topic for Bounce/Complaint notifications — subscribed by the ses_events Lambda defined in this module."
+  type        = string
+}
