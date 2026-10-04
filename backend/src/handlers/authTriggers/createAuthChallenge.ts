@@ -39,8 +39,8 @@ export const handler: CreateAuthChallengeTriggerHandler = async (event) => {
         Source: SENDER_EMAIL,
         Destination: { ToAddresses: [email] },
         Message: {
-          Subject: { Data: "Your FarmBook code" },
-          Body: { Text: { Data: `Your FarmBook code is ${code}.` } },
+          Subject: { Data: "Your TrackFarm code" },
+          Body: { Text: { Data: `Your TrackFarm code is ${code}.` } },
         },
       })
     );

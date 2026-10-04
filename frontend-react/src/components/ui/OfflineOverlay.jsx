@@ -86,7 +86,7 @@ export function OfflineOverlay() {
                 You're Offline
               </h2>
               <p className="text-sm text-stone-500 leading-relaxed">
-                It looks like you've lost your internet connection. FarmBook needs connectivity to sync your farm data.
+                It looks like you've lost your internet connection. TrackFarm needs connectivity to sync your farm data.
               </p>
             </div>
 

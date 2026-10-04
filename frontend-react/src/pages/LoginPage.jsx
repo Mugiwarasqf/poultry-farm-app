@@ -244,7 +244,7 @@ export function LoginPage({ onBack }) {
         {/* Footer Security Note */}
         <div className="pt-6 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-neutral-400">
          
-          <div>© {new Date().getFullYear()} FarmBook</div>
+          <div>© {new Date().getFullYear()} TrackFarm</div>
         </div>
       </div>
     </div>

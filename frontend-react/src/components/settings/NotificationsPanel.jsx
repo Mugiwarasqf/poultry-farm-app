@@ -22,7 +22,7 @@ export function NotificationsPanel() {
     <div className="space-y-5">
       <SettingsCard
         title="Notifications"
-        description="Choose which alerts and reminders FarmBook sends you."
+        description="Choose which alerts and reminders TrackFarm sends you."
       >
         <div>
           <ToggleRow

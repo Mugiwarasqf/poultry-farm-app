@@ -97,7 +97,7 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex flex-col justify-between gap-12 pb-14 md:flex-row md:gap-8">
           <h2 className="max-w-[480px] text-[34px] font-bold leading-[1.15] tracking-tight text-white sm:text-[42px]">
-            FarmBook helps farmers
+            TrackFarm helps farmers
             <br />
             turn daily records
             <br />
@@ -111,10 +111,10 @@ export default function Footer() {
                 Questions or feedback? Reach us anytime.
               </p>
               <a
-                href="mailto:hello@farmbook.app"
+                href="mailto:hello@trackfarm.cc"
                 className="mt-1 inline-block text-[14px] text-neutral-300 underline-offset-4 hover:text-white hover:underline"
               >
-                hello@farmbook.app
+                hello@trackfarm.cc
               </a>
 
               <div className="mt-5 flex items-center gap-3">
@@ -156,7 +156,7 @@ export default function Footer() {
 
       <div className="border-t border-white/10 px-6 py-6">
         <p className="mx-auto max-w-6xl text-[13px] text-neutral-500">
-          © 2026 FarmBook. All rights reserved.
+          © 2026 TrackFarm. All rights reserved.
         </p>
       </div>
     </footer>

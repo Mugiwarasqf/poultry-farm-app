@@ -34,7 +34,7 @@ export async function downloadTableReport({ filename, title, subtitle, headers, 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
   doc.setTextColor(...BRAND_GREEN);
-  doc.text('FarmBook', left, 44);
+  doc.text('TrackFarm', left, 44);
 
   doc.setFontSize(13);
   doc.setTextColor(28, 25, 23);

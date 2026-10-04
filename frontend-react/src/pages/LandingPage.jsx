@@ -122,7 +122,7 @@ function Hero() {
         </h1>
 
         <p className="hero-subhead mt-6 max-w-[520px] text-[16px] leading-relaxed text-neutral-600 md:text-[17px]">
-          FarmBook helps Nigerian poultry farmers replace paper records with
+          TrackFarm helps Nigerian poultry farmers replace paper records with
           simple digital tracking — feed, mortality, eggs, vaccinations, and
           profit, all in one place.
         </p>

@@ -46,7 +46,7 @@ export function AppearancePanel() {
 
         <div className="mt-5">
           <NotWiredNote>
-            FarmBook currently ships with the light theme only. Dark and system themes will appear
+            TrackFarm currently ships with the light theme only. Dark and system themes will appear
             here once they are built.
           </NotWiredNote>
         </div>

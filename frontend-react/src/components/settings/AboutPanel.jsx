@@ -6,7 +6,7 @@ export function AboutPanel() {
 
   return (
     <div className="space-y-5">
-      <SettingsCard title="About FarmBook" description="App version and support information.">
+      <SettingsCard title="About TrackFarm" description="App version and support information.">
         <div>
           <DetailRow label="Version" value="v1.0.0" />
           <DetailRow label="Farm ID" value={farmId ? `${farmId.slice(0, 8)}…` : '—'} />
@@ -23,9 +23,9 @@ export function AboutPanel() {
         </div>
       </SettingsCard>
 
-      <SettingsCard title="Support" description="Get help with FarmBook.">
+      <SettingsCard title="Support" description="Get help with TrackFarm.">
         <p className="text-sm text-stone-600 leading-relaxed">
-          FarmBook replaces the paper record book with simple digital tracking for mortality, feed,
+          TrackFarm replaces the paper record book with simple digital tracking for mortality, feed,
           egg production and vaccinations. If something is not working, note what you were doing at
           the time and reach out to the person who set up your farm.
         </p>
