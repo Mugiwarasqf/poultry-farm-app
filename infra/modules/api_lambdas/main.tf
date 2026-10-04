@@ -1,4 +1,4 @@
-# The 12 Lambdas that aren't Cognito triggers (those live in the
+# The 16 Lambdas that aren't Cognito triggers (those live in the
 # auth_triggers module — see that module's header comment for why they're
 # split out). One function per backend/src/handlers/* entry point;
 # dist/<name> directory names come from backend/esbuild.config.js.
@@ -25,6 +25,7 @@ locals {
     VACCINATION_SCHEDULES_TABLE = var.table_names["vaccination_schedules"]
     FEED_PURCHASES_TABLE        = var.table_names["feed_purchases"]
     WEIGHT_LOGS_TABLE           = var.table_names["weight_logs"]
+    SICK_BAY_TABLE              = var.table_names["sick_bay"]
     COGNITO_USER_POOL_ID        = var.cognito_user_pool_id
     COGNITO_CLIENT_ID           = var.cognito_client_id
     SES_SENDER_EMAIL            = var.ses_sender_email
@@ -173,6 +174,11 @@ data "archive_file" "weight" {
   source_dir  = "${var.backend_dist}/weight"
   output_path = "${path.module}/.build/weight.zip"
 }
+data "archive_file" "sick_bay" {
+  type        = "zip"
+  source_dir  = "${var.backend_dist}/sick-bay"
+  output_path = "${path.module}/.build/sick-bay.zip"
+}
 data "archive_file" "vaccinations" {
   type        = "zip"
   source_dir  = "${var.backend_dist}/vaccinations"
@@ -290,6 +296,17 @@ resource "aws_lambda_function" "weight" {
   timeout          = 10
   filename         = data.archive_file.weight.output_path
   source_code_hash = data.archive_file.weight.output_base64sha256
+  environment { variables = local.common_env }
+}
+
+resource "aws_lambda_function" "sick_bay" {
+  function_name    = "${var.project_name}-${var.environment}-sick-bay"
+  role             = aws_iam_role.dynamo.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  timeout          = 10
+  filename         = data.archive_file.sick_bay.output_path
+  source_code_hash = data.archive_file.sick_bay.output_base64sha256
   environment { variables = local.common_env }
 }
 

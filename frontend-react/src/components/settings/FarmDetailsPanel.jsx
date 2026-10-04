@@ -13,10 +13,12 @@ import {
   SecondaryButton,
   DetailRow,
 } from './ui';
-import { BIRD_TYPES } from '../../lib/batch';
+import { allBirdTypes } from '../../lib/batch';
+import { FarmPensCard } from './FarmPensCard';
+import { FarmBirdTypesCard } from './FarmBirdTypesCard';
 
-const FARM_BIRD_TYPES = [
-  ...BIRD_TYPES.map(({ value, label }) => ({ value, label })),
+const farmBirdTypes = () => [
+  ...allBirdTypes().map(({ value, label }) => ({ value, label })),
   { value: 'mixed', label: 'Mixed flock' },
 ];
 
@@ -122,13 +124,17 @@ export function FarmDetailsPanel() {
               onChange={(e) => setBirdType(e.target.value)}
               disabled={!editing}
             >
-              {FARM_BIRD_TYPES.map((option) => (
+              {farmBirdTypes().map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </SelectInput>
           </Field>
         </FieldGrid>
       </SettingsCard>
+
+      <FarmPensCard />
+
+      <FarmBirdTypesCard />
 
       <SettingsCard title="Farm Record" description="Details recorded when this farm was created.">
         <div>

@@ -11,6 +11,7 @@ const entries = {
   feed: "src/handlers/feed/index.ts",
   eggs: "src/handlers/eggs/index.ts",
   weight: "src/handlers/weight/index.ts",
+  "sick-bay": "src/handlers/sickBay/index.ts",
   "feed-stock": "src/handlers/feedStock/index.ts",
   vaccinations: "src/handlers/vaccinations/index.ts",
   "vaccination-schedule": "src/handlers/vaccinationSchedule/index.ts",

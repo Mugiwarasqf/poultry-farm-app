@@ -122,6 +122,49 @@ select option:checked {
   }
 }
 
+/* Ouroboros loading indicator (components/ui/LoadingIndicator.jsx).
+   The circle uses pathLength="100", so dash lengths below are percentages of
+   the ring. The dash grows until the head nearly meets the tail (88%), then
+   the offset runs on so the tail catches up — while the whole ring turns. */
+@keyframes ouroboros-turn {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ouroboros-chase {
+  0% {
+    stroke-dasharray: 2 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 88 150;
+    stroke-dashoffset: -6;
+  }
+  100% {
+    stroke-dasharray: 88 150;
+    stroke-dashoffset: -98;
+  }
+}
+
+.ouroboros {
+  transform-origin: center;
+  animation: ouroboros-turn 1.8s linear infinite;
+}
+
+.ouroboros__snake {
+  stroke-dasharray: 2 150;
+  animation: ouroboros-chase 1.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ouroboros,
+  .ouroboros__snake {
+    animation: none;
+  }
+  .ouroboros__snake {
+    stroke-dasharray: 75 150;
+  }
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

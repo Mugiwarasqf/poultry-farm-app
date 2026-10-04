@@ -11,7 +11,7 @@ import {
 import { useBatches } from '../context/BatchContext';
 import { BirdIcon } from '../components/ui/BirdIcon';
 import { BatchHistoryDetail } from '../components/history/BatchHistoryDetail';
-import { COMPLETED_PILL_CLASS, batchImage, formatDate, typePillClass, birdTypeLabel, TYPE_FILTER_OPTIONS } from '../lib/batch';
+import { COMPLETED_PILL_CLASS, batchImage, formatDate, typePillClass, birdTypeLabel, typeFilterOptions } from '../lib/batch';
 import { useIsDesktop } from '../lib/useMediaQuery';
 
 function BatchRow({ batch, selected, onSelect }) {
@@ -159,7 +159,7 @@ export function HistoryPage() {
               aria-label="Filter batches by type"
               className="appearance-none w-full sm:w-auto bg-white border border-stone-200 rounded-xl pl-10 pr-10 py-3 text-sm font-medium text-stone-700 shadow-xs cursor-pointer focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15 transition-colors"
             >
-              {TYPE_FILTER_OPTIONS.map((option) => (
+              {typeFilterOptions().map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>

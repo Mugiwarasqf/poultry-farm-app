@@ -28,7 +28,8 @@ export function makeLogResourceHandler<TExtra extends object>(opts: {
           ScanIndexForward: false, // entryId is time-prefixed, so this is newest-first
         })
       );
-      return ok({ entries: result.Items ?? [] });
+      const items = result.Items ?? [];
+      return ok({ entries: items, logs: items });
     }
 
     if (method === "POST") {

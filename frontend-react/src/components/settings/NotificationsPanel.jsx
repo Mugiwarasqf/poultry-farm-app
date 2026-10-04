@@ -2,27 +2,12 @@ import { useState } from 'react';
 import { Syringe, ClipboardList, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { SettingsCard, ToggleRow, NotWiredNote, DetailRow } from './ui';
+import { readPrefs, writePrefs } from '../../lib/notifications/prefs';
 
-// Preferences are device-local for now. The two reminder jobs run on a daily
-// EventBridge schedule server-side (infra/modules/notifications) and don't read
-// any per-farm preference yet, so a toggle here can't actually stop an email.
-// Kept honest with the note below rather than implying it does.
-const STORAGE_KEY = 'farmbook_notification_prefs';
-
-const DEFAULTS = {
-  vaccinationReminders: true,
-  loggingNudges: true,
-};
-
-function readPrefs() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? { ...DEFAULTS, ...JSON.parse(stored) } : DEFAULTS;
-  } catch {
-    return DEFAULTS;
-  }
-}
-
+// Preferences are device-local. They control the in-app notifications (the
+// header bell and /notifications) straight away. The two reminder emails run
+// on a daily EventBridge schedule server-side (infra/modules/notifications)
+// and don't read any per-farm preference yet — kept honest in the note below.
 export function NotificationsPanel() {
   const { farm } = useAuth();
   const [prefs, setPrefs] = useState(readPrefs);
@@ -30,11 +15,7 @@ export function NotificationsPanel() {
   const update = (key, value) => {
     const next = { ...prefs, [key]: value };
     setPrefs(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // Storage blocked — the toggle still reflects this session.
-    }
+    writePrefs(next);
   };
 
   return (
@@ -62,9 +43,9 @@ export function NotificationsPanel() {
 
         <div className="mt-5">
           <NotWiredNote>
-            These switches are saved on this device only. Reminder emails are currently sent on a
-            fixed daily schedule and do not yet read this setting, so turning one off will not stop
-            the emails until the server side is updated.
+            These switches are saved on this device and turn the matching alerts in your
+            notifications list on or off straight away. Reminder emails are sent on a fixed daily
+            schedule and do not read this setting yet, so turning one off will not stop the emails.
           </NotWiredNote>
         </div>
       </SettingsCard>

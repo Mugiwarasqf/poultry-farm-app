@@ -28,20 +28,50 @@ import { buildHealthEvents } from '../lib/healthEvents';
 import { ROUTES } from '../lib/vaccines';
 import { loadSupplements, describeDose, findSupplementType, supplementDates, toIso } from '../lib/supplements';
 import { PillIcon } from '../components/ui/PillIcon';
+import { Skeleton, SkeletonRows } from '../components/ui/Skeleton';
 import { FeedPurchaseModal } from '../components/ui/FeedPurchaseModal';
 import { FeedUsageModal } from '../components/ui/FeedUsageModal';
 import { useFeedStock } from '../lib/useFeedStock';
 import { formatNaira } from '../lib/feeds';
 import { eggCount, feedBags, formatBags, formatCrates, formatDate, laysEggs } from '../lib/batch';
 
-function StatCard({ icon: Icon, label, value, hint }) {
+function StatCard({ icon: Icon, label, value, hint, loading = false }) {
   return (
-    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
+    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80" aria-busy={loading || undefined}>
       <span className="text-xs font-semibold text-stone-500 flex items-center gap-1.5">
         <Icon size={14} className="text-[#0D5C3A]" /> {label}
       </span>
-      <span className="text-2xl sm:text-3xl font-extrabold text-stone-950 mt-1 block">{value}</span>
-      {hint && <span className="text-[11px] text-stone-500 mt-0.5 block">{hint}</span>}
+      {loading ? (
+        // Same height as the real number and hint, so nothing shifts when data lands.
+        <>
+          <Skeleton className="h-8 sm:h-9 w-24 mt-1" />
+          <Skeleton className="h-3 w-20 mt-1.5" />
+        </>
+      ) : (
+        <>
+          <span className="text-2xl sm:text-3xl font-extrabold text-stone-950 mt-1 block">{value}</span>
+          {hint && <span className="text-[11px] text-stone-500 mt-0.5 block">{hint}</span>}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Placeholder for a feed-store card while stock loads. */
+function StockCardSkeleton() {
+  return (
+    <div className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs flex flex-col gap-3" aria-hidden="true">
+      <div className="space-y-1.5">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+      <Skeleton className="h-8 w-20" />
+      <Skeleton className="h-2 w-full rounded-full" />
+      <div className="grid grid-cols-2 gap-2">
+        <Skeleton className="h-7" />
+        <Skeleton className="h-7" />
+      </div>
+      <Skeleton className="h-8 w-full rounded-xl" />
     </div>
   );
 }
@@ -136,6 +166,8 @@ export function InventoryPage() {
 
   // Feed store: purchases in, batch usage out.
   const { lines: stockLines } = feedStore.stock;
+  // First load only: later background refreshes keep showing the real numbers.
+  const feedLoading = feedStore.loading && feedStore.purchases.length === 0 && feedStore.usage.length === 0;
   const bagsInStore = stockLines.reduce((sum, l) => sum + Math.max(l.left, 0), 0);
   const storeValue = stockLines.reduce((sum, l) => sum + l.value, 0);
   const lowLines = stockLines.filter(l => l.status !== 'ok');
@@ -350,16 +382,20 @@ export function InventoryPage() {
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <StatCard icon={Package} label="Bags in store" value={formatBags(bagsInStore)} hint={lowLines.length ? `${lowLines.length} running low` : 'Stock levels OK'} />
-              <StatCard icon={Banknote} label="Store value" value={formatNaira(storeValue)} hint="At the price you paid" />
-              <StatCard icon={CircleMinus} label="Used this month" value={formatBags(bagsUsedThisMonth)} />
-              <StatCard icon={CirclePlus} label="Bought this month" value={formatNaira(spentThisMonth)} hint={formatBags(bagsBoughtThisMonth)} />
+              <StatCard loading={feedLoading} icon={Package} label="Bags in store" value={formatBags(bagsInStore)} hint={lowLines.length ? `${lowLines.length} running low` : 'Stock levels OK'} />
+              <StatCard loading={feedLoading} icon={Banknote} label="Store value" value={formatNaira(storeValue)} hint="At the price you paid" />
+              <StatCard loading={feedLoading} icon={CircleMinus} label="Used this month" value={formatBags(bagsUsedThisMonth)} />
+              <StatCard loading={feedLoading} icon={CirclePlus} label="Bought this month" value={formatNaira(spentThisMonth)} hint={formatBags(bagsBoughtThisMonth)} />
             </div>
           </div>
 
           {/* One card per kind of feed in the store */}
-          {feedStore.loading && feedStore.purchases.length === 0 ? (
-            <p className="py-6 text-center text-xs text-stone-400 font-medium">Loading the feed store…</p>
+          {feedLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" role="status" aria-label="Loading the feed store">
+              <StockCardSkeleton />
+              <StockCardSkeleton />
+              <StockCardSkeleton />
+            </div>
           ) : feedStore.stock.lines.length === 0 ? (
             <div className="bg-white border border-dashed border-stone-300 rounded-3xl p-8 text-center space-y-3">
               <p className="text-sm font-semibold text-stone-800">Your feed store is empty</p>
@@ -446,7 +482,9 @@ export function InventoryPage() {
           {/* Everything that went in and out */}
           <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
             <h4 className="text-sm font-bold text-stone-950 font-heading">Feed Activity</h4>
-            {feedActivity.length === 0 ? (
+            {feedLoading ? (
+              <SkeletonRows rows={4} />
+            ) : feedActivity.length === 0 ? (
               <p className="py-6 text-center text-xs text-stone-400 font-medium">No feed bought or used yet.</p>
             ) : (
               <div className="overflow-x-auto">
@@ -504,13 +542,14 @@ export function InventoryPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               <StatCard
+                loading={loading}
                 icon={Package}
                 label="Eggs in Inventory"
                 value={totalEggsStocked.toLocaleString()}
                 hint={formatCrates(totalEggsStocked)}
               />
-              <StatCard icon={Calendar} label="Collected This Month" value={eggsThisMonth.toLocaleString()} hint={formatCrates(eggsThisMonth)} />
-              <StatCard icon={Clock} label="Collected Today" value={eggsToday.toLocaleString()} hint={formatCrates(eggsToday)} />
+              <StatCard loading={loading} icon={Calendar} label="Collected This Month" value={eggsThisMonth.toLocaleString()} hint={formatCrates(eggsThisMonth)} />
+              <StatCard loading={loading} icon={Clock} label="Collected Today" value={eggsToday.toLocaleString()} hint={formatCrates(eggsToday)} />
             </div>
 
             {eggsByBatch.length > 0 && (
@@ -525,7 +564,7 @@ export function InventoryPage() {
                     >
                       <span className="text-xs font-bold text-stone-900 truncate">{b.name}</span>
                       <span className="text-xs text-stone-600 shrink-0">
-                        <span className="font-extrabold text-stone-950">{b.eggs.toLocaleString()}</span> eggs
+                        {loading ? <Skeleton className="h-3.5 w-16" /> : <><span className="font-extrabold text-stone-950">{b.eggs.toLocaleString()}</span> eggs</>}
                       </span>
                     </Link>
                   ))}
@@ -537,11 +576,11 @@ export function InventoryPage() {
           <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
             <h4 className="text-sm font-bold text-stone-950 font-heading">Recent Egg Collections</h4>
 
-            {allEggLogs.length === 0 ? (
+            {loading ? (
+              <SkeletonRows rows={4} />
+            ) : allEggLogs.length === 0 ? (
               <p className="py-6 text-center text-xs text-stone-400 font-medium">
-                {loading
-                  ? 'Loading egg records…'
-                  : eggsByBatch.length === 0
+                {eggsByBatch.length === 0
                   ? 'No layer batches yet. Eggs appear here once a layer batch records production.'
                   : 'No eggs recorded yet. Log eggs from a layer batch and they will be added here.'}
               </p>
@@ -605,19 +644,19 @@ export function InventoryPage() {
                 <span className="text-xs font-bold text-[#0D472B] flex items-center gap-1.5">
                   <Calendar size={15} className="text-[#0D5C3A]" /> Upcoming
                 </span>
-                <span className="text-2xl sm:text-3xl font-extrabold text-[#0D472B] mt-1 block">{upcomingVaccines.length}</span>
+                {loading ? <Skeleton className="h-8 sm:h-9 w-12 mt-1" /> : <span className="text-2xl sm:text-3xl font-extrabold text-[#0D472B] mt-1 block">{upcomingVaccines.length}</span>}
               </div>
               <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/70">
                 <span className="text-xs font-bold text-rose-800 flex items-center gap-1.5">
                   <AlertTriangle size={15} className="text-rose-600" /> Overdue
                 </span>
-                <span className="text-2xl sm:text-3xl font-extrabold text-rose-950 mt-1 block">{overdueVaccines.length}</span>
+                {loading ? <Skeleton className="h-8 sm:h-9 w-12 mt-1" /> : <span className="text-2xl sm:text-3xl font-extrabold text-rose-950 mt-1 block">{overdueVaccines.length}</span>}
               </div>
               <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
                 <span className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
                   <CheckCircle2 size={15} className="text-stone-500" /> Given this month
                 </span>
-                <span className="text-2xl sm:text-3xl font-extrabold text-stone-950 mt-1 block">{givenThisMonth}</span>
+                {loading ? <Skeleton className="h-8 sm:h-9 w-12 mt-1" /> : <span className="text-2xl sm:text-3xl font-extrabold text-stone-950 mt-1 block">{givenThisMonth}</span>}
               </div>
             </div>
           </div>
@@ -654,9 +693,11 @@ export function InventoryPage() {
           {/* Due and overdue */}
           <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-3">
             <h4 className="text-sm font-bold text-stone-950 font-heading">Due Vaccinations</h4>
-            {dueVaccines.length === 0 ? (
+            {loading ? (
+              <SkeletonRows rows={2} />
+            ) : dueVaccines.length === 0 ? (
               <p className="py-4 text-center text-xs text-stone-400 font-medium">
-                {loading ? 'Loading…' : 'Nothing scheduled. Use "Schedule Vaccination" to plan the next one.'}
+                Nothing scheduled. Use "Schedule Vaccination" to plan the next one.
               </p>
             ) : (
               <ul className="divide-y divide-stone-100">
@@ -699,9 +740,11 @@ export function InventoryPage() {
           {/* History */}
           <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-3">
             <h4 className="text-sm font-bold text-stone-950 font-heading">Vaccination History</h4>
-            {vaccinationHistory.length === 0 ? (
+            {loading ? (
+              <SkeletonRows rows={3} />
+            ) : vaccinationHistory.length === 0 ? (
               <p className="py-4 text-center text-xs text-stone-400 font-medium">
-                {loading ? 'Loading…' : 'No vaccinations recorded yet.'}
+                No vaccinations recorded yet.
               </p>
             ) : (
               <div className="overflow-x-auto">

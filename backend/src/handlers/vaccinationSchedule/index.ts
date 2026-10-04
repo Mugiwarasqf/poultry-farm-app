@@ -4,6 +4,7 @@ import { ddb, tables } from "../../lib/dynamo";
 import { badRequest, created, ok } from "../../lib/http";
 import { newId } from "../../lib/ids";
 import type { VaccinationSchedule, VaccinationScheduleStatus } from "../../lib/types";
+import { pickOptional } from "../../lib/optionalFields";
 
 // The forward-looking half of vaccination reminders (docs/04-v1-feature-scope.md
 // §4) — due dates the scheduled Lambda in handlers/scheduled/vaccinationReminders.ts
@@ -39,6 +40,14 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
       dueDate: body.dueDate,
       status: "upcoming",
       createdAt: new Date().toISOString(),
+      // Planning detail shown back in the app; the reminder job ignores it.
+      ...pickOptional(body, {
+        route: "string",
+        doseNumber: "string",
+        birdsToVaccinate: "number",
+        dosesPerVial: "number",
+        notes: "string",
+      }),
     };
 
     await ddb.send(new PutCommand({ TableName: tables.vaccinationSchedules, Item: item }));

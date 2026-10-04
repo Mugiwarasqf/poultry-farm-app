@@ -25,6 +25,7 @@ backend/coverage/
 .env.*
 *.pem
 *.key
+frontend/config.js
 
 # OS / editor
 .DS_Store

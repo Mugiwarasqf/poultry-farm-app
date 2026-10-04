@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Bell, Menu, User, ChevronDown, Home, Layers, Package, History, Settings, LogOut, Clock, RefreshCw } from 'lucide-react';
+import { Menu, User, ChevronDown, Home, Layers, Package, History, Settings, LogOut, Clock, RefreshCw } from 'lucide-react';
 import { Sidebar } from './Sidebar';
+import { NotificationBell } from '../notifications/NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 import { useOfflineQueue } from '../../lib/useOfflineQueue';
 
@@ -11,6 +12,7 @@ const VIEW_TITLES = {
   '/history': 'History',
   '/batches': 'Batches',
   '/settings': 'Settings',
+  '/notifications': 'Notifications',
   '/batches/new': 'Create New Batch',
 };
 
@@ -69,7 +71,7 @@ export function AppShell() {
         onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="flex-1 flex flex-col min-h-screen md:pl-60">
+      <div className="flex-1 min-w-0 flex flex-col min-h-screen md:pl-60">
         {/* Top Header Bar with frosted glass blur */}
         <header className="sticky top-0 z-30 h-16 bg-white/75 backdrop-blur-md border-b border-stone-200/50 px-4 sm:px-8 flex items-center justify-between gap-4 transition-all">
           <div className="flex items-center gap-3 min-w-0">
@@ -109,15 +111,8 @@ export function AppShell() {
               </button>
             )}
 
-            {/* Notification Bell with red indicator */}
-            <button
-              type="button"
-              className="relative p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-full transition-colors cursor-pointer"
-              aria-label="Notifications"
-            >
-              <Bell size={19} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
-            </button>
+            {/* Notification bell + recent-notifications dropdown */}
+            <NotificationBell />
 
             {/* Profile Avatar & Name with Chevron Dropdown */}
             <div className="relative" ref={userMenuRef}>

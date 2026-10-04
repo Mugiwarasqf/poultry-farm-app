@@ -1,3 +1,5 @@
+import { addLocalNotification } from './notifications/localEvents';
+
 /**
  * Downloadable reports, built in the browser as a PDF with a real table.
  *
@@ -62,4 +64,10 @@ export async function downloadTableReport({ filename, title, subtitle, headers, 
   });
 
   doc.save(filename);
+
+  addLocalNotification({
+    type: 'report_ready',
+    title: 'Report Ready',
+    message: `${title}${subtitle ? ` for ${subtitle}` : ''} has been downloaded as a PDF.`,
+  });
 }

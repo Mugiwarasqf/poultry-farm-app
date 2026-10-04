@@ -43,7 +43,7 @@ comparison.
 - **Backend + infra: real, code-complete, git-tracked, deployed on and off
   during testing.** `infra/` is a modular Terraform stack (validates and
   plans clean against AWS account 543613943899) covering Cognito
-  email/OTP auth, API Gateway, ~18 Lambda functions, 10 DynamoDB tables,
+  email/OTP auth, API Gateway, 19 Lambda functions, 11 DynamoDB tables,
   S3, SES, and daily EventBridge notification schedules. `backend/` is
   the TypeScript Lambda source. Whether it's *currently* applied varies —
   it's been deployed, torn down, and redeployed multiple times during
@@ -261,7 +261,7 @@ diagram.
 | `docs/04-v1-feature-scope.md` | Canonical, living product spec |
 | `docs/05-interview-elizabeth.txt`, `docs/06-interview-juliana.txt`, `docs/07-interview-banjo.txt`, `docs/08-interview-ruth.txt`, `docs/09-interview-toluwase.txt`, etc. | Raw transcripts of follow-ups, one file each (Banjo's is incomplete — he stopped replying) |
 | `docs/10-build-plan.md` | Living beta build plan — data model, API shape, build sequence, open decisions |
-| `infra/` | Terraform, modular (`infra/main.tf` + `infra/modules/*`) — Cognito (email/OTP), API Gateway, ~18 Lambdas, 10 DynamoDB tables, S3, SES/EventBridge. Deploy state varies, check `terraform plan` |
+| `infra/` | Terraform, modular (`infra/main.tf` + `infra/modules/*`) — Cognito (email/OTP), API Gateway, 19 Lambdas, 11 DynamoDB tables, S3, SES/EventBridge. Deploy state varies, check `terraform plan` |
 | `backend/` | TypeScript Lambda source, one handler per API resource. Typechecks + bundles clean |
 | `frontend-react/` | The real product frontend (Vite + React), built by the founder's friend. Source of truth for what the backend needs to support. `infra/modules/frontend/` now hosts its built `dist/` output |
 | `README.md` | Shorter orientation doc, same information at a glance |

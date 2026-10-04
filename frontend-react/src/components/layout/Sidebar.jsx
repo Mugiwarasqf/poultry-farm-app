@@ -1,9 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Layers, Package, History, Settings, X, Sprout, LogOut } from 'lucide-react';
+import { Home, Layers, Package, History, Settings, X, Sprout, LogOut, Bell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
+import { badgeCount } from '../../lib/notifications/format';
 
 export function Sidebar({ isOpen, onClose }) {
   const { logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const onSignOut = () => {
     onClose?.();
     logout();
@@ -14,6 +17,7 @@ export function Sidebar({ isOpen, onClose }) {
     { to: '/batches', label: 'Batches', icon: Layers },
     { to: '/inventory', label: 'Inventory', icon: Package },
     { to: '/history', label: 'History', icon: History },
+    { to: '/notifications', label: 'Notifications', icon: Bell, count: unreadCount },
     { to: '/settings', label: 'Settings', icon: Settings },
   ];
 
@@ -37,10 +41,7 @@ export function Sidebar({ isOpen, onClose }) {
           {/* Brand header with FarmBook logo & green sprout mark */}
           <div className="h-16 px-6 flex items-center justify-between border-b border-stone-100">
             <a href="/dashboard" className="flex items-center gap-2 focus:outline-hidden">
-             
-              <span className="text-[20px] font-bold tracking-tight text-stone-950 font-heading">
-                farm<span className="text-[#0D5C3A]">book</span>
-              </span>
+              <img src="/icon/logo.png" alt="FarmBook" className="h-8 w-auto" />
             </a>
             <button
               onClick={onClose}
@@ -68,8 +69,25 @@ export function Sidebar({ isOpen, onClose }) {
                     }`
                   }
                 >
-                  <Icon size={19} />
-                  <span>{item.label}</span>
+                  {({ isActive }) => (
+                    <>
+                      <Icon size={19} />
+                      <span className="flex-1">{item.label}</span>
+                      {item.count > 0 && (
+                        <>
+                          <span
+                            aria-hidden="true"
+                            className={`min-w-5 h-5 px-1.5 rounded-full text-[11px] font-semibold leading-5 text-center tabular-nums ${
+                              isActive ? 'bg-white/20 text-white' : 'bg-stone-900 text-white'
+                            }`}
+                          >
+                            {badgeCount(item.count)}
+                          </span>
+                          <span className="sr-only">, {item.count} unread</span>
+                        </>
+                      )}
+                    </>
+                  )}
                 </NavLink>
               );
             })}

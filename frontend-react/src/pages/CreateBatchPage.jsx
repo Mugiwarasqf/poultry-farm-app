@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, Calendar, AlertCircle, Info, ShieldCheck, HelpCircle, Syringe } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Info, ShieldCheck, Syringe, Plus, Trash2, Bell } from 'lucide-react';
 import { BirdIcon } from '../components/ui/BirdIcon';
 import { useBatches } from '../context/BatchContext';
+import { useAuth } from '../context/AuthContext';
 import { createSchedule } from '../api/schedule';
 import { useToast } from '../components/ui/Toast';
-import { BIRD_TYPES, birdTypeLabel, laysEggs } from '../lib/batch';
+import { BIRD_PURPOSES, allBirdTypes, birdPurpose, birdTypeLabel, laysEggs } from '../lib/batch';
+import { DOSE_NUMBERS, ROUTES, findVaccine, vaccinesFor } from '../lib/vaccines';
+import { pensInUse } from '../lib/pens';
+import { toIso } from '../lib/supplements';
 
 const STEPS = [
   { id: 1, label: 'Basic Info' },
@@ -14,57 +18,83 @@ const STEPS = [
   { id: 4, label: 'Review' },
 ];
 
-const VACCINE_OPTIONS = [
-  'Newcastle (ND)',
-  'Gumboro (IBD)',
-  "Marek's Disease",
-  'Lasota',
-  'Fowl Pox',
-  'Infectious Bronchitis (IB)',
-  'Dewormer',
-  'Other Vaccination',
-];
+const OTHER_VACCINE = 'Other vaccine';
+
+let rowSeq = 0;
+/** One planned vaccination in the create form. */
+function newVaccinationRow(dueDate = '') {
+  rowSeq += 1;
+  return { key: `v${rowSeq}`, vaccineName: '', customName: '', dueDate, doseNumber: '' };
+}
+
+const plusDays = (n) => {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return toIso(d);
+};
 
 export function CreateBatchPage() {
   const navigate = useNavigate();
-  const { createBatch } = useBatches();
+  const { batches, createBatch } = useBatches();
+  const { farm } = useAuth();
   const toast = useToast();
+  const today = toIso(new Date());
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
   // Step 1: Basic Info
   const [name, setName] = useState('');
-  const [birdType, setBirdType] = useState('layer'); // one of BIRD_TYPES
+  const [birdType, setBirdType] = useState('layer'); // built-in or the farm's own type id
   const [birdCount, setBirdCount] = useState('');
   const [breed, setBreed] = useState('');
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
-  const [housing, setHousing] = useState('');
+  const [startDate, setStartDate] = useState(today);
+  const [penId, setPenId] = useState('');
+  const [housing, setHousing] = useState(''); // free text, only when the farm has no pens set up
   const [ageValue, setAgeValue] = useState('1');
   const [ageUnit, setAgeUnit] = useState('weeks'); // 'days' | 'weeks'
 
   // Step 2: Birds & Housing
   const [hatchery, setHatchery] = useState('');
   const [targetWeight, setTargetWeight] = useState('');
+  const [purchaseCost, setPurchaseCost] = useState('');
   const [notes, setNotes] = useState('');
 
-  // Step 3: Vaccination
-  const [addVaccine, setAddVaccine] = useState(true);
-  const [vaccineName, setVaccineName] = useState('Newcastle (ND)');
-  const [vaccineDate, setVaccineDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 7);
-    return d.toISOString().slice(0, 10);
-  });
-  const [enableReminder, setEnableReminder] = useState(true);
-  const [reminderTiming, setReminderTiming] = useState('3 days before');
-  const [vaccineNotes, setVaccineNotes] = useState('');
+  // Step 3: Vaccination — as many as the farmer wants to plan up front.
+  const [vaccinations, setVaccinations] = useState(() => [newVaccinationRow(plusDays(7))]);
+
+  const pens = farm?.pens || [];
+  const penUsage = useMemo(() => pensInUse(pens, batches), [pens, batches]);
+  const selectedPen = pens.find((p) => p.id === penId);
+  const purpose = birdPurpose(birdType);
+  const vaccineOptions = useMemo(() => vaccinesFor(birdType), [birdType]);
+
+  const updateVaccination = (key, field, value) =>
+    setVaccinations((rows) => rows.map((r) => (r.key === key ? { ...r, [field]: value } : r)));
+  const removeVaccination = (key) => setVaccinations((rows) => rows.filter((r) => r.key !== key));
+  const addVaccination = () => {
+    // Default the new row a week after the last one, which is the usual gap.
+    const last = vaccinations[vaccinations.length - 1]?.dueDate;
+    const next = last ? new Date(`${last}T00:00:00`) : new Date();
+    next.setDate(next.getDate() + 7);
+    setVaccinations((rows) => [...rows, newVaccinationRow(toIso(next))]);
+  };
+
+  const vaccineNameOf = (row) => (row.vaccineName === OTHER_VACCINE ? row.customName.trim() : row.vaccineName);
+  // Rows the farmer actually filled in; a blank row is simply ignored.
+  const plannedVaccinations = vaccinations.filter((r) => vaccineNameOf(r) && r.dueDate);
 
   const nextStep = () => {
     if (currentStep === 1) {
       if (!name.trim()) return toast('Please enter a batch name', 'error');
       if (!birdCount || Number(birdCount) <= 0) return toast('Please enter a valid bird count', 'error');
       if (!startDate) return toast('Please select date placed', 'error');
+    }
+    if (currentStep === 3) {
+      const half = vaccinations.find((r) => (r.vaccineName || r.customName) && !r.dueDate);
+      if (half) return toast('Pick a date for each vaccination, or remove the row', 'error');
+      const missingName = vaccinations.find((r) => r.vaccineName === OTHER_VACCINE && !r.customName.trim());
+      if (missingName) return toast('Enter the name of the other vaccine', 'error');
     }
     setCurrentStep(s => Math.min(s + 1, 4));
   };
@@ -83,24 +113,39 @@ export function CreateBatchPage() {
         startDate,
         birdCount: Number(birdCount),
         breed: breed.trim() || undefined,
-        housing: housing.trim() || undefined,
+        // housing keeps the pen's name too, so older screens still show it.
+        housing: selectedPen?.name || housing.trim() || undefined,
+        penId: selectedPen?.id || undefined,
+        hatchery: hatchery.trim() || undefined,
+        targetWeightKg: Number(targetWeight) > 0 ? Number(targetWeight) : undefined,
+        purchaseCostNaira: Number(purchaseCost) > 0 ? Number(purchaseCost) : undefined,
         initialAgeWeeks: calculatedAgeWeeks || 0,
         notes: notes.trim() || undefined,
       });
 
-      // 2. If vaccination schedule was configured, save it
-      if (addVaccine && vaccineName && vaccineDate && newBatch.batchId) {
-        try {
-          await createSchedule(newBatch.batchId, {
-            vaccineName,
-            dueDate: vaccineDate,
-          });
-        } catch (vacErr) {
-          console.warn('Initial vaccination schedule skipped:', vacErr);
-        }
+      // 2. Every planned vaccination goes on the schedule.
+      let failed = 0;
+      if (newBatch.batchId) {
+        const results = await Promise.allSettled(
+          plannedVaccinations.map((r) => {
+            const vaccine = findVaccine(r.vaccineName);
+            return createSchedule(newBatch.batchId, {
+              vaccineName: vaccineNameOf(r),
+              dueDate: r.dueDate,
+              ...(r.doseNumber ? { doseNumber: r.doseNumber } : {}),
+              ...(vaccine?.route ? { route: vaccine.route } : {}),
+            });
+          })
+        );
+        failed = results.filter((x) => x.status === 'rejected').length;
       }
 
-      toast('Batch created successfully!', 'success');
+      toast(
+        failed
+          ? `Batch created, but ${failed} vaccination${failed === 1 ? '' : 's'} could not be scheduled. Add ${failed === 1 ? 'it' : 'them'} from the Vaccination tab.`
+          : 'Batch created successfully!',
+        failed ? 'error' : 'success'
+      );
       navigate(`/batches/${newBatch.batchId}`);
     } catch (e) {
       toast(e.message || 'Failed to create batch', 'error');
@@ -199,10 +244,13 @@ export function CreateBatchPage() {
                   onChange={e => setBirdType(e.target.value)}
                   className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm font-semibold text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all cursor-pointer"
                 >
-                  {BIRD_TYPES.map((t) => (
+                  {allBirdTypes().map((t) => (
                     <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
                 </select>
+                <Link to="/settings/farm" className="inline-block text-[11px] font-semibold text-[#0D5C3A] hover:underline">
+                  Keep a bird that isn't listed? Add it in Farm Details
+                </Link>
 
                 <div className="flex items-center gap-2 pt-1 text-xs">
                   {laysEggs(birdType) ? (
@@ -223,9 +271,17 @@ export function CreateBatchPage() {
                   <BirdIcon size={22} />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-stone-950">Only Layers produce eggs</h4>
+                  <h4 className="text-xs font-bold text-stone-950">
+                    {birdTypeLabel(birdType)}: raised for {BIRD_PURPOSES.find((p) => p.value === purpose)?.label.toLowerCase()}
+                  </h4>
                   <p className="text-[11px] text-stone-600 mt-1 leading-relaxed">
-                    Egg production is only available for Layer batches. Other bird types are tracked for feed, health and bird losses.
+                    {purpose === 'eggs'
+                      ? 'Egg collection is tracked, and performance is judged on how many eggs the flock lays.'
+                      : purpose === 'meat'
+                      ? 'Performance is judged on sales and profit when you complete the batch, and on growth and survival before then.'
+                      : purpose === 'dual'
+                      ? 'Eggs are tracked, and performance looks at both egg output and sales when the batch is complete.'
+                      : 'Performance is judged on how many birds survive and what each one costs to raise.'}
                   </p>
                 </div>
               </div>
@@ -299,18 +355,42 @@ export function CreateBatchPage() {
               </div>
             </div>
 
-            {/* Location / Housing */}
+            {/* Pen — picked from the farm's pens; free text only until pens are set up */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-stone-800 block">
-                Location / House (optional)
+                Pen / House (optional)
               </label>
-              <input
-                type="text"
-                placeholder="Select location or enter pen / house"
-                value={housing}
-                onChange={e => setHousing(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
-              />
+              {pens.length > 0 ? (
+                <select
+                  value={penId}
+                  onChange={e => setPenId(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm font-semibold text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all cursor-pointer"
+                >
+                  <option value="">No pen</option>
+                  {pens.map((p) => {
+                    const inPen = penUsage.get(p.id) || [];
+                    return (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                        {inPen.length ? ` (in use: ${inPen.map((b) => b.name).join(', ')})` : ' (free)'}
+                      </option>
+                    );
+                  })}
+                </select>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    placeholder="e.g. Pen A, House 2"
+                    value={housing}
+                    onChange={e => setHousing(e.target.value)}
+                    className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
+                  />
+                  <Link to="/settings/farm" className="inline-block text-[11px] font-semibold text-[#0D5C3A] hover:underline">
+                    Set up your pens in Farm Details to pick from a list
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
@@ -351,7 +431,25 @@ export function CreateBatchPage() {
               />
             </div>
 
-            {birdType === 'broiler' && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-stone-800 block">
+                Cost of the Birds (₦, optional)
+              </label>
+              <input
+                type="number"
+                min="0"
+                inputMode="numeric"
+                placeholder="e.g. 450000 for all the birds"
+                value={purchaseCost}
+                onChange={e => setPurchaseCost(e.target.value)}
+                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
+              />
+              <p className="text-[11px] text-stone-500">
+                What you paid for the whole batch. Needed to work out profit when the batch is complete.
+              </p>
+            </div>
+
+            {(purpose === 'meat' || purpose === 'dual') && (
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-stone-800 block">
                   Target Slaughter Weight (kg)
@@ -402,17 +500,16 @@ export function CreateBatchPage() {
         </div>
       )}
 
-      {/* Step 3: Vaccination (Matching Reference Screenshot Exactly) */}
+      {/* Step 3: Vaccination — any number of planned vaccinations */}
       {currentStep === 3 && (
         <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 animate-fade-in">
           <div>
-            <h2 className="text-xl font-bold text-stone-950 font-heading">Vaccination</h2>
+            <h2 className="text-xl font-bold text-stone-950 font-heading">3. Vaccination</h2>
             <p className="text-xs sm:text-sm text-stone-500 mt-0.5">
-              Add vaccination schedule and set reminders for this batch.
+              Plan the vaccinations you already know about. Add as many as you need; you can add more later too.
             </p>
           </div>
 
-          {/* Green banner matching reference image */}
           <div className="bg-[#EAF5EF] border border-[#CFE8D9] rounded-2xl p-4 flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-full bg-white text-[#0D5C3A] flex items-center justify-center shrink-0 shadow-2xs">
               <ShieldCheck size={22} />
@@ -420,97 +517,104 @@ export function CreateBatchPage() {
             <div>
               <h4 className="text-xs sm:text-sm font-bold text-[#0D472B]">Keep your birds healthy</h4>
               <p className="text-xs text-stone-600 mt-0.5">
-                Set vaccination dates and reminders so you never miss an important dose.
+                Each one goes on the schedule, with an email reminder 3 days before and on the day.
               </p>
             </div>
           </div>
 
-          <div className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-stone-800 block">
-                  Vaccination Type <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={vaccineName}
-                  onChange={e => setVaccineName(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm font-semibold text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all cursor-pointer"
-                >
-                  {VACCINE_OPTIONS.map(v => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
-              </div>
+          <div className="space-y-3">
+            {vaccinations.length === 0 && (
+              <p className="text-sm text-stone-500 text-center py-4 border border-dashed border-stone-300 rounded-2xl">
+                No vaccinations planned. You can add them later from the batch's Vaccination tab.
+              </p>
+            )}
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-stone-800 block">
-                  Vaccination Date <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={vaccineDate}
-                  onChange={e => setVaccineDate(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all"
-                />
-              </div>
-            </div>
+            {vaccinations.map((row, index) => {
+              const vaccine = findVaccine(row.vaccineName);
+              const isOther = row.vaccineName === OTHER_VACCINE;
+              return (
+                <div key={row.key} className="border border-stone-200 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="inline-flex items-center gap-2 text-xs font-bold text-stone-800">
+                      <span className="w-6 h-6 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center text-[11px]">{index + 1}</span>
+                      Vaccination {index + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeVaccination(row.key)}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-500 hover:text-rose-600 cursor-pointer"
+                      aria-label={`Remove vaccination ${index + 1}`}
+                    >
+                      <Trash2 size={13} /> Remove
+                    </button>
+                  </div>
 
-            {/* Set Reminder row matching reference image */}
-            <div className="space-y-2">
-              <div className="text-xs font-bold text-stone-800">Set Reminder</div>
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-                <div className="sm:col-span-3 flex items-center gap-3">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={enableReminder}
-                      onChange={e => setEnableReminder(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-stone-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0D5C3A]"></div>
-                  </label>
-                  <span className="text-xs text-stone-600 font-medium">
-                    {enableReminder ? 'On' : 'Off'}
-                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <div className="sm:col-span-6 space-y-1.5">
+                      <label className="text-[11px] font-bold text-stone-700 block">Vaccine</label>
+                      <select
+                        value={row.vaccineName}
+                        onChange={e => updateVaccination(row.key, 'vaccineName', e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm font-semibold text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] cursor-pointer"
+                      >
+                        <option value="">Choose a vaccine</option>
+                        {vaccineOptions.map((v) => (
+                          <option key={v.id} value={v.name}>{v.name}</option>
+                        ))}
+                      </select>
+                      {isOther && (
+                        <input
+                          type="text"
+                          placeholder="Vaccine name"
+                          value={row.customName}
+                          onChange={e => updateVaccination(row.key, 'customName', e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] placeholder:text-stone-400"
+                        />
+                      )}
+                    </div>
+                    <div className="sm:col-span-3 space-y-1.5">
+                      <label className="text-[11px] font-bold text-stone-700 block">Due date</label>
+                      <input
+                        type="date"
+                        min={today}
+                        value={row.dueDate}
+                        onChange={e => updateVaccination(row.key, 'dueDate', e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A]"
+                      />
+                    </div>
+                    <div className="sm:col-span-3 space-y-1.5">
+                      <label className="text-[11px] font-bold text-stone-700 block">Dose</label>
+                      <select
+                        value={row.doseNumber}
+                        onChange={e => updateVaccination(row.key, 'doseNumber', e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] cursor-pointer"
+                      >
+                        <option value="">Not set</option>
+                        {DOSE_NUMBERS.map((d) => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {vaccine && !isOther && (
+                    <p className="text-[11px] text-stone-500 flex items-start gap-1.5">
+                      <Info size={12} className="shrink-0 mt-0.5 text-[#0D5C3A]" />
+                      <span>
+                        {ROUTES[vaccine.route]?.label}
+                        {vaccine.typicalAge ? ` · usually ${vaccine.typicalAge.charAt(0).toLowerCase()}${vaccine.typicalAge.slice(1)}` : ''}
+                      </span>
+                    </p>
+                  )}
                 </div>
+              );
+            })}
 
-                <div className="sm:col-span-5">
-                  <input
-                    type="date"
-                    disabled={!enableReminder}
-                    value={vaccineDate}
-                    onChange={e => setVaccineDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-xs font-medium text-stone-800 disabled:opacity-50"
-                  />
-                </div>
-
-                <div className="sm:col-span-4">
-                  <select
-                    disabled={!enableReminder}
-                    value={reminderTiming}
-                    onChange={e => setReminderTiming(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold text-stone-800 focus:outline-hidden cursor-pointer disabled:opacity-50"
-                  >
-                    <option value="3 days before">3 days before</option>
-                    <option value="1 day before">1 day before</option>
-                    <option value="Day of">Day of vaccination</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-stone-800 block">
-                Notes (optional)
-              </label>
-              <textarea
-                rows={2}
-                placeholder="e.g. Batch specific notes or additional instructions..."
-                value={vaccineNotes}
-                onChange={e => setVaccineNotes(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
-              />
-            </div>
+            <button
+              type="button"
+              onClick={addVaccination}
+              className="w-full py-3 rounded-2xl border border-dashed border-[#0D5C3A]/40 text-sm font-semibold text-[#0D5C3A] hover:bg-[#EAF5EF] transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
+            >
+              <Plus size={16} /> Add another vaccination
+            </button>
           </div>
 
           <div className="flex justify-between pt-4 border-t border-stone-100">
@@ -570,17 +674,41 @@ export function CreateBatchPage() {
                 <span className="text-stone-400 block font-medium">Initial Age</span>
                 <span className="text-stone-900 font-semibold">{ageValue} {ageUnit}</span>
               </div>
+              <div>
+                <span className="text-stone-400 block font-medium">Pen</span>
+                <span className="text-stone-900 font-semibold">{selectedPen?.name || housing.trim() || 'Not set'}</span>
+              </div>
+              <div>
+                <span className="text-stone-400 block font-medium">Cost of Birds</span>
+                <span className="text-stone-900 font-semibold">
+                  {Number(purchaseCost) > 0 ? `₦${Number(purchaseCost).toLocaleString()}` : 'Not set'}
+                </span>
+              </div>
             </div>
 
-            {addVaccine && (
-              <div className="pt-3 border-t border-stone-200 text-xs">
-                <span className="text-stone-400 block font-medium mb-1">Vaccination Schedule</span>
-                <div className="flex items-center justify-between font-semibold text-stone-900 bg-white p-2.5 rounded-xl border border-stone-200">
-                  <span className="inline-flex items-center gap-1.5"><Syringe size={13} strokeWidth={2.5} className="text-stone-500" />{vaccineName}</span>
-                  <span>Date: {vaccineDate} ({reminderTiming})</span>
-                </div>
-              </div>
-            )}
+            <div className="pt-3 border-t border-stone-200 text-xs space-y-2">
+              <span className="text-stone-400 block font-medium">
+                Vaccination Schedule ({plannedVaccinations.length})
+              </span>
+              {plannedVaccinations.length === 0 ? (
+                <p className="text-stone-500">None planned.</p>
+              ) : (
+                plannedVaccinations.map((r) => (
+                  <div key={r.key} className="flex items-center justify-between gap-3 font-semibold text-stone-900 bg-white p-2.5 rounded-xl border border-stone-200">
+                    <span className="inline-flex items-center gap-1.5 min-w-0">
+                      <Syringe size={13} strokeWidth={2.5} className="text-stone-500 shrink-0" />
+                      <span className="truncate">{vaccineNameOf(r)}{r.doseNumber ? ` · ${r.doseNumber}` : ''}</span>
+                    </span>
+                    <span className="shrink-0 text-stone-600">{r.dueDate}</span>
+                  </div>
+                ))
+              )}
+              {plannedVaccinations.length > 0 && (
+                <p className="text-[11px] text-stone-500 inline-flex items-center gap-1.5">
+                  <Bell size={12} /> Reminder email 3 days before each one and on the day.
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="flex justify-between pt-4 border-t border-stone-100">

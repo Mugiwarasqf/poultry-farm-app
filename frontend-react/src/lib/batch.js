@@ -5,43 +5,98 @@
 // one of the photos is swapped the two pages silently drift apart.
 
 /**
- * Bird types a farmer can pick when creating a batch. One list, shared by the
- * create form and every filter, so adding a type here adds it everywhere.
- * Only layers get egg tracking — eggs are logged in 30-egg crates, which is
- * how chicken eggs are sold, not duck or quail eggs.
+ * What a bird type is raised for. This drives two things: whether egg
+ * logging is offered, and how production performance is judged
+ * (lib/performance.js) — so a type the farmer adds themselves gets sensible
+ * tracking without any code change.
+ */
+export const BIRD_PURPOSES = [
+  { value: 'eggs', label: 'Eggs', description: 'Kept for egg production' },
+  { value: 'meat', label: 'Meat', description: 'Raised to be sold for meat' },
+  { value: 'dual', label: 'Eggs and meat', description: 'Lays eggs and is sold for meat' },
+  { value: 'other', label: 'Other', description: 'Breeding, show, pets or growing on' },
+];
+
+/**
+ * Built-in bird types. The farm can add its own on top (Settings → Farm
+ * Details); those are registered below with setCustomBirdTypes.
  */
 export const BIRD_TYPES = [
-  { value: 'layer', label: 'Layer', laysEggs: true },
-  { value: 'broiler', label: 'Broiler' },
-  { value: 'cockerel', label: 'Cockerel' },
-  { value: 'noiler', label: 'Noiler' },
-  { value: 'turkey', label: 'Turkey' },
-  { value: 'duck', label: 'Duck' },
-  { value: 'guinea_fowl', label: 'Guinea Fowl' },
-  { value: 'quail', label: 'Quail' },
+  { value: 'layer', label: 'Layer', purpose: 'eggs' },
+  { value: 'broiler', label: 'Broiler', purpose: 'meat' },
+  { value: 'cockerel', label: 'Cockerel', purpose: 'meat' },
+  { value: 'noiler', label: 'Noiler', purpose: 'dual' },
+  { value: 'turkey', label: 'Turkey', purpose: 'meat' },
+  { value: 'duck', label: 'Duck', purpose: 'meat' },
+  { value: 'guinea_fowl', label: 'Guinea Fowl', purpose: 'meat' },
+  { value: 'quail', label: 'Quail', purpose: 'eggs' },
 ];
 
 // "chick" was offered before the list above existed. Batches created with it
 // still need a readable label and a filter entry, but it is no longer offered
 // on the create form.
-const LEGACY_TYPES = [{ value: 'chick', label: 'Chick' }];
+const LEGACY_TYPES = [{ value: 'chick', label: 'Chick', purpose: 'other' }];
 
-export function birdTypeLabel(type) {
+// The farm's own bird types ({ id, label, purpose }), set by AuthContext
+// whenever the farm profile loads or changes. Kept here so every helper
+// below understands custom types without each caller passing them in.
+let customBirdTypes = [];
+
+export function setCustomBirdTypes(list) {
+  customBirdTypes = Array.isArray(list)
+    ? list.map((t) => ({ value: t.id, label: t.label, purpose: t.purpose, custom: true }))
+    : [];
+}
+
+/** Every type a batch can be created with: built-in first, then the farm's own. */
+export function allBirdTypes() {
+  return [...BIRD_TYPES, ...customBirdTypes.filter((c) => !BIRD_TYPES.some((b) => b.value === c.value))];
+}
+
+function findType(type) {
   const key = (type || '').toLowerCase();
-  const match = [...BIRD_TYPES, ...LEGACY_TYPES].find((t) => t.value === key);
-  return match ? match.label : type || 'Other';
+  return [...allBirdTypes(), ...LEGACY_TYPES].find((t) => t.value === key) || null;
 }
 
+/** "guinea_fowl" → "Guinea Fowl"; unknown ids are made readable rather than shown raw. */
+export function birdTypeLabel(type) {
+  const match = findType(type);
+  if (match) return match.label;
+  if (!type) return 'Other';
+  return String(type).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** 'eggs' | 'meat' | 'dual' | 'other' */
+export function birdPurpose(type) {
+  return findType(type)?.purpose || 'other';
+}
+
+/** Egg logging is offered for anything kept (at least partly) for eggs. */
 export function laysEggs(type) {
-  return (type || '').toLowerCase() === 'layer';
+  const purpose = birdPurpose(type);
+  return purpose === 'eggs' || purpose === 'dual';
 }
 
-/** Filter options for list pages: "All Types" + every type, legacy included. */
-export const TYPE_FILTER_OPTIONS = [
-  { value: 'all', label: 'All Types' },
-  ...BIRD_TYPES.map(({ value, label }) => ({ value, label })),
-  ...LEGACY_TYPES,
-];
+/** Turns a new type's name into its id: "Pigeon (racing)" → "pigeon_racing". */
+export function birdTypeId(label) {
+  return String(label || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 40);
+}
+
+/** Filter options for list pages: "All Types" + every type, custom and legacy included. */
+export function typeFilterOptions() {
+  return [
+    { value: 'all', label: 'All Types' },
+    ...allBirdTypes().map(({ value, label }) => ({ value, label })),
+    ...LEGACY_TYPES.map(({ value, label }) => ({ value, label })),
+  ];
+}
+
+/** @deprecated use typeFilterOptions(), which includes the farm's own types. */
+export const TYPE_FILTER_OPTIONS = typeFilterOptions();
 
 // Real bird images from public/birds/. Types without their own photo (turkey,
 // duck, etc.) fall back to `default` until one is added.

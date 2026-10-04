@@ -20,8 +20,17 @@ import {
   Package,
   FileText,
   Download,
+  Flag,
+  RotateCcw,
+  Stethoscope,
 } from 'lucide-react';
 import { useBatches } from '../context/BatchContext';
+import { useAuth } from '../context/AuthContext';
+import { CompleteBatchModal } from '../components/ui/CompleteBatchModal';
+import { SickBayTab } from '../components/sickbay/SickBayTab';
+import { assessPerformance, RATING_STYLES } from '../lib/performance';
+import { penForBatch } from '../lib/pens';
+import { batchAgeWeeks } from '../lib/feeds';
 import { getLogs, createLog } from '../api/logs';
 import { QUEUED_SAVE_MESSAGE } from '../lib/offlineQueue';
 import { getSchedule } from '../api/schedule';
@@ -37,7 +46,7 @@ import { DeleteBatchModal } from '../components/ui/DeleteBatchModal';
 import { useToast } from '../components/ui/Toast';
 import { PillIcon } from '../components/ui/PillIcon';
 import { BirdIcon } from '../components/ui/BirdIcon';
-import { EGGS_PER_CRATE, FEED_BAG_KG, batchAge, batchImage, computeFCR, daysActive, feedBags, formatBags, formatCrates, formatDate, typePillClass, birdTypeLabel, laysEggs } from '../lib/batch';
+import { EGGS_PER_CRATE, FEED_BAG_KG, batchAge, batchImage, computeFCR, daysActive, feedBags, formatBags, formatCrates, formatDate, typePillClass, birdTypeLabel, birdPurpose, laysEggs } from '../lib/batch';
 import { downloadTableReport } from '../lib/report';
 import { FeedUsageModal } from '../components/ui/FeedUsageModal';
 import { FeedPurchaseModal } from '../components/ui/FeedPurchaseModal';
@@ -48,7 +57,9 @@ const TABS = [
   { id: 'feed', label: 'Feed Record' },
   { id: 'vaccines', label: 'Vaccination' },
   { id: 'multivitamins', label: 'Vitamins' },
-  { id: 'mortality', label: 'Bird Lost' },
+  { id: 'sickbay', label: 'Sick Bay' },
+  { id: 'mortality', label: 'Mortality' },
+  { id: 'weight', label: 'Weight' },
 ];
 
 function HeaderStat({ icon: Icon, label, value }) {
@@ -143,7 +154,8 @@ function QuickAction({ icon: Icon, label, onClick }) {
 export function BatchDetailPage() {
   const { batchId } = useParams();
   const navigate = useNavigate();
-  const { batches, selectBatch, deleteBatch } = useBatches();
+  const { batches, selectBatch, deleteBatch, updateBatch } = useBatches();
+  const { farm } = useAuth();
   const toast = useToast();
 
   const batch = batches.find(b => b.batchId === batchId) || null;
@@ -151,6 +163,9 @@ export function BatchDetailPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  // Bumped by the "Isolate Birds" quick action to open the sick bay form.
+  const [sickBaySignal, setSickBaySignal] = useState(0);
 
   // Batch specific logs state
   const [mortalityLogs, setMortalityLogs] = useState([]);
@@ -241,6 +256,34 @@ export function BatchDetailPage() {
   // lib/batch.js's computeFCR for why, and the approximation it makes.
   const fcr = computeFCR(feedLogs, weightLogs, currentBirds);
 
+  // Weigh-ins oldest → newest, each with its change from the one before.
+  const weightHistory = [...weightLogs]
+    .filter((w) => w.date && Number(w.averageWeightKg) > 0)
+    .sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.createdAt || '').localeCompare(b.createdAt || ''))
+    .map((w, i, list) => ({
+      ...w,
+      change: i === 0 ? null : Number(w.averageWeightKg) - Number(list[i - 1].averageWeightKg),
+    }));
+  const firstWeight = weightHistory[0];
+  const latestWeight = weightHistory[weightHistory.length - 1];
+  const weightGain = weightHistory.length > 1 ? Number(latestWeight.averageWeightKg) - Number(firstWeight.averageWeightKg) : null;
+  const formatKg = (kg) => `${Math.round(Number(kg) * 1000) / 1000} kg`;
+
+  // Feed conversion ratio as shown everywhere on this page: the value, or
+  // the actual reason it can't be worked out yet.
+  const fcrValue = fcr != null ? `${fcr} : 1` : '-';
+  const fcrNote =
+    fcr != null
+      ? 'kg of feed per kg of weight gained'
+      : weightHistory.length < 2
+      ? 'Log 2 weigh-ins in the Weight tab'
+      : !(weightGain > 0)
+      ? 'Birds have not gained weight between weigh-ins'
+      : feedLogs.length === 0
+      ? 'Record feed usage to work it out'
+      : 'Not enough data yet';
+  const formatChange = (kg) => `${kg > 0 ? '+' : kg < 0 ? '−' : ''}${formatKg(Math.abs(kg))}`;
+
   // Handlers for logging
   const handleLogMortality = async (e) => {
     e.preventDefault();
@@ -274,7 +317,7 @@ export function BatchDetailPage() {
   const handleLogEggs = async (e) => {
     e.preventDefault();
     const batchType = (batch?.type || '').toLowerCase();
-    if (!laysEggs(batchType)) return toast('Only Layer batches produce eggs', 'error');
+    if (!laysEggs(batchType)) return toast(`Egg logging isn't set up for ${birdTypeLabel(batchType)} batches`, 'error');
     if (!eggCrates && !looseEggs) return toast('Enter crates or loose eggs', 'error');
     try {
       const payload = {
@@ -358,10 +401,36 @@ export function BatchDetailPage() {
     navigate('/dashboard');
   };
 
+  const handleCompleteBatch = async (updates) => {
+    await updateBatch(batchId, updates);
+    toast(`${batch.name} is complete. You'll find it in History.`, 'success');
+  };
+
+  const handleReopen = async () => {
+    try {
+      await updateBatch(batchId, { status: 'active' });
+      toast(`${batch.name} is active again`, 'success');
+    } catch (err) {
+      toast(err.message || 'Could not reopen the batch', 'error');
+    }
+  };
+
+  // A sick-bay death is written to mortality; pull the list again so the
+  // bird counts on this page update.
+  const refreshMortality = async () => {
+    try {
+      const res = await getLogs(batchId, 'mortality');
+      setMortalityLogs(res?.logs || res?.entries || []);
+    } catch {
+      // Next page load will pick it up.
+    }
+  };
+
   const batchType = (batch?.type || '').toLowerCase();
   const isLayer = laysEggs(batchType);
+  const purpose = birdPurpose(batchType);
+  const batchPen = penForBatch(batch, farm?.pens || []);
 
-  const birdsSold = Math.max(0, (batch.birdCount || 0) - totalMortality);
   const totalEggs = eggLogs.reduce((sum, e) => sum + (Number(e.crates) || 0) * EGGS_PER_CRATE + (Number(e.looseEggs) || 0), 0);
   const totalFeedCost = feedLogs.reduce((sum, e) => sum + (Number(e.costNaira) || 0), 0);
   const closedDays = daysActive(batch.startDate, batch.closedAt);
@@ -413,7 +482,8 @@ export function BatchDetailPage() {
   // Every log type merged for the Daily Logs tab, newest first.
   const dailyLogs = [
     ...feedLogs.map((e) => ({ date: e.date, kind: 'Feed logged', detail: `${e.feedType || 'Feed'} - ${formatBags(feedBags(e))}`, icon: Wheat })),
-    ...mortalityLogs.map((e) => ({ date: e.date, kind: 'Bird loss recorded', detail: `${Number(e.count) || 0} birds${e.note ? ` (${e.note})` : ''}`, icon: TrendingDown })),
+    ...mortalityLogs.map((e) => ({ date: e.date, kind: 'Mortality recorded', detail: `${Number(e.count) || 0} birds${e.note ? ` (${e.note})` : ''}`, icon: TrendingDown })),
+    ...weightHistory.map((w) => ({ date: w.date, kind: 'Weight recorded', detail: `${formatKg(w.averageWeightKg)} average${w.sampleSize ? ` (${w.sampleSize} birds weighed)` : ''}`, icon: Scale })),
     ...eggLogs.map((e) => ({ date: e.date, kind: 'Eggs recorded', detail: `${Number(e.crates) || 0} crates, ${Number(e.looseEggs) || 0} loose`, icon: Egg })),
     ...multivitaminLogs.map((m) => ({ date: m.date, kind: `${findSupplementType(m.type)?.label || 'Vitamin'} given`, detail: [m.product, describeDose(m)].filter(Boolean).join(' - '), icon: PillIcon })),
     ...vaccinationHistory.map((v) => ({ date: v.date, kind: 'Vaccination given', detail: [v.vaccineName, v.doseNumber, ROUTES[v.route]?.label].filter(Boolean).join(' - '), icon: Syringe })),
@@ -423,6 +493,26 @@ export function BatchDetailPage() {
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const closed = batch.status === 'closed';
+
+  // Performance, judged by what this bird type is raised for (lib/performance.js).
+  const vaccineCost = vaccRecords.reduce((sum, r) => sum + (Number(r.costNaira) || 0), 0);
+  const supplementCost = multivitaminLogs.reduce((sum, m) => sum + (Number(m.costNaira) || 0), 0);
+  const costs = {
+    birds: Number(batch.purchaseCostNaira) || 0,
+    feed: totalFeedCost,
+    vaccines: vaccineCost,
+    supplements: supplementCost,
+  };
+  const performance = assessPerformance({
+    purpose,
+    batch,
+    eggLogs,
+    currentBirds,
+    fcr,
+    ageWeeks: batchAgeWeeks(batch),
+    costs,
+  });
+  const ratingStyle = RATING_STYLES[performance.rating];
   const safeName = (batch.name || 'batch').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
 
   // Each tab exports the rows it is showing, so the file always matches what
@@ -444,7 +534,7 @@ export function BatchDetailPage() {
           ['Age', batchAge(batch)],
           ['Total birds placed', Number(batch.birdCount || 0).toLocaleString()],
           ['Birds remaining', currentBirds.toLocaleString()],
-          ['Birds lost', totalMortality.toLocaleString()],
+          ['Mortality', `${totalMortality.toLocaleString()} birds`],
           ['Days active', activeDays == null ? '-' : activeDays],
           ['Total feed used', formatBags(totalFeedBags)],
           ['Total feed cost (NGN)', totalFeedCost.toLocaleString()],
@@ -526,13 +616,28 @@ export function BatchDetailPage() {
       }),
     },
     mortality: {
-      title: 'Download Bird Loss Report',
-      subtitle: 'Every bird loss recorded for this batch',
+      title: 'Download Mortality Report',
+      subtitle: 'Every death recorded for this batch',
       build: () => ({
-        heading: 'Bird Losses',
-        filename: safeName + '-bird-loss.pdf',
-        headers: ['Date', 'Birds lost', 'Cause'],
+        heading: 'Mortality',
+        filename: safeName + '-mortality.pdf',
+        headers: ['Date', 'Birds died', 'Cause'],
         rows: mortalityLogs.map((m) => [formatDate(m.date), m.count || 0, m.note || '']),
+      }),
+    },
+    weight: {
+      title: 'Download Weight Report',
+      subtitle: 'Every weigh-in recorded for this batch',
+      build: () => ({
+        heading: 'Bird Weight',
+        filename: safeName + '-weight.pdf',
+        headers: ['Date', 'Average weight', 'Change', 'Birds weighed'],
+        rows: [...weightHistory].reverse().map((w) => [
+          formatDate(w.date),
+          formatKg(w.averageWeightKg),
+          w.change == null ? 'First weigh-in' : formatChange(w.change),
+          w.sampleSize ? Number(w.sampleSize).toLocaleString() : '-',
+        ]),
       }),
     },
   };
@@ -592,7 +697,7 @@ export function BatchDetailPage() {
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <MapPin size={13} strokeWidth={2.5} className="text-stone-500" />
-                    {batch.housing || 'No house recorded'}
+                    {batchPen?.name || batch.housing || 'No pen recorded'}
                   </span>
                 </div>
               </div>
@@ -611,6 +716,23 @@ export function BatchDetailPage() {
                 {closed && <CheckCircle2 size={12} strokeWidth={3} />}
                 {closed ? 'Completed' : 'Active'}
               </span>
+              {closed ? (
+                <button
+                  type="button"
+                  onClick={handleReopen}
+                  className="h-8 px-3 rounded-lg border border-stone-200 text-xs font-semibold text-stone-700 hover:bg-stone-50 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <RotateCcw size={13} strokeWidth={2.5} /> Reopen
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowCompleteModal(true)}
+                  className="h-8 px-3 rounded-lg bg-[#0D5C3A] hover:bg-[#094229] text-xs font-semibold text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                >
+                  <Flag size={13} strokeWidth={2.5} /> Complete Batch
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(true)}
@@ -624,7 +746,11 @@ export function BatchDetailPage() {
 
             <div className="grid grid-cols-3 sm:flex items-stretch divide-x divide-stone-200">
               <HeaderStat icon={BirdIcon} label="Total Birds" value={Number(batch.birdCount || 0).toLocaleString()} />
-              <HeaderStat icon={ShoppingCart} label="Birds Sold" value={birdsSold.toLocaleString()} />
+              {closed && batch.birdsSold != null ? (
+                <HeaderStat icon={ShoppingCart} label="Birds Sold" value={Number(batch.birdsSold).toLocaleString()} />
+              ) : (
+                <HeaderStat icon={BirdIcon} label="Birds Alive" value={currentBirds.toLocaleString()} />
+              )}
               <HeaderStat icon={Clock} label="Days Active" value={activeDays == null ? '-' : activeDays + ' days'} />
             </div>
           </div>
@@ -665,10 +791,16 @@ export function BatchDetailPage() {
             <>
               <div className="bg-white rounded-xl shadow-sm p-5">
                 <h2 className="text-base font-bold text-stone-950 font-heading mb-4">Batch Summary</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                  <SummaryTile
+                    icon={Percent}
+                    label="Feed Conversion Ratio"
+                    value={fcrValue}
+                    hint={`(${fcrNote})`}
+                  />
                   <SummaryTile
                     icon={TrendingDown}
-                    label="Birds Lost"
+                    label="Mortality"
                     value={totalMortality.toLocaleString()}
                     suffix={lossPercent == null ? null : '(' + lossPercent + '%)'}
                   />
@@ -676,7 +808,7 @@ export function BatchDetailPage() {
                     icon={Egg}
                     label="Average Egg Production"
                     value={avgEggsPerDay == null ? '-' : avgEggsPerDay.toLocaleString()}
-                    hint={isLayer ? '(Per day)' : '(Layer batches only)'}
+                    hint={isLayer ? '(Per day)' : '(Egg-laying birds only)'}
                   />
                   <SummaryTile
                     icon={Package}
@@ -686,35 +818,49 @@ export function BatchDetailPage() {
                   />
                 </div>
               </div>
-
               <div className="bg-white rounded-xl shadow-sm p-5">
-                <h2 className="text-base font-bold text-stone-950 font-heading mb-4">Production Performance</h2>
-                <div className="rounded-xl bg-stone-50 border border-stone-100 p-5 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-white border border-stone-200 flex items-center justify-center shrink-0">
-                    <TrendingUp size={20} strokeWidth={2.5} className="text-emerald-700" />
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                  <div>
+                    <h2 className="text-base font-bold text-stone-950 font-heading">Production Performance</h2>
+                    <p className="text-xs text-stone-500 mt-0.5">
+                      Based on: <span className="font-semibold text-stone-700">{performance.basis}</span>
+                      {' · '}{birdTypeLabel(batchType)} batches are raised for {purpose === 'dual' ? 'eggs and meat' : purpose === 'other' ? 'other purposes' : purpose}
+                    </p>
                   </div>
-                  <div className="min-w-0">
-                    {totalEggs > 0 || totalFeedBags > 0 ? (
-                      <>
-                        <div className="text-sm font-semibold text-emerald-800">
-                          {lossPercent != null && lossPercent <= 5 ? 'Good performance overall' : 'Performance summary'}
-                        </div>
-                        <div className="text-xs text-stone-500 mt-0.5">
-                          {totalEggs > 0 && totalEggs.toLocaleString() + ' eggs collected'}
-                          {totalEggs > 0 && totalFeedBags > 0 && ' - '}
-                          {totalFeedBags > 0 && formatBags(totalFeedBags) + ' of feed used'}
-                          {lossPercent != null && ' - ' + lossPercent + '% loss rate'}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-sm font-semibold text-stone-800">No production data yet</div>
-                        <div className="text-xs text-stone-500 mt-0.5">
-                          Record feed, eggs or bird losses and this fills in automatically.
-                        </div>
-                      </>
-                    )}
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold border shrink-0 ${ratingStyle.pill}`}>
+                    {ratingStyle.label}
+                  </span>
+                </div>
+
+                <div className="rounded-xl bg-stone-50 border border-stone-100 p-4 sm:p-5 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <span className={`mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 ${ratingStyle.bar}`} aria-hidden="true" />
+                    <div className="min-w-0">
+                      <div className="text-base font-bold text-stone-950 font-heading">{performance.headline}</div>
+                      <p className="text-xs text-stone-500 mt-1 leading-relaxed">{performance.detail}</p>
+                    </div>
                   </div>
+
+                  {performance.metrics.length > 0 && (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+                      {performance.metrics.map((m) => (
+                        <div key={m.label} className="rounded-lg bg-white border border-stone-200 px-3 py-2.5 min-w-0">
+                          <div className="text-[11px] text-stone-500 truncate">{m.label}</div>
+                          <div className="text-sm font-bold text-stone-950 mt-0.5 truncate">{m.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {(purpose === 'meat' || purpose === 'dual') && !closed && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCompleteModal(true)}
+                      className="text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
+                    >
+                      Sold the birds? Complete the batch to record sales and see profit.
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -726,7 +872,7 @@ export function BatchDetailPage() {
                     label="Peak egg production (if applicable)"
                     value={peakEggDay == null ? '-' : peakEggDay.toLocaleString() + ' eggs'}
                   />
-                  <InsightRow icon={Percent} label="Feed conversion ratio" value={fcr != null ? `${fcr} : 1` : 'Log 2+ weight samples'} />
+                  <InsightRow icon={Percent} label="Feed conversion ratio" sub={fcrNote} value={fcrValue} />
                   <InsightRow
                     icon={Wheat}
                     label="Total feed used"
@@ -942,20 +1088,30 @@ export function BatchDetailPage() {
             </div>
           )}
 
+          {activeTab === 'sickbay' && (
+            <SickBayTab
+              batch={batch}
+              birdsAlive={currentBirds}
+              readOnly={closed}
+              onMortalityLogged={refreshMortality}
+              openSignal={sickBaySignal}
+            />
+          )}
+
           {activeTab === 'mortality' && (
             <div className="bg-white rounded-xl shadow-sm p-5">
               <div className="flex items-center justify-between gap-4 mb-2">
-                <h2 className="text-base font-bold text-stone-950 font-heading">Bird Lost</h2>
+                <h2 className="text-base font-bold text-stone-950 font-heading">Mortality</h2>
                 <button
                   type="button"
                   onClick={() => setLogModal('mortality')}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
                 >
-                  <Plus size={14} strokeWidth={2.5} /> Log Bird Lost
+                  <Plus size={14} strokeWidth={2.5} /> Log Mortality
                 </button>
               </div>
               {mortalityLogs.length === 0 ? (
-                <EmptyState icon={TrendingDown} title="No bird losses recorded for this batch." />
+                <EmptyState icon={TrendingDown} title="No mortality recorded for this batch." />
               ) : (
                 <div>
                   {mortalityLogs.map((entry, index) => (
@@ -971,6 +1127,75 @@ export function BatchDetailPage() {
               )}
             </div>
           )}
+
+          {activeTab === 'weight' && (
+            <>
+              <div className="bg-white rounded-xl shadow-sm p-5">
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <h2 className="text-base font-bold text-stone-950 font-heading">Weight Summary</h2>
+                  <button
+                    type="button"
+                    onClick={() => setLogModal('weight')}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
+                  >
+                    <Plus size={14} strokeWidth={2.5} /> Log Weight
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <SummaryTile
+                    icon={Scale}
+                    label="Latest average"
+                    value={latestWeight ? formatKg(latestWeight.averageWeightKg) : '-'}
+                    hint={latestWeight ? formatDate(latestWeight.date) : 'No weigh-ins yet'}
+                  />
+                  <SummaryTile
+                    icon={TrendingUp}
+                    label="Gain per bird"
+                    value={weightGain == null ? '-' : formatChange(weightGain)}
+                    hint={weightGain == null ? 'Needs 2 weigh-ins' : `Since ${formatDate(firstWeight.date)}`}
+                  />
+                  <SummaryTile
+                    icon={Percent}
+                    label="Feed conversion"
+                    value={fcrValue}
+                    hint={fcrNote}
+                  />
+                  <SummaryTile
+                    icon={BirdIcon}
+                    label="Weigh-ins"
+                    value={weightHistory.length}
+                    hint={latestWeight?.sampleSize ? `Last: ${Number(latestWeight.sampleSize).toLocaleString()} birds weighed` : null}
+                  />
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm p-5">
+                <h2 className="text-base font-bold text-stone-950 font-heading mb-2">Weigh-ins</h2>
+                {weightHistory.length === 0 ? (
+                  <EmptyState
+                    icon={Scale}
+                    title="No weigh-ins recorded for this batch yet."
+                    description="Weigh a handful of birds, record the average, and repeat every week or two to track growth."
+                  />
+                ) : (
+                  <div>
+                    {[...weightHistory].reverse().map((w, index) => (
+                      <LogRow
+                        key={w.entryId || index}
+                        icon={Scale}
+                        primary={`${formatKg(w.averageWeightKg)} average`}
+                        secondary={[
+                          w.change == null ? 'First weigh-in' : `${formatChange(w.change)} since previous`,
+                          w.sampleSize ? `${Number(w.sampleSize).toLocaleString()} birds weighed` : null,
+                        ].filter(Boolean).join(' · ')}
+                        value={formatDate(w.date)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right column. Quick Actions sits at the top now that Recent
@@ -982,7 +1207,15 @@ export function BatchDetailPage() {
               <QuickAction icon={Wheat} label="Log Feed" onClick={() => setLogModal('feed')} />
               <QuickAction icon={PillIcon} label="Log Vitamin" onClick={() => setLogModal('multivitamin')} />
               <QuickAction icon={Syringe} label="Log Vaccination" onClick={() => openVaccination()} />
-              <QuickAction icon={BirdIcon} label="Log Bird Lost" onClick={() => setLogModal('mortality')} />
+              <QuickAction icon={BirdIcon} label="Log Mortality" onClick={() => setLogModal('mortality')} />
+              <QuickAction
+                icon={Stethoscope}
+                label="Isolate Sick Birds"
+                onClick={() => {
+                  setActiveTab('sickbay');
+                  setSickBaySignal((n) => n + 1);
+                }}
+              />
               {isLayer && <QuickAction icon={Egg} label="Log Eggs" onClick={() => setLogModal('eggs')} />}
               <QuickAction icon={Scale} label="Log Weight" onClick={() => setLogModal('weight')} />
             </div>
@@ -1027,7 +1260,7 @@ export function BatchDetailPage() {
       />
 
       {/* 2. Mortality Modal */}
-      <Modal open={logModal === 'mortality'} title={`Log Birds Lost for ${batch.name}`} onClose={() => setLogModal(null)}>
+      <Modal open={logModal === 'mortality'} title={`Log Mortality for ${batch.name}`} onClose={() => setLogModal(null)}>
         <form onSubmit={handleLogMortality} className="space-y-4">
           <div>
             <label className="text-xs font-bold text-neutral-800 block mb-1">Date</label>
@@ -1040,7 +1273,7 @@ export function BatchDetailPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-neutral-800 block mb-1">Birds Lost</label>
+            <label className="text-xs font-bold text-neutral-800 block mb-1">Number of Birds Died</label>
             <input
               type="number"
               min="1"
@@ -1174,6 +1407,17 @@ export function BatchDetailPage() {
         onSaved={setAllSupplements}
         defaultBatchId={batchId}
         events={healthEvents}
+      />
+
+      {/* Complete batch — records sales, closes the batch */}
+      <CompleteBatchModal
+        open={showCompleteModal}
+        onClose={() => setShowCompleteModal(false)}
+        batch={batch}
+        purpose={purpose}
+        birdsAlive={currentBirds}
+        otherCosts={costs.feed + costs.vaccines + costs.supplements}
+        onConfirm={handleCompleteBatch}
       />
 
       {/* Delete Batch Modal */}

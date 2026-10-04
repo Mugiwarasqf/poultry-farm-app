@@ -18,7 +18,7 @@ import {
 import { useBatches } from '../context/BatchContext';
 import { getLogs } from '../api/logs';
 import { BirdIcon } from '../components/ui/BirdIcon';
-import { EGGS_PER_CRATE, batchAge, batchImage, daysActive, formatDate, typePillClass, birdTypeLabel, TYPE_FILTER_OPTIONS, feedBags, formatBags } from '../lib/batch';
+import { EGGS_PER_CRATE, batchAge, batchImage, daysActive, formatDate, typePillClass, birdTypeLabel, typeFilterOptions, feedBags, formatBags } from '../lib/batch';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'All Statuses' },
@@ -328,7 +328,7 @@ export function BatchesPage() {
           />
         </div>
 
-        <Dropdown value={typeFilter} onChange={setTypeFilter} options={TYPE_FILTER_OPTIONS} ariaLabel="Filter by type" />
+        <Dropdown value={typeFilter} onChange={setTypeFilter} options={typeFilterOptions()} ariaLabel="Filter by type" />
         <Dropdown value={statusFilter} onChange={setStatusFilter} options={STATUS_FILTERS} ariaLabel="Filter by status" />
         <Dropdown value={sort} onChange={setSort} options={SORT_OPTIONS} ariaLabel="Sort batches" />
       </div>

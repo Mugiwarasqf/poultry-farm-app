@@ -186,3 +186,22 @@ resource "aws_dynamodb_table" "feed_purchases" {
     type = "S"
   }
 }
+
+# Sick birds isolated from a batch, one row per case. Updatable (a case is
+# closed with how many recovered and died), so keyed by caseId rather than
+# going through the append-only log pattern. See backend/src/handlers/sickBay.
+resource "aws_dynamodb_table" "sick_bay" {
+  name         = "${var.project_name}-${var.environment}-sick-bay"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "batchId"
+  range_key    = "caseId"
+
+  attribute {
+    name = "batchId"
+    type = "S"
+  }
+  attribute {
+    name = "caseId"
+    type = "S"
+  }
+}

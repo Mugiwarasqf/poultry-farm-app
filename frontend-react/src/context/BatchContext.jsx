@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { getBatches, createBatch as apiCreateBatch, deleteBatch as apiDeleteBatch } from '../api/batches';
+import { getBatches, createBatch as apiCreateBatch, updateBatch as apiUpdateBatch, deleteBatch as apiDeleteBatch } from '../api/batches';
 import { useAuth } from './AuthContext';
 
 const BatchContext = createContext(null);
@@ -10,7 +10,11 @@ export function BatchProvider({ children }) {
   const [currentBatchId, setCurrentBatchId] = useState(
     localStorage.getItem('farmbook_batchid') || null
   );
-  const [loading, setLoading] = useState(false);
+  // True from the start when already signed in, for the same reason as
+  // farmLoading in AuthContext: otherwise the first render after a refresh
+  // sees no batches, decides setup isn't done, and redirects the farmer away
+  // from the page they were on.
+  const [loading, setLoading] = useState(isLoggedIn);
 
   const loadBatches = useCallback(async () => {
     if (!isLoggedIn) return;
@@ -49,6 +53,24 @@ export function BatchProvider({ children }) {
     return result;
   }, [loadBatches, selectBatch]);
 
+  /**
+   * PATCH a batch, then mirror the change locally. Closing a batch also
+   * stamps closedAt here so the page updates straight away (the server sets
+   * its own closedAt; the next load replaces this one).
+   */
+  const updateBatch = useCallback(async (batchId, updates) => {
+    await apiUpdateBatch(batchId, updates);
+    setBatches((prev) =>
+      prev.map((b) => {
+        if (b.batchId !== batchId) return b;
+        const next = { ...b, ...updates };
+        if (updates.status === 'closed') next.closedAt = new Date().toISOString();
+        if (updates.status === 'active') delete next.closedAt;
+        return next;
+      })
+    );
+  }, []);
+
   const deleteBatch = useCallback(async (batchId) => {
     try {
       await apiDeleteBatch(batchId);
@@ -82,6 +104,7 @@ export function BatchProvider({ children }) {
     loading,
     selectBatch,
     createBatch,
+    updateBatch,
     deleteBatch,
     loadBatches,
   };

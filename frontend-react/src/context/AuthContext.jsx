@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect } from 'rea
 import { getTokens, setTokens, clearTokens } from '../api/client';
 import { requestOtp, verifyOtp } from '../api/auth';
 import { getFarm } from '../api/farms';
+import { setCustomBirdTypes } from '../lib/batch';
 
 const AuthContext = createContext(null);
 
@@ -13,7 +14,16 @@ export function AuthProvider({ children }) {
 
   // Farm Profile state from DynamoDB
   const [farm, setFarm] = useState(null);
-  const [farmLoading, setFarmLoading] = useState(false);
+
+  // Make the farm's own bird types known to every label / egg-logging /
+  // performance helper in lib/batch.js. Done during render (it only sets a
+  // module variable) so it's in place before any page reads it.
+  setCustomBirdTypes(farm?.birdTypes);
+  // Starts true for a returning (already signed-in) visitor. The fetch only
+  // begins after the first render, and if this started false the route guard
+  // in App.jsx would see "signed in, no farm yet" on that first render and
+  // redirect a page refresh away from wherever the farmer was.
+  const [farmLoading, setFarmLoading] = useState(Boolean(stored.idToken && stored.farmId));
 
   // OTP flow state
   const [otpSession, setOtpSession] = useState(null);

@@ -15,7 +15,8 @@ export function useFeedStock({ enabled = true } = {}) {
   const { batches } = useBatches();
   const [purchases, setPurchases] = useState([]);
   const [usage, setUsage] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // Starts loading when enabled so the first render shows skeletons, not zeros.
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {

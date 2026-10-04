@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { useBatches } from './context/BatchContext';
 import { AppShell } from './components/layout/AppShell';
+import { LoadingIndicator } from './components/ui/LoadingIndicator';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -13,6 +14,7 @@ import { HistoryPage } from './pages/HistoryPage';
 import { BatchHistoryDetailPage } from './pages/BatchHistoryDetailPage';
 import { InventoryPage } from './pages/InventoryPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 
 export default function App() {
   const { isLoggedIn, isOnboarded, farmLoading } = useAuth();
@@ -21,31 +23,8 @@ export default function App() {
   // Logged in but still loading farm profile or batches
   if (isLoggedIn && (farmLoading || batchesLoading)) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: '#FAFAF9',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: '12px',
-          color: '#6B7280',
-          fontFamily: 'Inter, sans-serif',
-        }}
-      >
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            border: '3px solid #E5E7EB',
-            borderTopColor: '#0D5C3A',
-            borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite',
-          }}
-        />
-        <span style={{ fontSize: 13, fontWeight: 600 }}>Loading your farm…</span>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
+        <LoadingIndicator size={56} label="Loading your farm" />
       </div>
     );
   }
@@ -140,6 +119,9 @@ export default function App() {
 
           {/* Settings — every section reuses the same two-column shell, so
               they share one component and differ only by :section. */}
+          {/* Notifications — the full list behind the header bell */}
+          <Route path="/notifications" element={<NotificationsPage />} />
+
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/:section" element={<SettingsPage />} />
         </Route>

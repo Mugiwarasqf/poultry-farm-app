@@ -62,7 +62,7 @@ and `CLAUDE.md` are the only files kept at the project root.
    The build plan turned into real code (31/08/2026): a modular Terraform
    stack (`infra/main.tf` wires together `infra/modules/dynamodb`, `s3`,
    `auth_triggers`, `cognito`, `api_lambdas`, `api_gateway`, and
-   `notifications` — Cognito, API Gateway, 15 Lambdas, 8 DynamoDB tables,
+   `notifications` — Cognito, API Gateway, 19 Lambdas, 11 DynamoDB tables,
    S3, daily EventBridge notification schedules) and its TypeScript Lambda
    source in `backend/`. `terraform validate` / `terraform plan` and `npm
    run build` all pass clean, but nothing has been `terraform apply`'d —

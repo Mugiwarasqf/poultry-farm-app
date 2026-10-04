@@ -2,7 +2,7 @@
 # matters here specifically to avoid a module-level cycle — see
 # modules/auth_triggers/main.tf's header comment for why the three
 # Cognito trigger Lambdas are their own module instead of living in
-# api_lambdas alongside the other 12:
+# api_lambdas alongside the other 16:
 #
 #   dynamodb, s3, ses, auth_triggers  (no dependencies, can build in any order —
 #            |                         auth_triggers needs ses's identity for

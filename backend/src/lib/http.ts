@@ -12,6 +12,8 @@ export const ok = (body: unknown) => json(200, body);
 export const created = (body: unknown) => json(201, body);
 export const badRequest = (message: string) => json(400, { error: message });
 export const notFound = (message: string) => json(404, { error: message });
+export const serverError = (message: string, extra?: Record<string, unknown>) =>
+  json(500, { error: message, ...(extra || {}) });
 
 /**
  * The farmId comes from the authenticated user's Cognito claims, never from

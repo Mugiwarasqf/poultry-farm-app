@@ -201,6 +201,38 @@ something a farmer asked for?
 
 ---
 
+## 7. Pens, custom bird types, Sick Bay, purpose-based performance (founder-directed, not interview-validated)
+
+Added October 2026 at the founder's request, alongside small fixes
+(Mortality wording on the batch page, a Complete Batch action, several
+vaccinations planned at batch creation, no batch delete from the
+dashboard).
+
+- **Pens:** the farm records how many pens/houses it has
+  (`Farm.pens: [{ id, name, capacity? }]`); a batch is placed in one
+  (`Batch.penId`), and Farm Details shows pens in use vs free.
+- **Custom bird types:** the farm can add its own types
+  (`Farm.birdTypes: [{ id, label, purpose }]`) beside the built-in list.
+  `purpose` is `eggs | meat | dual | other`.
+- **Purpose-based performance:** replaces the flat good/bad label.
+  - eggs: laying rate
+  - meat: profit and margin from the sales recorded when a batch is
+    completed (`Batch.birdsSold`, `salesRevenueNaira`, plus
+    `purchaseCostNaira`), and survival / feed conversion before then
+  - dual: both
+  - other: survival and cost per bird
+
+  Because it keys off purpose, any new type gets sensible tracking.
+- **Sick Bay:** sick birds isolated from a batch, tracked to recovery or
+  death (`SickBayCase`); deaths also go to MortalityLog.
+
+None of these came from the interviews. Recording bird sales does touch
+the "market/sales access" area listed as out of scope below, but only as
+the farmer's own record of what they sold, not buyer-facing features.
+Treat all of this as unvalidated, the same way as #6.
+
+---
+
 ## Explicitly out of scope for v1
 
 Insurance/compliance export, loan/credit documentation, voice-based data

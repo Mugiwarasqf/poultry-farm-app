@@ -36,6 +36,11 @@ output "functions" {
       arn        = aws_lambda_function.weight.arn
       invoke_arn = aws_lambda_function.weight.invoke_arn
     }
+    sick_bay = {
+      name       = aws_lambda_function.sick_bay.function_name
+      arn        = aws_lambda_function.sick_bay.arn
+      invoke_arn = aws_lambda_function.sick_bay.invoke_arn
+    }
     vaccinations = {
       name       = aws_lambda_function.vaccinations.function_name
       arn        = aws_lambda_function.vaccinations.arn

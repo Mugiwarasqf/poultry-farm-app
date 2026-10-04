@@ -7,7 +7,6 @@ import {
   Calendar,
   Clock,
   Pencil,
-  Trash2,
   Layers,
   Warehouse,
   Banknote,
@@ -21,8 +20,6 @@ import { useAuth } from '../context/AuthContext';
 import { useBatches } from '../context/BatchContext';
 import { getSummary } from '../api/summary';
 import { getLogs } from '../api/logs';
-import { DeleteBatchModal } from '../components/ui/DeleteBatchModal';
-import { useToast } from '../components/ui/Toast';
 // Bird imagery + the crate-to-egg factor are shared with History so the two
 // pages can't drift apart when a photo gets swapped.
 import { BATCH_IMAGES, EGGS_PER_CRATE, batchAge, birdTypeLabel, feedBags, formatBags } from '../lib/batch';
@@ -71,10 +68,8 @@ function ActivityIcon({ type }) {
 export function DashboardPage() {
   const navigate = useNavigate();
   const { farm, farmId } = useAuth();
-  const { batches, loading: batchesLoading, deleteBatch } = useBatches();
-  const toast = useToast();
+  const { batches, loading: batchesLoading } = useBatches();
   const [summary, setSummary] = useState(null);
-  const [deleteTargetBatch, setDeleteTargetBatch] = useState(null);
   const [activity, setActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [eggsPerDay, setEggsPerDay] = useState(0);
@@ -230,13 +225,6 @@ export function DashboardPage() {
     }
   };
 
-  const handleDeleteBatch = async (batchId) => {
-    const name = deleteTargetBatch?.name || 'Batch';
-    await deleteBatch(batchId);
-    toast(`Batch "${name}" was permanently deleted.`, 'success');
-    setDeleteTargetBatch(null);
-  };
-
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* 1. FARM PROFILE HEADER */}
@@ -367,20 +355,6 @@ export function DashboardPage() {
                           e.target.src = BATCH_IMAGES.default;
                         }}
                       />
-                      {/* Quick Delete Action */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteTargetBatch(batch);
-                        }}
-                        className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full bg-white/90 backdrop-blur-xs hover:bg-rose-50 text-stone-400 hover:text-rose-600 shadow-sm flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 max-sm:opacity-100 focus:opacity-100 cursor-pointer border border-stone-200/40"
-                        title={`Delete ${batch.name}`}
-                        aria-label={`Delete ${batch.name}`}
-                      >
-                        <Trash2 size={11} />
-                      </button>
-
                       {/* Bird Type Pill */}
                       <div className="absolute top-1.5 right-1.5">
                         {isLayer && (
@@ -490,13 +464,6 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Delete Batch Confirmation Modal */}
-      <DeleteBatchModal
-        open={!!deleteTargetBatch}
-        batch={deleteTargetBatch}
-        onClose={() => setDeleteTargetBatch(null)}
-        onConfirm={handleDeleteBatch}
-      />
     </div>
   );
 }
