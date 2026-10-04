@@ -33,9 +33,9 @@ variable "cognito_client_id" {
   type = string
 }
 
-variable "ses_identity_arn" {
-  description = "The ses module's verified sender identity ARN — scopes the notification Lambdas' ses:SendEmail permission."
-  type        = string
+variable "ses_identity_arns" {
+  description = "The ses module's send_identity_arns output — the domain identity (From address) plus every test recipient identity (sending TO a same-account identity needs its own grant too, not just the sender's). Scopes the notification Lambdas' ses:SendEmail permission."
+  type        = list(string)
 }
 
 variable "ses_sender_email" {

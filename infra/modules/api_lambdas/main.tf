@@ -60,7 +60,7 @@ data "aws_iam_policy_document" "dynamo_rw" {
 data "aws_iam_policy_document" "ses_send_email" {
   statement {
     actions   = ["ses:SendEmail", "ses:SendRawEmail"]
-    resources = [var.ses_identity_arn]
+    resources = var.ses_identity_arns
   }
 }
 

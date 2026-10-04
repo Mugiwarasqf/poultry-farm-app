@@ -1,5 +1,5 @@
 output "test_recipient_identity_arns" {
-  description = "Not used for the app's own SendEmail permission (see domain_identity_arn below for that) — only relevant if something needs to reference a test recipient identity directly. Keyed by email."
+  description = "Keyed by email. Also required for the app's SendEmail IAM permission (see send_identity_arns below) — SES checks resource-level authorization against the *destination* address too whenever that address is itself a registered identity in the same account, not just the sender."
   value       = { for email, identity in aws_ses_email_identity.test_recipient : email => identity.arn }
 }
 
@@ -9,8 +9,13 @@ output "sender_email" {
 }
 
 output "domain_identity_arn" {
-  description = "ARN covering any address @domain_name — this is what actually has to be granted ses:SendEmail (see infra/main.tf's module \"auth_triggers\"/\"api_lambdas\" calls), since sender_email isn't its own identity."
+  description = "ARN covering any address @domain_name, for sending FROM it."
   value       = aws_ses_domain_identity.domain.arn
+}
+
+output "send_identity_arns" {
+  description = "Every identity ARN the app's SendEmail IAM policy needs: the domain identity (for the From address) plus every test recipient identity (for sending TO them during sandbox testing — see test_recipient_identity_arns' description for why that's required too). Pass this whole list to auth_triggers/api_lambdas' ses_identity_arns, not domain_identity_arn alone."
+  value       = concat([aws_ses_domain_identity.domain.arn], values({ for email, identity in aws_ses_email_identity.test_recipient : email => identity.arn }))
 }
 
 output "domain_verification_record" {

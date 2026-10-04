@@ -56,11 +56,12 @@ module "auth_triggers" {
   environment  = var.environment
   backend_dist = local.backend_dist
 
-  # The domain identity's ARN, not a per-address one — sender_email
-  # (noreply@trackfarm.cc) isn't its own SES identity, it's authorized by
-  # the verified domain. See infra/modules/ses/main.tf's header comment.
-  ses_identity_arn = module.ses.domain_identity_arn
-  ses_sender_email = module.ses.sender_email
+  # The domain identity's ARN (for the From address) plus every test
+  # recipient's ARN (SES also checks resource-level authorization against
+  # the *destination* address whenever it's itself a same-account
+  # identity — see infra/modules/ses/outputs.tf's send_identity_arns).
+  ses_identity_arns = module.ses.send_identity_arns
+  ses_sender_email  = module.ses.sender_email
 
   suppressed_emails_table_name = module.dynamodb.table_names["suppressed_emails"]
   suppressed_emails_table_arn  = module.dynamodb.suppressed_emails_table_arn
@@ -94,9 +95,8 @@ module "api_lambdas" {
   cognito_user_pool_arn = module.cognito.user_pool_arn
   cognito_client_id     = module.cognito.client_id
 
-  # The domain identity's ARN, not a per-address one — same fix as the
-  # auth_triggers module call above.
-  ses_identity_arn     = module.ses.domain_identity_arn
+  # Same reasoning as the auth_triggers module call above.
+  ses_identity_arns    = module.ses.send_identity_arns
   ses_sender_email     = module.ses.sender_email
   ses_events_topic_arn = module.ses.events_topic_arn
 }
