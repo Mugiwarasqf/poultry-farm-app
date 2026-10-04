@@ -143,6 +143,7 @@ module "frontend" {
   # redeploy just to point at a new URL.
   api_base          = module.api_gateway.custom_domain_url
   cognito_client_id = module.cognito.client_id
+  cognito_region    = var.aws_region
 
   domain_name         = var.domain_name
   acm_certificate_arn = aws_acm_certificate_validation.frontend.certificate_arn

@@ -134,8 +134,9 @@ resource "aws_s3_object" "config" {
   # changing, so it needs the same revalidate-on-every-request treatment.
   cache_control = "no-cache"
   content = templatefile(var.config_template, {
-    api_base  = var.api_base
-    client_id = var.cognito_client_id
+    api_base       = var.api_base
+    client_id      = var.cognito_client_id
+    cognito_region = var.cognito_region
   })
 }
 
