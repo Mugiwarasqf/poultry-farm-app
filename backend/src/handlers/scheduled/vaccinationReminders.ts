@@ -3,6 +3,7 @@ import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
 import { ddb, tables } from "../../lib/dynamo";
 import { isSuppressed } from "../../lib/suppression";
+import { logger } from "../../lib/logger";
 
 const ses = new SESClient({});
 const SENDER_EMAIL = process.env.SES_SENDER_EMAIL!;
@@ -46,6 +47,10 @@ export const handler: ScheduledHandler = async () => {
     })
   );
 
+  let sent = 0;
+  let skippedSuppressed = 0;
+  let skippedNoFarmOrEmail = 0;
+
   for (const item of dueSoon.Items ?? []) {
     const batch = await ddb.send(
       new QueryCommand({
@@ -56,12 +61,24 @@ export const handler: ScheduledHandler = async () => {
       })
     );
     const farmId = batch.Items?.[0]?.farmId;
-    if (!farmId) continue;
+    if (!farmId) {
+      logger.warn("vaccination_reminder_skipped_no_farm", { batchId: item.batchId, scheduleId: item.scheduleId });
+      skippedNoFarmOrEmail++;
+      continue;
+    }
 
     const farm = await ddb.send(new GetCommand({ TableName: tables.farms, Key: { farmId } }));
     const email = farm.Item?.ownerEmail;
-    if (!email) continue;
-    if (await isSuppressed(email)) continue;
+    if (!email) {
+      logger.warn("vaccination_reminder_skipped_no_email", { farmId, batchId: item.batchId });
+      skippedNoFarmOrEmail++;
+      continue;
+    }
+    if (await isSuppressed(email)) {
+      logger.warn("vaccination_reminder_skipped_suppressed", { email, batchId: item.batchId });
+      skippedSuppressed++;
+      continue;
+    }
 
     const dueToday = item.dueDate === today;
     const message = dueToday
@@ -78,5 +95,15 @@ export const handler: ScheduledHandler = async () => {
         },
       })
     );
+    sent++;
   }
+
+  // The only way to confirm from CloudWatch alone that today's run actually
+  // found and acted on something, without needing a failure to look at.
+  logger.info("vaccination_reminders_run_complete", {
+    due: dueSoon.Items?.length ?? 0,
+    sent,
+    skippedSuppressed,
+    skippedNoFarmOrEmail,
+  });
 };

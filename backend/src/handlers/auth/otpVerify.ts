@@ -9,6 +9,7 @@ import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { ddb, tables } from "../../lib/dynamo";
 import { badRequest, json, ok } from "../../lib/http";
 import { newId } from "../../lib/ids";
+import { logger } from "../../lib/logger";
 
 const cognito = new CognitoIdentityProviderClient({});
 const CLIENT_ID = process.env.COGNITO_CLIENT_ID!;
@@ -42,6 +43,7 @@ export async function handler(event: APIGatewayProxyEventV2) {
     // with "Invalid session for the user" regardless of whether the code
     // entered that time is correct. (This was a real bug, not a comment
     // ahead of the code: the session was documented but never returned.)
+    logger.warn("otp_verify_incorrect_code", { email });
     return json(400, { error: "incorrect code", session: result.Session });
   }
 
@@ -54,6 +56,7 @@ export async function handler(event: APIGatewayProxyEventV2) {
 
   if (!existing.Item) {
     farmId = newId();
+    logger.info("new_user_provisioned", { userId, email, farmId });
     await ddb.send(
       new PutCommand({
         TableName: tables.farms,
@@ -92,6 +95,7 @@ export async function handler(event: APIGatewayProxyEventV2) {
     idToken = refreshed.AuthenticationResult!.IdToken!;
   }
 
+  logger.info("otp_verify_success", { userId, email, farmId, newUser: !existing.Item });
   return ok({
     idToken,
     accessToken: result.AuthenticationResult.AccessToken,

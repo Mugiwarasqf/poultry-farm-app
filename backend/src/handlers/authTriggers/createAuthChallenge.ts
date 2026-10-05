@@ -2,6 +2,7 @@ import type { CreateAuthChallengeTriggerHandler } from "aws-lambda";
 import { randomInt } from "node:crypto";
 import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
 import { isSuppressed } from "../../lib/suppression";
+import { logger } from "../../lib/logger";
 
 const ses = new SESClient({});
 const SENDER_EMAIL = process.env.SES_SENDER_EMAIL!;
@@ -33,7 +34,9 @@ export const handler: CreateAuthChallengeTriggerHandler = async (event) => {
   // outcome, since an address that permanently bounced or complained
   // can't be reached anyway, and re-sending to it would hurt the sending
   // domain's reputation for every real user. See lib/suppression.ts.
-  if (!(await isSuppressed(email))) {
+  if (await isSuppressed(email)) {
+    logger.warn("otp_send_skipped_suppressed", { email });
+  } else {
     await ses.send(
       new SendEmailCommand({
         Source: SENDER_EMAIL,
@@ -44,6 +47,7 @@ export const handler: CreateAuthChallengeTriggerHandler = async (event) => {
         },
       })
     );
+    logger.info("otp_sent", { email });
   }
 
   event.response.publicChallengeParameters = {};
