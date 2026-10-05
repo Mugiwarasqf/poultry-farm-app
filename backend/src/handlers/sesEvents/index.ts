@@ -15,13 +15,35 @@ export const handler: SNSHandler = async (event) => {
   for (const record of event.Records) {
     const message = JSON.parse(record.Sns.Message);
 
-    if (message.notificationType === "Bounce" && message.bounce?.bounceType === "Permanent") {
-      for (const recipient of message.bounce.bouncedRecipients ?? []) {
-        await suppress(recipient.emailAddress, "bounce");
+    if (message.notificationType === "Bounce") {
+      // Logged regardless of type/suppression outcome -- a Transient bounce
+      // was previously invisible (the handler just silently did nothing for
+      // it), which made "the send succeeded but nothing arrived" look like
+      // a mystery instead of what it actually was: a real rejection SES
+      // already knew about.
+      console.log("Bounce", JSON.stringify({
+        bounceType: message.bounce?.bounceType,
+        bounceSubType: message.bounce?.bounceSubType,
+        recipients: (message.bounce?.bouncedRecipients ?? []).map((r: any) => ({
+          email: r.emailAddress,
+          action: r.action,
+          status: r.status,
+          diagnosticCode: r.diagnosticCode,
+        })),
+      }));
+
+      if (message.bounce?.bounceType === "Permanent") {
+        for (const recipient of message.bounce.bouncedRecipients ?? []) {
+          await suppress(recipient.emailAddress, "bounce");
+        }
       }
     }
 
     if (message.notificationType === "Complaint") {
+      console.log("Complaint", JSON.stringify({
+        recipients: (message.complaint?.complainedRecipients ?? []).map((r: any) => r.emailAddress),
+        feedbackType: message.complaint?.complaintFeedbackType,
+      }));
       for (const recipient of message.complaint?.complainedRecipients ?? []) {
         await suppress(recipient.emailAddress, "complaint");
       }
