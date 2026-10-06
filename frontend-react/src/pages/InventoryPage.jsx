@@ -1,24 +1,18 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  ArrowLeft,
-  Wheat,
+  ChevronLeft,
   Plus,
-  Calendar,
   CheckCircle2,
   AlertTriangle,
   Clock,
-  Egg,
-  Package,
-  Banknote,
-  Syringe,
   ClipboardCheck,
   CircleMinus,
   CirclePlus,
   PackagePlus,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useBatches } from '../context/BatchContext';
-import { getLogs } from '../api/logs';
+import { LOGS_CHANGED_EVENT, getLogs } from '../api/logs';
 import { getSchedule } from '../api/schedule';
 import { getVaccinationRecords } from '../api/vaccinations';
 import { VaccinationModal } from '../components/ui/VaccinationModal';
@@ -34,6 +28,12 @@ import { FeedUsageModal } from '../components/ui/FeedUsageModal';
 import { useFeedStock } from '../lib/useFeedStock';
 import { formatNaira } from '../lib/feeds';
 import { eggCount, feedBags, formatBags, formatCrates, formatDate, laysEggs } from '../lib/batch';
+import { VaccineIcon } from '../components/ui/VaccineIcon';
+import { FeedIcon } from '../components/ui/FeedIcon';
+import { EggIcon } from '../components/ui/EggIcon';
+import { MoneyIcon } from '../components/ui/MoneyIcon';
+import { InventoryIcon } from '../components/ui/InventoryIcon';
+import { CalendarIcon } from '../components/ui/CalendarIcon';
 
 function StatCard({ icon: Icon, label, value, hint, loading = false }) {
   return (
@@ -98,67 +98,89 @@ export function InventoryPage() {
   const [showMultiModal, setShowMultiModal] = useState(false);
   const [calendarDate, setCalendarDate] = useState(() => toIso(new Date()));
 
-  // Load eggs and vaccinations across all batches (feed comes from useFeedStock)
-  useEffect(() => {
-    let cancelled = false;
-    async function loadAllInventory() {
-      if (batches.length === 0) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      try {
-        const schedPromises = batches.map(async b => {
-          try {
-            const res = await getSchedule(b.batchId);
-            return (res.schedule || []).map(s => ({ ...s, batchName: b.name }));
-          } catch {
-            return [];
-          }
-        });
-
-        // Every egg a layer batch records counts toward the farm's egg stock.
-        const eggPromises = batches.filter(b => laysEggs(b.type)).map(async b => {
-          try {
-            const res = await getLogs(b.batchId, 'eggs');
-            return (res.logs || []).map(log => ({ ...log, batchId: b.batchId, batchName: b.name }));
-          } catch {
-            return [];
-          }
-        });
-
-        const recordPromises = batches.map(async b => {
-          try {
-            const res = await getVaccinationRecords(b.batchId);
-            return (res.logs || []).map(r => ({ ...r, batchId: b.batchId, batchName: b.name }));
-          } catch {
-            return [];
-          }
-        });
-
-        const [schedsNested, eggsNested, recordsNested] = await Promise.all([
-          Promise.all(schedPromises),
-          Promise.all(eggPromises),
-          Promise.all(recordPromises),
-        ]);
-
-        if (!cancelled) {
-          const byDateDesc = (a, b) => (b.date || '').localeCompare(a.date || '');
-          const flatScheds = schedsNested.flat().sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
-          setAllEggLogs(eggsNested.flat().sort(byDateDesc));
-          setAllSchedules(flatScheds);
-          setAllVaccRecords(recordsNested.flat());
-        }
-      } catch (err) {
-        console.error('Inventory aggregate load error:', err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  // Load eggs and vaccinations across all batches (feed comes from useFeedStock).
+  // Only the first load shows skeletons; later refreshes (a log saved
+  // elsewhere, the tab coming back into view) swap the numbers in place.
+  // A request counter drops responses from refreshes that were overtaken.
+  const loadSeq = useRef(0);
+  const loadedOnce = useRef(false);
+  const loadAllInventory = useCallback(async () => {
+    const seq = ++loadSeq.current;
+    const isCurrent = () => seq === loadSeq.current;
+    if (batches.length === 0) {
+      setLoading(false);
+      return;
     }
+    if (!loadedOnce.current) setLoading(true);
+    try {
+      const schedPromises = batches.map(async b => {
+        try {
+          const res = await getSchedule(b.batchId);
+          return (res.schedule || []).map(s => ({ ...s, batchName: b.name }));
+        } catch {
+          return [];
+        }
+      });
 
-    loadAllInventory();
-    return () => { cancelled = true; };
+      // Every egg a layer batch records counts toward the farm's egg stock.
+      const eggPromises = batches.filter(b => laysEggs(b.type)).map(async b => {
+        try {
+          const res = await getLogs(b.batchId, 'eggs');
+          return (res.logs || []).map(log => ({ ...log, batchId: b.batchId, batchName: b.name }));
+        } catch {
+          return [];
+        }
+      });
+
+      const recordPromises = batches.map(async b => {
+        try {
+          const res = await getVaccinationRecords(b.batchId);
+          return (res.logs || []).map(r => ({ ...r, batchId: b.batchId, batchName: b.name }));
+        } catch {
+          return [];
+        }
+      });
+
+      const [schedsNested, eggsNested, recordsNested] = await Promise.all([
+        Promise.all(schedPromises),
+        Promise.all(eggPromises),
+        Promise.all(recordPromises),
+      ]);
+
+      if (isCurrent()) {
+        const byDateDesc = (a, b) => (b.date || '').localeCompare(a.date || '');
+        const flatScheds = schedsNested.flat().sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+        setAllEggLogs(eggsNested.flat().sort(byDateDesc));
+        setAllSchedules(flatScheds);
+        setAllVaccRecords(recordsNested.flat());
+        loadedOnce.current = true;
+      }
+    } catch (err) {
+      console.error('Inventory aggregate load error:', err);
+    } finally {
+      if (isCurrent()) setLoading(false);
+    }
   }, [batches]);
+
+  useEffect(() => {
+    loadAllInventory();
+    // Bumping the counter on unmount drops any response still in flight.
+    return () => { loadSeq.current += 1; };
+  }, [loadAllInventory]);
+
+  // Refresh when a log is saved anywhere in the app, or when the farmer
+  // comes back to this tab.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') loadAllInventory();
+    };
+    window.addEventListener(LOGS_CHANGED_EVENT, loadAllInventory);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener(LOGS_CHANGED_EVENT, loadAllInventory);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [loadAllInventory]);
 
   const today = toIso(new Date());
   const thisMonth = today.slice(0, 7);
@@ -317,7 +339,7 @@ export function InventoryPage() {
           className="p-2 rounded-full hover:bg-stone-100 text-stone-600 hover:text-stone-950 transition-colors"
           aria-label="Back to home"
         >
-          <ArrowLeft size={20} />
+          <ChevronLeft size={20} />
         </Link>
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-950 font-heading">
@@ -358,7 +380,7 @@ export function InventoryPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3.5">
                 <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl text-[#0D5C3A] flex items-center justify-center shadow-2xs shrink-0">
-                  <Wheat size={22} />
+                  <FeedIcon size={22} />
                 </div>
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Feed Store</h3>
@@ -382,8 +404,8 @@ export function InventoryPage() {
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <StatCard loading={feedLoading} icon={Package} label="Bags in store" value={formatBags(bagsInStore)} hint={lowLines.length ? `${lowLines.length} running low` : 'Stock levels OK'} />
-              <StatCard loading={feedLoading} icon={Banknote} label="Store value" value={formatNaira(storeValue)} hint="At the price you paid" />
+              <StatCard loading={feedLoading} icon={InventoryIcon} label="Bags in store" value={formatBags(bagsInStore)} hint={lowLines.length ? `${lowLines.length} running low` : 'Stock levels OK'} />
+              <StatCard loading={feedLoading} icon={MoneyIcon} label="Store value" value={formatNaira(storeValue)} hint="At the price you paid" />
               <StatCard loading={feedLoading} icon={CircleMinus} label="Used this month" value={formatBags(bagsUsedThisMonth)} />
               <StatCard loading={feedLoading} icon={CirclePlus} label="Bought this month" value={formatNaira(spentThisMonth)} hint={formatBags(bagsBoughtThisMonth)} />
             </div>
@@ -532,7 +554,7 @@ export function InventoryPage() {
           <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex items-center gap-3.5">
               <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl  text-[#0D5C3A] flex items-center justify-center shadow-2xs shrink-0">
-                <Egg size={22} />
+                <EggIcon size={22} />
               </div>
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Egg Inventory</h3>
@@ -543,12 +565,12 @@ export function InventoryPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               <StatCard
                 loading={loading}
-                icon={Package}
+                icon={EggIcon}
                 label="Eggs in Inventory"
                 value={totalEggsStocked.toLocaleString()}
                 hint={formatCrates(totalEggsStocked)}
               />
-              <StatCard loading={loading} icon={Calendar} label="Collected This Month" value={eggsThisMonth.toLocaleString()} hint={formatCrates(eggsThisMonth)} />
+              <StatCard loading={loading} icon={CalendarIcon} label="Collected This Month" value={eggsThisMonth.toLocaleString()} hint={formatCrates(eggsThisMonth)} />
               <StatCard loading={loading} icon={Clock} label="Collected Today" value={eggsToday.toLocaleString()} hint={formatCrates(eggsToday)} />
             </div>
 
@@ -642,7 +664,7 @@ export function InventoryPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-4 rounded-2xl bg-[#EAF5EF]/70 border border-[#CFE8D9]">
                 <span className="text-xs font-bold text-[#0D472B] flex items-center gap-1.5">
-                  <Calendar size={15} className="text-[#0D5C3A]" /> Upcoming
+                  <CalendarIcon size={15} className="text-[#0D5C3A]" /> Upcoming
                 </span>
                 {loading ? <Skeleton className="h-8 sm:h-9 w-12 mt-1" /> : <span className="text-2xl sm:text-3xl font-extrabold text-[#0D472B] mt-1 block">{upcomingVaccines.length}</span>}
               </div>
@@ -676,7 +698,7 @@ export function InventoryPage() {
                     onClick={() => openVaccination({ mode: date > today ? 'schedule' : 'record', date })}
                     className="px-2.5 h-7 rounded-lg bg-[#0D5C3A] hover:bg-[#094229] text-white text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
                   >
-                    <Syringe size={12} /> Vaccine
+                    <VaccineIcon size={12} /> Vaccine
                   </button>
                   <button
                     type="button"
@@ -805,7 +827,7 @@ export function InventoryPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <StatCard icon={Clock} label="Running now" value={activeSupplements.length} hint={activeSupplements.map(s => s.product).slice(0, 3).join(', ') || 'No course running today'} />
-              <StatCard icon={Calendar} label="Given this month" value={supplementsThisMonth} />
+              <StatCard icon={CalendarIcon} label="Given this month" value={supplementsThisMonth} />
               <StatCard
                 icon={AlertTriangle}
                 label="Withdrawal in force"

@@ -1,10 +1,24 @@
 import { useState, useRef, useEffect } from 'react';
+import {
+  Menu,
+  User,
+  ChevronDown,
+  LogOut,
+  Clock,
+  RefreshCw,
+} from 'lucide-react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Menu, User, ChevronDown, Home, Layers, Package, History, Settings, LogOut, Clock, RefreshCw } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 import { useOfflineQueue } from '../../lib/useOfflineQueue';
+import { InventoryIcon } from '../ui/InventoryIcon';
+import { BatchIcon } from '../ui/BatchIcon';
+import { SettingsIcon } from '../ui/SettingsIcon';
+import { HistoryIcon } from '../ui/HistoryIcon';
+import { FarmIcon } from '../ui/FarmIcon';
+import { OfflineBanner } from '../pwa/OfflineBanner';
+import { UpdateBanner } from '../pwa/UpdateBanner';
 
 const VIEW_TITLES = {
   '/dashboard': 'Farm Overview',
@@ -73,7 +87,7 @@ export function AppShell() {
 
       <div className="flex-1 min-w-0 flex flex-col min-h-screen md:pl-60">
         {/* Top Header Bar with frosted glass blur */}
-        <header className="sticky top-0 z-30 h-16 bg-white/75 backdrop-blur-md border-b border-stone-200/50 px-4 sm:px-8 flex items-center justify-between gap-4 transition-all">
+        <header className="sticky top-0 z-30 min-h-16 pt-[env(safe-area-inset-top)] bg-white/75 backdrop-blur-md border-b border-stone-200/50 px-4 sm:px-8 flex items-center justify-between gap-4 transition-all">
           <div className="flex items-center gap-3 min-w-0">
             <button
               className="md:hidden p-2 -ml-2 text-stone-600 hover:text-stone-900 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer"
@@ -178,19 +192,21 @@ export function AppShell() {
           </div>
         </header>
 
+        <OfflineBanner />
+
         {/* Main Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 md:pb-10 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-10 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
 
         {/* Mobile Bottom Navigation Bar */}
-        <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-stone-200 px-4 py-2 flex items-center justify-around md:hidden shadow-lg">
+        <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-stone-200 px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around md:hidden shadow-lg">
           {[
-            { to: '/dashboard', icon: Home, label: 'Home' },
-            { to: '/batches', icon: Layers, label: 'Batches' },
-            { to: '/inventory', icon: Package, label: 'Inventory' },
-            { to: '/history', icon: History, label: 'History' },
-            { to: '/settings', icon: Settings, label: 'Settings' },
+            { to: '/dashboard', icon: FarmIcon, label: 'Home' },
+            { to: '/batches', icon: BatchIcon, label: 'Batches' },
+            { to: '/inventory', icon: InventoryIcon, label: 'Inventory' },
+            { to: '/history', icon: HistoryIcon, label: 'History' },
+            { to: '/settings', icon: SettingsIcon, label: 'Settings' },
           ].map((item) => {
             const Icon = item.icon;
             return (
@@ -209,6 +225,8 @@ export function AppShell() {
             );
           })}
         </nav>
+
+        <UpdateBanner />
       </div>
     </div>
   );

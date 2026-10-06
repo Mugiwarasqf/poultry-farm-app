@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Minus, Plus, Trash2, Warehouse } from 'lucide-react';
+import {
+  Check,
+  Minus,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useBatches } from '../../context/BatchContext';
 import { updateFarm } from '../../api/farms';
 import { useToast } from '../ui/Toast';
 import { SettingsCard, PrimaryButton } from './ui';
 import { newPenId, pensInUse } from '../../lib/pens';
+import { PenIcon } from '../ui/PenIcon';
 
 const MAX_PENS = 200;
 const INPUT =
@@ -149,7 +155,7 @@ export function FarmPensCard() {
             return (
               <li key={pen.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 py-3">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <Warehouse size={16} className="text-stone-400 shrink-0" aria-hidden="true" />
+                  <PenIcon size={16} className="text-stone-400 shrink-0" aria-hidden="true" />
                   <input
                     value={pen.name}
                     onChange={(e) => update(pen.id, 'name', e.target.value)}

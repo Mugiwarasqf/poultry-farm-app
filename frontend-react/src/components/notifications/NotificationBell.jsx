@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bell, CheckCheck } from 'lucide-react';
+import { CheckCheck } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
 import { badgeCount } from '../../lib/notifications/format';
 import { NotificationItem } from './NotificationItem';
 import { NotificationSkeleton, NotificationsEmpty, NotificationsError } from './NotificationStates';
 import { moveFocusInList, useOpenNotification, usePresence } from './hooks';
+import { BellIcon } from '../ui/BellIcon';
 
 const DROPDOWN_LIMIT = 5;
 
@@ -112,7 +113,7 @@ export function NotificationBell() {
           open ? 'bg-stone-100 text-stone-900' : 'text-stone-500 hover:text-stone-900 hover:bg-stone-100'
         }`}
       >
-        <Bell size={19} strokeWidth={1.9} aria-hidden="true" />
+        <BellIcon size={19} strokeWidth={1.9} aria-hidden="true" />
         {unreadCount > 0 && (
           <span
             aria-hidden="true"

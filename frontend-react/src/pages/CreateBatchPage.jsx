@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, Info, ShieldCheck, Syringe, Plus, Trash2, Bell } from 'lucide-react';
+import { ChevronLeft, ArrowRight, Check, Info, ShieldCheck, Plus, Trash2 } from 'lucide-react';
 import { BirdIcon } from '../components/ui/BirdIcon';
 import { useBatches } from '../context/BatchContext';
 import { useAuth } from '../context/AuthContext';
@@ -10,6 +10,8 @@ import { BIRD_PURPOSES, allBirdTypes, birdPurpose, birdTypeLabel, laysEggs } fro
 import { DOSE_NUMBERS, ROUTES, findVaccine, vaccinesFor } from '../lib/vaccines';
 import { pensInUse } from '../lib/pens';
 import { toIso } from '../lib/supplements';
+import { VaccineIcon } from '../components/ui/VaccineIcon';
+import { BellIcon } from '../components/ui/BellIcon';
 
 const STEPS = [
   { id: 1, label: 'Basic Info' },
@@ -87,14 +89,18 @@ export function CreateBatchPage() {
   const nextStep = () => {
     if (currentStep === 1) {
       if (!name.trim()) return toast('Please enter a batch name', 'error');
-      if (!birdCount || Number(birdCount) <= 0) return toast('Please enter a valid bird count', 'error');
       if (!startDate) return toast('Please select date placed', 'error');
+    }
+    if (currentStep === 2) {
+      if (!birdCount || Number(birdCount) <= 0) return toast('Please enter a valid bird count', 'error');
     }
     if (currentStep === 3) {
       const half = vaccinations.find((r) => (r.vaccineName || r.customName) && !r.dueDate);
       if (half) return toast('Pick a date for each vaccination, or remove the row', 'error');
       const missingName = vaccinations.find((r) => r.vaccineName === OTHER_VACCINE && !r.customName.trim());
       if (missingName) return toast('Enter the name of the other vaccine', 'error');
+      const noDose = vaccinations.find((r) => (r.vaccineName || r.customName) && !r.doseNumber);
+      if (noDose) return toast('Pick a dose for each vaccination, or remove the row', 'error');
     }
     setCurrentStep(s => Math.min(s + 1, 4));
   };
@@ -132,7 +138,7 @@ export function CreateBatchPage() {
             return createSchedule(newBatch.batchId, {
               vaccineName: vaccineNameOf(r),
               dueDate: r.dueDate,
-              ...(r.doseNumber ? { doseNumber: r.doseNumber } : {}),
+              doseNumber: r.doseNumber,
               ...(vaccine?.route ? { route: vaccine.route } : {}),
             });
           })
@@ -163,7 +169,7 @@ export function CreateBatchPage() {
           className="p-2 rounded-full hover:bg-stone-100 text-stone-600 hover:text-stone-950 transition-colors"
           aria-label="Back to home"
         >
-          <ArrowLeft size={20} />
+          <ChevronLeft size={20} />
         </Link>
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-950 font-heading">
@@ -287,6 +293,46 @@ export function CreateBatchPage() {
               </div>
             </div>
 
+            {/* Date Placed */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-stone-800 block">
+                  Date Placed / Acquired <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-4 border-t border-stone-100">
+            <button
+              type="button"
+              onClick={nextStep}
+              className="px-8 py-3 bg-[#0D5C3A] hover:bg-[#094229] text-white font-bold rounded-xl text-sm transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shadow-xs"
+            >
+              <span>Next</span>
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2: Birds & Housing */}
+      {currentStep === 2 && (
+        <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 animate-fade-in">
+          <div>
+            <h2 className="text-xl font-bold text-stone-950 font-heading">2. Birds &amp; Housing</h2>
+            <p className="text-xs sm:text-sm text-stone-500 mt-0.5">
+              Provide relevant information about the birds and where they are kept.
+            </p>
+          </div>
+
+          <div className="space-y-5">
             {/* Number of Birds & Age */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -327,32 +373,18 @@ export function CreateBatchPage() {
               </div>
             </div>
 
-            {/* Breed & Date Placed */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-stone-800 block">
-                  Breed (optional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Hisex Brown"
-                  value={breed}
-                  onChange={e => setBreed(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-stone-800 block">
-                  Date Placed / Acquired <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all"
-                />
-              </div>
+            {/* Breed */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-stone-800 block">
+                Breed (optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Hisex Brown"
+                value={breed}
+                onChange={e => setBreed(e.target.value)}
+                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
+              />
             </div>
 
             {/* Pen — picked from the farm's pens; free text only until pens are set up */}
@@ -392,32 +424,7 @@ export function CreateBatchPage() {
                 </>
               )}
             </div>
-          </div>
 
-          <div className="flex justify-end pt-4 border-t border-stone-100">
-            <button
-              type="button"
-              onClick={nextStep}
-              className="px-8 py-3 bg-[#0D5C3A] hover:bg-[#094229] text-white font-bold rounded-xl text-sm transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shadow-xs"
-            >
-              <span>Next</span>
-              <ArrowRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 2: Birds & Housing */}
-      {currentStep === 2 && (
-        <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 animate-fade-in">
-          <div>
-            <h2 className="text-xl font-bold text-stone-950 font-heading">2. Birds &amp; Housing</h2>
-            <p className="text-xs sm:text-sm text-stone-500 mt-0.5">
-              Provide relevant information about the birds and where they are kept.
-            </p>
-          </div>
-
-          <div className="space-y-5">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-stone-800 block">
                 Source Hatchery / Supplier (optional)
@@ -485,7 +492,7 @@ export function CreateBatchPage() {
               onClick={prevStep}
               className="px-6 py-2.5 border border-stone-300 hover:bg-stone-50 text-stone-800 font-semibold rounded-xl text-sm transition-all cursor-pointer inline-flex items-center gap-2"
             >
-              <ArrowLeft size={16} />
+              <ChevronLeft size={16} />
               <span>Back</span>
             </button>
             <button
@@ -583,13 +590,13 @@ export function CreateBatchPage() {
                       />
                     </div>
                     <div className="sm:col-span-3 space-y-1.5">
-                      <label className="text-[11px] font-bold text-stone-700 block">Dose</label>
+                      <label className="text-[11px] font-bold text-stone-700 block">Dose <span className="text-rose-500">*</span></label>
                       <select
                         value={row.doseNumber}
                         onChange={e => updateVaccination(row.key, 'doseNumber', e.target.value)}
                         className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] cursor-pointer"
                       >
-                        <option value="">Not set</option>
+                        <option value="">Select dose</option>
                         {DOSE_NUMBERS.map((d) => <option key={d} value={d}>{d}</option>)}
                       </select>
                     </div>
@@ -623,7 +630,7 @@ export function CreateBatchPage() {
               onClick={prevStep}
               className="px-6 py-2.5 border border-stone-300 hover:bg-stone-50 text-stone-800 font-semibold rounded-xl text-sm transition-all cursor-pointer inline-flex items-center gap-2"
             >
-              <ArrowLeft size={16} />
+              <ChevronLeft size={16} />
               <span>Back</span>
             </button>
             <button
@@ -696,7 +703,7 @@ export function CreateBatchPage() {
                 plannedVaccinations.map((r) => (
                   <div key={r.key} className="flex items-center justify-between gap-3 font-semibold text-stone-900 bg-white p-2.5 rounded-xl border border-stone-200">
                     <span className="inline-flex items-center gap-1.5 min-w-0">
-                      <Syringe size={13} strokeWidth={2.5} className="text-stone-500 shrink-0" />
+                      <VaccineIcon size={13} strokeWidth={2.5} className="text-stone-500 shrink-0" />
                       <span className="truncate">{vaccineNameOf(r)}{r.doseNumber ? ` · ${r.doseNumber}` : ''}</span>
                     </span>
                     <span className="shrink-0 text-stone-600">{r.dueDate}</span>
@@ -705,7 +712,7 @@ export function CreateBatchPage() {
               )}
               {plannedVaccinations.length > 0 && (
                 <p className="text-[11px] text-stone-500 inline-flex items-center gap-1.5">
-                  <Bell size={12} /> Reminder email 3 days before each one and on the day.
+                  <BellIcon size={12} /> Reminder email 3 days before each one and on the day.
                 </p>
               )}
             </div>
@@ -717,7 +724,7 @@ export function CreateBatchPage() {
               onClick={prevStep}
               className="px-6 py-2.5 border border-stone-300 hover:bg-stone-50 text-stone-800 font-semibold rounded-xl text-sm transition-all cursor-pointer inline-flex items-center gap-2"
             >
-              <ArrowLeft size={16} />
+              <ChevronLeft size={16} />
               <span>Back</span>
             </button>
             <button

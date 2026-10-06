@@ -29,8 +29,88 @@ export async function downloadTableReport({ filename, title, subtitle, headers, 
 
   // Landscape once a table gets wide, so columns aren't squeezed on A4.
   const doc = new jsPDF({ orientation: headers.length > 4 ? 'landscape' : 'portrait', unit: 'pt', format: 'a4' });
-  const left = 40;
+  drawHeader(doc, title, subtitle);
+  autoTable(doc, { ...tableStyle(doc), startY: 96, head: [headers], body: cells(rows) });
 
+  doc.save(filename);
+
+  addLocalNotification({
+    type: 'report_ready',
+    title: 'Report Ready',
+    message: `${title}${subtitle ? ` for ${subtitle}` : ''} has been downloaded as a PDF.`,
+  });
+}
+
+/**
+ * Several tables in one PDF, each under its own heading — the farm-wide
+ * export. Landscape throughout, since some sections are wide.
+ *
+ * @param {object} report
+ * @param {string} report.filename
+ * @param {string} report.title
+ * @param {string} [report.subtitle]
+ * @param {Array<{ title: string, headers: string[], rows: Array<Array<string|number>> }>} report.sections
+ */
+export async function downloadMultiTableReport({ filename, title, subtitle, sections }) {
+  const [{ jsPDF }, { autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')]);
+
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+  drawHeader(doc, title, subtitle);
+
+  let y = 104;
+  for (const section of sections) {
+    // Start a section on a new page rather than strand its heading at the bottom.
+    if (y > doc.internal.pageSize.height - 120) {
+      doc.addPage();
+      y = 50;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(...BRAND_GREEN);
+    doc.text(`${section.title} (${section.rows.length})`, LEFT, y);
+
+    autoTable(doc, {
+      ...tableStyle(doc),
+      startY: y + 8,
+      head: [section.headers],
+      body: section.rows.length ? cells(section.rows) : [[{ content: 'Nothing recorded', colSpan: section.headers.length }]],
+    });
+    y = doc.lastAutoTable.finalY + 32;
+  }
+
+  doc.save(filename);
+
+  addLocalNotification({
+    type: 'report_ready',
+    title: 'Report Ready',
+    message: `${title} has been downloaded as a PDF.`,
+  });
+}
+
+const LEFT = 40;
+
+function cells(rows) {
+  return rows.map((row) => row.map((cell) => (cell == null ? '' : String(cell))));
+}
+
+function tableStyle(doc) {
+  return {
+    margin: { left: LEFT, right: LEFT },
+    styles: { font: 'helvetica', fontSize: 9, cellPadding: 6, textColor: [41, 37, 36], lineColor: [231, 229, 228], lineWidth: 0.5 },
+    headStyles: { fillColor: BRAND_GREEN, textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: STRIPE },
+    didDrawPage: () => {
+      const page = doc.getNumberOfPages();
+      const { height } = doc.internal.pageSize;
+      doc.setFontSize(8);
+      doc.setTextColor(168, 162, 158);
+      doc.text(`Page ${page}`, LEFT, height - 20);
+    },
+  };
+}
+
+function drawHeader(doc, title, subtitle) {
+  const left = LEFT;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
   doc.setTextColor(...BRAND_GREEN);
@@ -45,29 +125,4 @@ export async function downloadTableReport({ filename, title, subtitle, headers, 
   doc.setTextColor(120, 113, 108);
   const generated = `Generated ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
   doc.text(subtitle ? `${subtitle}  ·  ${generated}` : generated, left, 82);
-
-  autoTable(doc, {
-    startY: 96,
-    head: [headers],
-    body: rows.map((row) => row.map((cell) => (cell == null ? '' : String(cell)))),
-    margin: { left, right: left },
-    styles: { font: 'helvetica', fontSize: 9, cellPadding: 6, textColor: [41, 37, 36], lineColor: [231, 229, 228], lineWidth: 0.5 },
-    headStyles: { fillColor: BRAND_GREEN, textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: STRIPE },
-    didDrawPage: () => {
-      const page = doc.getNumberOfPages();
-      const { height } = doc.internal.pageSize;
-      doc.setFontSize(8);
-      doc.setTextColor(168, 162, 158);
-      doc.text(`Page ${page}`, left, height - 20);
-    },
-  });
-
-  doc.save(filename);
-
-  addLocalNotification({
-    type: 'report_ready',
-    title: 'Report Ready',
-    message: `${title}${subtitle ? ` for ${subtitle}` : ''} has been downloaded as a PDF.`,
-  });
 }

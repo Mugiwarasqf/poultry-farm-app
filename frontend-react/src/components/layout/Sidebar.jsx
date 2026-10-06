@@ -1,8 +1,16 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Layers, Package, History, Settings, X, Sprout, LogOut, Bell } from 'lucide-react';
+import {
+  X,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { badgeCount } from '../../lib/notifications/format';
+import { InventoryIcon } from '../ui/InventoryIcon';
+import { BatchIcon } from '../ui/BatchIcon';
+import { SettingsIcon } from '../ui/SettingsIcon';
+import { HistoryIcon } from '../ui/HistoryIcon';
+import { HomeIcon } from '../ui/HomeIcon';
+import { BellIcon } from '../ui/BellIcon';
 
 export function Sidebar({ isOpen, onClose }) {
   const { logout } = useAuth();
@@ -13,12 +21,12 @@ export function Sidebar({ isOpen, onClose }) {
   };
 
   const navItems = [
-    { to: '/dashboard', label: 'Home', icon: Home },
-    { to: '/batches', label: 'Batches', icon: Layers },
-    { to: '/inventory', label: 'Inventory', icon: Package },
-    { to: '/history', label: 'History', icon: History },
-    { to: '/notifications', label: 'Notifications', icon: Bell, count: unreadCount },
-    { to: '/settings', label: 'Settings', icon: Settings },
+    { to: '/dashboard', label: 'Home', icon: HomeIcon },
+    { to: '/batches', label: 'Batches', icon: BatchIcon },
+    { to: '/inventory', label: 'Inventory', icon: InventoryIcon },
+    { to: '/history', label: 'History', icon: HistoryIcon },
+    { to: '/notifications', label: 'Notifications', icon: BellIcon, count: unreadCount },
+    { to: '/settings', label: 'Settings', icon: SettingsIcon },
   ];
 
   return (

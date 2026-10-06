@@ -1,19 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft,
-  Calendar,
+  ChevronLeft,
   CalendarClock,
-  Egg,
   Loader2,
-  MapPin,
-  Package,
   Percent,
   ShoppingCart,
   Skull,
-  Syringe,
   TrendingDown,
   TrendingUp,
-  Wheat,
   FileText,
 } from 'lucide-react';
 import { getLogs } from '../../api/logs';
@@ -31,6 +25,11 @@ import {
   feedBags,
   formatBags,
 } from '../../lib/batch';
+import { VaccineIcon } from '../ui/VaccineIcon';
+import { FeedIcon } from '../ui/FeedIcon';
+import { EggIcon } from '../ui/EggIcon';
+import { CalendarIcon } from '../ui/CalendarIcon';
+import { LocationIcon } from '../ui/LocationIcon';
 
 const TABS = ['Overview', 'Production', 'Feed', 'Health', 'Vaccination', 'Notes'];
 
@@ -204,7 +203,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
             onClick={onBack}
             className="inline-flex items-center gap-2 text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors cursor-pointer"
           >
-            <ArrowLeft size={16} strokeWidth={2.5} />
+            <ChevronLeft size={16} strokeWidth={2.5} />
             <span>Back to History</span>
           </button>
         )}
@@ -232,7 +231,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
             </div>
 
             <div className="flex items-center gap-1.5 text-sm text-stone-500">
-              <Calendar size={13} strokeWidth={3} className="text-stone-500 shrink-0" />
+              <CalendarIcon size={13} strokeWidth={3} className="text-stone-500 shrink-0" />
               <span className="truncate">{dateRange}</span>
             </div>
 
@@ -242,7 +241,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
                 {stats.totalBirds.toLocaleString()} birds
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <MapPin size={13} strokeWidth={3} className="text-stone-500 shrink-0" />
+                <LocationIcon size={13} strokeWidth={3} className="text-stone-500 shrink-0" />
                 {batch.housing || 'No house recorded'}
               </span>
             </div>
@@ -293,7 +292,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
             {tab === 'Production' && (
               logs.eggs.length === 0 ? (
                 <EmptyState
-                  icon={Egg}
+                  icon={EggIcon}
                   title="No egg production recorded for this batch."
                   description="Egg production is only available for layer batches."
                 />
@@ -313,7 +312,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
 
             {tab === 'Feed' && (
               logs.feed.length === 0 ? (
-                <EmptyState icon={Wheat} title="No feed recorded for this batch." />
+                <EmptyState icon={FeedIcon} title="No feed recorded for this batch." />
               ) : (
                 <div className="divide-y divide-stone-100">
                   {logs.feed.map((entry) => (
@@ -347,7 +346,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
 
             {tab === 'Vaccination' && (
               logs.vaccinations.length === 0 ? (
-                <EmptyState icon={Syringe} title="No vaccinations recorded for this batch." />
+                <EmptyState icon={VaccineIcon} title="No vaccinations recorded for this batch." />
               ) : (
                 <div className="divide-y divide-stone-100">
                   {logs.vaccinations.map((entry) => (
@@ -396,13 +395,13 @@ function OverviewTab({ batch, stats }) {
             hint={stats.days == null ? '(No close date recorded)' : null}
           />
           <StatTile
-            icon={Egg}
+            icon={EggIcon}
             label="Average Egg Production"
             value={stats.avgEggsPerDay != null ? stats.avgEggsPerDay.toLocaleString() : '–'}
             hint={stats.isLayer ? '(Per day)' : '(Layer batches only)'}
           />
           <StatTile
-            icon={Package}
+            icon={EggIcon}
             label="Total Eggs Collected"
             value={stats.totalEggs.toLocaleString()}
             hint="(Lifetime total)"
@@ -442,7 +441,7 @@ function OverviewTab({ batch, stats }) {
         <h3 className="text-base font-bold text-stone-950 font-heading mb-2">Key Insights</h3>
         <div className="divide-y divide-stone-100">
           <InsightRow
-            icon={Egg}
+            icon={EggIcon}
             label="Peak egg production (if applicable)"
             value={stats.peakEggDay != null ? `${stats.peakEggDay.toLocaleString()} eggs` : '-'}
           />
@@ -452,11 +451,11 @@ function OverviewTab({ batch, stats }) {
             value={stats.fcr != null ? `${stats.fcr} : 1` : 'No weight samples logged'}
           />
           <InsightRow
-            icon={Wheat}
+            icon={FeedIcon}
             label="Total feed used"
             value={stats.totalFeedBags > 0 ? formatBags(stats.totalFeedBags) : '-'}
           />
-          <InsightRow icon={Syringe} label="Total vaccination records" value={stats.vaccinationCount} />
+          <InsightRow icon={VaccineIcon} label="Total vaccination records" value={stats.vaccinationCount} />
         </div>
       </section>
     </div>

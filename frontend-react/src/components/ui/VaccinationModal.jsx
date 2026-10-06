@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { X, ChevronLeft, Calendar, ShieldCheck, Bell, Check, ArrowRight, Info, CalendarClock, ClipboardCheck } from 'lucide-react';
+import { X, ChevronLeft, ShieldCheck, Check, ArrowRight, Info, CalendarClock, ClipboardCheck } from 'lucide-react';
 import { CalendarPicker } from './CalendarPicker';
 import { useToast } from './Toast';
 import { useBatches } from '../../context/BatchContext';
@@ -8,6 +8,8 @@ import { QUEUED_SAVE_MESSAGE } from '../../lib/offlineQueue';
 import { ROUTES, DOSE_NUMBERS, DOSES_PER_VIAL, vaccinesFor, findVaccine } from '../../lib/vaccines';
 import { birdTypeLabel } from '../../lib/batch';
 import { toIso } from '../../lib/supplements';
+import { CalendarIcon } from './CalendarIcon';
+import { BellIcon } from './BellIcon';
 
 const GIVEN_BY = ['Myself', 'Farm staff', 'Vet'];
 
@@ -286,7 +288,7 @@ export function VaccinationModal({
             <>
               {/* Date chip */}
               <div className="flex items-center gap-2.5 px-4 py-2.5 bg-[#EAF5EF] border border-[#CFE8D9] rounded-2xl">
-                <Calendar size={15} className="text-[#0D5C3A] shrink-0" />
+                <CalendarIcon size={15} className="text-[#0D5C3A] shrink-0" />
                 <span className="text-sm font-bold text-[#0D472B]">
                   {isRecord ? 'Given on ' : 'Due on '}{formatDisplayDate(date)}
                 </span>
@@ -396,7 +398,7 @@ export function VaccinationModal({
               ) : (
                 <div className="flex items-start gap-3 rounded-2xl border border-stone-200 p-4">
                   <div className="w-8 h-8 rounded-full bg-[#EAF5EF] flex items-center justify-center shrink-0">
-                    <Bell size={15} className="text-[#0D5C3A]" />
+                    <BellIcon size={15} className="text-[#0D5C3A]" />
                   </div>
                   <div className="text-xs text-stone-600">
                     <div className="font-bold text-stone-900">Reminder</div>

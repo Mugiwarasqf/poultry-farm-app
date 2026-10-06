@@ -1,5 +1,6 @@
 import { useAuth } from '../../context/AuthContext';
 import { SettingsCard, DetailRow } from './ui';
+import { InstallRow } from '../pwa/InstallCard';
 
 export function AboutPanel() {
   const { farmId } = useAuth();
@@ -21,6 +22,10 @@ export function AboutPanel() {
           />
           <DetailRow label="Plan" value="Free trial" />
         </div>
+      </SettingsCard>
+
+      <SettingsCard title="Install" description="Use FarmBook like any other app on your phone.">
+        <InstallRow />
       </SettingsCard>
 
       <SettingsCard title="Support" description="Get help with FarmBook.">

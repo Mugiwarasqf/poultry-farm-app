@@ -11,14 +11,16 @@ export function SettingsCard({ title, description, action, children, className =
   return (
     <section className={`bg-white rounded-xl border border-stone-200 shadow-xs p-5 sm:p-6 ${className}`}>
       {(title || action) && (
-        <div className="flex items-start justify-between gap-4 mb-5">
+        // Stacked on phones so the action buttons don't squeeze the
+        // description into a narrow column; side by side from sm up.
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-5">
           <div className="min-w-0">
             {title && (
               <h2 className="text-base sm:text-lg font-bold text-stone-950 font-heading">{title}</h2>
             )}
-            {description && <p className="text-sm text-stone-500 mt-0.5">{description}</p>}
+            {description && <p className="text-sm text-stone-500 mt-0.5 break-words">{description}</p>}
           </div>
-          {action && <div className="shrink-0">{action}</div>}
+          {action && <div className="sm:shrink-0">{action}</div>}
         </div>
       )}
       {children}

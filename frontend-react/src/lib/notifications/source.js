@@ -30,6 +30,7 @@ import { getFeedPurchases } from '../../api/feedStock';
 import { computeFeedStock, stockKey } from '../feeds';
 import { loadSupplements, supplementDates, findSupplementType, toIso } from '../supplements';
 import { formatBags, feedBags } from '../batch';
+import { BATCHES_PER_GROUP, inGroups, safe } from '../farmData';
 import { readPrefs } from './prefs';
 import { notificationMeta } from './meta';
 import { readLocalEvents } from './localEvents';
@@ -75,25 +76,6 @@ function notAfterNow(iso) {
 }
 
 const isActive = (b) => (b.status || 'active') !== 'closed';
-
-const BATCHES_PER_GROUP = 2;
-
-/** Runs `fn` over `items` `size` at a time; results keep the original order. */
-async function inGroups(items, size, fn) {
-  const results = [];
-  for (let i = 0; i < items.length; i += size) {
-    results.push(...(await Promise.all(items.slice(i, i + size).map(fn))));
-  }
-  return results;
-}
-
-async function safe(promise, fallback) {
-  try {
-    return await promise;
-  } catch {
-    return fallback;
-  }
-}
 
 // ---- builders (one per notification type) ---------------------------------
 

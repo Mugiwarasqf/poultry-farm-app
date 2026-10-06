@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, Check, RefreshCw } from 'lucide-react';
+import { Check, RefreshCw } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
 import { groupByDate } from '../lib/notifications/format';
 import { CATEGORY_FILTERS } from '../lib/notifications/meta';
@@ -7,6 +7,7 @@ import { NotificationCard } from '../components/notifications/NotificationCard';
 import { NotificationSkeleton, NotificationsEmpty, NotificationsError } from '../components/notifications/NotificationStates';
 import { moveFocusInList, useOpenNotification } from '../components/notifications/hooks';
 import { Modal } from '../components/ui/Modal';
+import { BellIcon } from '../components/ui/BellIcon';
 
 const PAGE_SIZE = 20;
 
@@ -59,7 +60,7 @@ export function NotificationsPage() {
       {/* Header */}
       <div className="flex items-start gap-4">
         <span className="w-12 h-12 rounded-full bg-[#0D5C3A] text-white flex items-center justify-center shrink-0 shadow-xs" aria-hidden="true">
-          <Bell size={22} strokeWidth={1.9} />
+          <BellIcon size={22} className="brightness-0 invert" />
         </span>
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold text-stone-950 font-heading">Notifications</h1>

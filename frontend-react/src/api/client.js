@@ -84,6 +84,13 @@ export async function api(method, path, body, _isRetry = false) {
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
+  // Offline, the service worker answers reads with the last copy it saved
+  // and stamps when that was; the offline banner shows that time.
+  const cachedAt = res.headers.get('X-FarmBook-Cached-At');
+  if (cachedAt) {
+    window.dispatchEvent(new CustomEvent('farmbook:offline-data', { detail: { cachedAt } }));
+  }
+
   if (res.status === 401 && !_isRetry) {
     const refreshed = await refreshIdToken();
     if (refreshed) return api(method, path, body, true);

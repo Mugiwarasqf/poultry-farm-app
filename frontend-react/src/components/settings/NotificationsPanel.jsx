@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Syringe, ClipboardList, Mail } from 'lucide-react';
+import { ClipboardList, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { SettingsCard, ToggleRow, NotWiredNote, DetailRow } from './ui';
 import { readPrefs, writePrefs } from '../../lib/notifications/prefs';
+import { VaccineIcon } from '../ui/VaccineIcon';
 
 // Preferences are device-local. They control the in-app notifications (the
 // header bell and /notifications) straight away. The two reminder emails run
@@ -26,7 +27,7 @@ export function NotificationsPanel() {
       >
         <div>
           <ToggleRow
-            icon={Syringe}
+            icon={VaccineIcon}
             title="Vaccination reminders"
             description="A reminder a few days before a scheduled vaccination, and again on the day."
             checked={prefs.vaccinationReminders}

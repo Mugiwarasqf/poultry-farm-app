@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { X, Check, Wheat, AlertTriangle, PackagePlus, Sparkles } from 'lucide-react';
+import { X, Check, AlertTriangle, PackagePlus, Sparkles } from 'lucide-react';
 import { useToast } from './Toast';
 import { useBatches } from '../../context/BatchContext';
 import { createLog } from '../../api/logs';
@@ -8,6 +8,7 @@ import { useFeedStock } from '../../lib/useFeedStock';
 import { FEED_TYPES, findFeedType, recommendedFeedId, expectedBagsPerDay, formatNaira } from '../../lib/feeds';
 import { FEED_BAG_SIZES, FEED_BAG_KG, birdTypeLabel, formatBags } from '../../lib/batch';
 import { toIso } from '../../lib/supplements';
+import { FeedIcon } from './FeedIcon';
 
 const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400';
 const LABEL = 'text-xs font-bold text-stone-800 block mb-1.5';
@@ -116,7 +117,7 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
         <div className="flex items-center justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b border-stone-100 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-[#EAF5EF] text-[#0D5C3A] flex items-center justify-center shrink-0">
-              <Wheat size={20} />
+              <FeedIcon size={20} />
             </div>
             <div className="min-w-0">
               <h2 className="text-lg font-bold text-stone-950 font-heading truncate">Record Feed Usage</h2>

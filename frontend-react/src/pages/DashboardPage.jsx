@@ -1,32 +1,30 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import {
-  MapPin,
   Plus,
   ChevronRight,
-  Calendar,
   Clock,
   Pencil,
-  Layers,
-  Warehouse,
-  Banknote,
-  Wheat,
-  Egg,
-  Syringe,
   Skull,
   PlusCircle,
 } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useBatches } from '../context/BatchContext';
-import { getSummary } from '../api/summary';
 import { getLogs } from '../api/logs';
 // Bird imagery + the crate-to-egg factor are shared with History so the two
 // pages can't drift apart when a photo gets swapped.
-import { BATCH_IMAGES, EGGS_PER_CRATE, batchAge, birdTypeLabel, feedBags, formatBags } from '../lib/batch';
+import { BATCH_IMAGES, EGGS_PER_CRATE, batchAge, batchImage, birdTypeLabel, feedBags, formatBags } from '../lib/batch';
 import { BirdIcon } from '../components/ui/BirdIcon';
+import { VaccineIcon } from '../components/ui/VaccineIcon';
+import { FeedIcon } from '../components/ui/FeedIcon';
+import { EggIcon } from '../components/ui/EggIcon';
+import { PenIcon } from '../components/ui/PenIcon';
+import { BatchIcon } from '../components/ui/BatchIcon';
+import { CalendarIcon } from '../components/ui/CalendarIcon';
+import { LocationIcon } from '../components/ui/LocationIcon';
 
 // Farm cover & avatar
-const COVER_IMAGE = '/images/gabriele-romano-5sBG1uTmV4o-unsplash';
+const COVER_IMAGE = '/images/andreas-meier-jKFpdhOLKhw-unsplash.jpg';
 const AVATAR_IMAGE = '/images/hd.jpg';
 
 // Batch cards shown before the "create new" tile — 4 real batches + 1
@@ -37,7 +35,7 @@ const RECENT_ACTIVITY_LIMIT = 5;
 function InsightTile({ icon: Icon, value, label, hint }) {
   return (
     <div className="p-3 rounded-lg bg-stone-50 border border-stone-100">
-      <Icon size={16} className="text-stone-400 mb-1.5" />
+      <Icon size={28} className="text-stone-400 mb-2" />
       <div className="text-lg font-bold text-stone-950 font-heading truncate">{value}</div>
       <div className="text-xs text-stone-600 font-medium truncate">{label}</div>
       {hint && <div className="text-[11px] text-stone-400 truncate">{hint}</div>}
@@ -50,9 +48,9 @@ function InsightTile({ icon: Icon, value, label, hint }) {
 // so the feed adds noise rather than meaning. The icon carries the type.
 const ACTIVITY_ICONS = {
   mortality: Skull,
-  feed: Wheat,
-  eggs: Egg,
-  vaccination: Syringe,
+  feed: FeedIcon,
+  eggs: EggIcon,
+  vaccination: VaccineIcon,
   batch: PlusCircle,
 };
 
@@ -67,27 +65,11 @@ function ActivityIcon({ type }) {
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const { farm, farmId } = useAuth();
+  const { farm } = useAuth();
   const { batches, loading: batchesLoading } = useBatches();
-  const [summary, setSummary] = useState(null);
   const [activity, setActivity] = useState([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [eggsPerDay, setEggsPerDay] = useState(0);
-
-  useEffect(() => {
-    if (!farmId) return;
-    let cancelled = false;
-    async function load() {
-      try {
-        const data = await getSummary(farmId, 'month');
-        if (!cancelled) setSummary(data);
-      } catch (err) {
-        console.warn('Summary load error:', err);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [farmId]);
 
   // Recent Activity + Quick Insights are rolled up client-side from each
   // batch's logs — there's no cross-resource activity feed on the backend,
@@ -198,22 +180,15 @@ export function DashboardPage() {
   const totalBirds = activeBatches.reduce((sum, b) => sum + (Number(b.currentBirds ?? b.birdCount) || 0), 0);
   const layerBatches = activeBatches.filter(b => (b.type || '').toLowerCase() === 'layer');
   const broilerBatches = activeBatches.filter(b => (b.type || '').toLowerCase() === 'broiler');
-  // Everything that isn't a layer or broiler: turkey, duck, cockerel, quail, older 'chick' batches.
-  const otherBatches = activeBatches.filter(b => !['layer', 'broiler'].includes((b.type || '').toLowerCase()));
-  const housesCount = new Set(
+  // Pens set up in Farm Details; farms that haven't set any up yet fall back
+  // to the distinct free-text housing names on their active batches.
+  const pensCount = farm?.pens?.length || new Set(
     activeBatches.map((b) => (b.housing || '').trim()).filter(Boolean)
   ).size;
 
-  const formatNaira = (n) => {
-    if (n == null) return '₦0';
-    const abs = Math.abs(n);
-    const prefix = n < 0 ? '-₦' : '₦';
-    return prefix + abs.toLocaleString();
-  };
-
-  // Farm display info
-  const farmDisplayName = farm?.name || 'Green Valley Poultry Farm';
-  const farmLocation = farm?.location || 'Fresh Meadows, NY 11366, USA';
+  // Farm display info — no made-up name or location when the farmer hasn't set one.
+  const farmDisplayName = farm?.name || 'Your farm';
+  const farmLocation = (farm?.location || '').trim();
 
   const formatPlacedDate = (dateStr) => {
     if (!dateStr) return 'Recently';
@@ -235,9 +210,7 @@ export function DashboardPage() {
             src={COVER_IMAGE}
             alt="Farm landscape banner"
             className="w-full h-full object-cover object-center brightness-95"
-            onError={(e) => {
-              e.target.src = '/images/adrien-olichon-hEjbjw9PpHE-unsplash.jpg';
-            }}
+            
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
         </div>
@@ -272,10 +245,20 @@ export function DashboardPage() {
                   <span>•</span>
                   <span>{totalBirds.toLocaleString()} birds</span>
                 </div>
-                <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-stone-500 mt-1.5">
-                  <MapPin size={13} className="text-emerald-700 shrink-0" />
-                  <span>{farmLocation}</span>
-                </div>
+                {farmLocation ? (
+                  <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-stone-500 mt-1.5">
+                    <LocationIcon size={13} className="shrink-0" />
+                    <span>{farmLocation}</span>
+                  </div>
+                ) : (
+                  <Link
+                    to="/settings/farm"
+                    className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline mt-1.5"
+                  >
+                    <LocationIcon size={13} className="shrink-0" />
+                    <span>Add your farm location</span>
+                  </Link>
+                )}
               </div>
             </div>
 
@@ -323,16 +306,7 @@ export function DashboardPage() {
                 const isLayer = type === 'layer';
                 const isChick = type === 'chick';
                 const isBroiler = type === 'broiler';
-
-                const cardImage =
-                  batch.imageUrl ||
-                  (isLayer
-                    ? BATCH_IMAGES.layer
-                    : isChick
-                    ? BATCH_IMAGES.chick
-                    : isBroiler
-                    ? BATCH_IMAGES.broiler
-                    : BATCH_IMAGES.default);
+                const cardImage = batchImage(batch);
 
                 const birdCount = Number(batch.currentBirds ?? batch.birdCount ?? 0);
                 const breedDisplay = batch.breed || birdTypeLabel(type);
@@ -391,7 +365,7 @@ export function DashboardPage() {
                           <span className="truncate">Age: <strong className="text-stone-800 font-semibold">{ageDisplay}</strong></span>
                         </div>
                         <div className="flex items-center gap-1 truncate">
-                          <Calendar size={10} className="text-stone-400 shrink-0" />
+                          <CalendarIcon size={10} className="text-stone-400 shrink-0" />
                           <span className="truncate">Placed: <strong className="text-stone-800 font-semibold">{placedDateDisplay}</strong></span>
                         </div>
                       </div>
@@ -447,18 +421,14 @@ export function DashboardPage() {
             )}
           </div>
 
-          {/* Farm Overview — merges farm-wide totals with the per-type breakdown */}
+          {/* Farm Overview — the four farm-wide numbers */}
           <div className="bg-white rounded-lg border border-stone-200 shadow-xs p-5 flex flex-col">
             <h3 className="text-base font-bold text-stone-950 font-heading mb-3">Farm Overview</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-3 flex-1">
               <InsightTile icon={BirdIcon} value={totalBirds.toLocaleString()} label="Total Birds" />
-              <InsightTile icon={Layers} value={activeBatches.length} label="Active Batches" />
-              <InsightTile icon={Warehouse} value={housesCount || '—'} label="Houses" />
-              <InsightTile icon={Banknote} value={formatNaira(summary?.netNaira)} label="Farm Profit" hint="This month" />
-              <InsightTile icon={BirdIcon} value={layerBatches.length} label="Layer Batches" hint="Producing eggs" />
-              <InsightTile icon={BirdIcon} value={broilerBatches.length} label="Broiler Batches" hint="Meat production" />
-              <InsightTile icon={BirdIcon} value={otherBatches.length} label="Other Batches" hint="Turkey, duck, cockerel…" />
-              <InsightTile icon={Egg} value={`~${eggsPerDay}`} label="Egg Production" hint="pcs/day, 7d" />
+              <InsightTile icon={BatchIcon} value={activeBatches.length} label="Active Batches" />
+              <InsightTile icon={PenIcon} value={pensCount || '—'} label="Pens" />
+              <InsightTile icon={EggIcon} value={`~${eggsPerDay}`} label="Egg Production" hint="pcs/day, 7d" />
             </div>
           </div>
         </div>

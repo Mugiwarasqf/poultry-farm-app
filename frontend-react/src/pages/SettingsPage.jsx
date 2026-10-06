@@ -2,7 +2,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   UserCircle,
   Home,
-  Bell,
   Palette,
   Database,
   Info,
@@ -14,6 +13,7 @@ import { NotificationsPanel } from '../components/settings/NotificationsPanel';
 import { AppearancePanel } from '../components/settings/AppearancePanel';
 import { DataBackupPanel } from '../components/settings/DataBackupPanel';
 import { AboutPanel } from '../components/settings/AboutPanel';
+import { BellIcon } from '../components/ui/BellIcon';
 
 /**
  * Every settings sub-page renders inside this same shell: the category list
@@ -40,7 +40,7 @@ const SECTIONS = [
     id: 'notifications',
     label: 'Notifications',
     description: 'Alerts and reminders',
-    icon: Bell,
+    icon: BellIcon,
     Panel: NotificationsPanel,
   },
   {

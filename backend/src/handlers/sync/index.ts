@@ -2,6 +2,7 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer } from "aws-lambda";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { ddb, tables } from "../../lib/dynamo";
 import { badRequest, ok } from "../../lib/http";
+import { checkRecordDateOf } from "../../lib/dates";
 
 // POST /sync/batch — docs/10-build-plan.md §6. The body is JSON Lines (one
 // queued offline write per line), matching the on-device append-only queue
@@ -45,6 +46,10 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
       const tableName = RESOURCE_TABLES[parsed.resource];
       if (!tableName || !parsed.batchId || !parsed.entryId) {
         return { line: index, status: "error" as const, reason: "missing resource/batchId/entryId" };
+      }
+      const dateError = checkRecordDateOf(parsed);
+      if (dateError) {
+        return { line: index, status: "error" as const, reason: dateError };
       }
 
       try {

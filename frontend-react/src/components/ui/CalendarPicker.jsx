@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Syringe, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { PillIcon } from './PillIcon';
 import { EVENT_STYLES } from '../../lib/healthEvents';
 import { toIso } from '../../lib/supplements';
+import { VaccineIcon } from './VaccineIcon';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -248,7 +249,7 @@ export function CalendarPicker({
           ) : (
             <ul className="divide-y divide-stone-100">
               {agendaEvents.map((e) => {
-                const Icon = e.kind === 'supplement' ? PillIcon : Syringe;
+                const Icon = e.kind === 'supplement' ? PillIcon : VaccineIcon;
                 const clickable = Boolean(onEventClick);
                 return (
                   <li key={e.id}>
