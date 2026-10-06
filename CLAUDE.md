@@ -12,6 +12,14 @@ direct personal connections in the poultry industry (heavily
 Lagos/Ikorodu-based so far) that sourced the real survey responses and
 follow-up interviews the original scope and build plan are built on.
 
+**Product name: TrackFarm (as of 04/10/2026).** The app was called
+"FarmBook" through most of its build — that name is still accurate as a
+historical label for the original design mockups referenced below, but
+every current user-facing surface (page titles, email subject lines, the
+PDF export header, footer copy, the contact address) now says
+"TrackFarm" instead. The domain bought for this project is
+`trackfarm.cc`.
+
 **This is an independent project.** It is unrelated to any other project
 that might exist elsewhere in this Documents\Cloud directory (e.g.
 VoiceBridge). Do not carry over names, tech stack choices, or assumptions

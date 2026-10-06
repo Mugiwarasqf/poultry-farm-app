@@ -29,3 +29,19 @@ provider "aws" {
     }
   }
 }
+
+# CloudFront only accepts ACM certificates requested in us-east-1,
+# regardless of which region the rest of this stack lives in (CloudFront
+# itself is a global service) — see acm.tf's aws_acm_certificate.frontend.
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+
+  default_tags {
+    tags = {
+      project     = "poultry-farm-app"
+      environment = var.environment
+      managed_by  = "terraform"
+    }
+  }
+}

@@ -61,7 +61,7 @@ export function AppShell() {
 
   const currentTitle =
     VIEW_TITLES[location.pathname] ||
-    (location.pathname.startsWith('/batches/') ? 'Batch Details' : 'FarmBook');
+    (location.pathname.startsWith('/batches/') ? 'Batch Details' : 'TrackFarm');
 
   const farmerDisplayName = farm?.farmerName || farm?.name || 'Samuel';
 

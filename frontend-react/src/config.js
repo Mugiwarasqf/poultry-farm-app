@@ -7,6 +7,9 @@ export const config = {
   get cognitoClientId() {
     return window.CONFIG?.cognitoClientId || '';
   },
+  get cognitoRegion() {
+    return window.CONFIG?.cognitoRegion || '';
+  },
   get isConfigured() {
     return Boolean(
       this.apiBase &&

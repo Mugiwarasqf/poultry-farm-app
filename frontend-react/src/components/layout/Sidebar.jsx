@@ -46,10 +46,10 @@ export function Sidebar({ isOpen, onClose }) {
         }`}
       >
         <div>
-          {/* Brand header with FarmBook logo & green sprout mark */}
+          {/* Brand header with TrackFarm logo & green sprout mark */}
           <div className="h-16 px-6 flex items-center justify-between border-b border-stone-100">
             <a href="/dashboard" className="flex items-center gap-2 focus:outline-hidden">
-              <img src="/icon/logo.png" alt="FarmBook" className="h-8 w-auto" />
+              <img src="/icon/logo.png" alt="TrackFarm" className="h-8 w-auto" />
             </a>
             <button
               onClick={onClose}

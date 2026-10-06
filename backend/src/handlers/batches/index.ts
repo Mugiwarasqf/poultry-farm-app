@@ -3,6 +3,7 @@ import { DeleteCommand, PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk
 import { ddb, tables } from "../../lib/dynamo";
 import { badRequest, created, farmIdFromEvent, notFound, ok } from "../../lib/http";
 import { newId } from "../../lib/ids";
+import { logger } from "../../lib/logger";
 import { pickOptional } from "../../lib/optionalFields";
 import type { Batch, BatchStatus } from "../../lib/types";
 
@@ -132,7 +133,15 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
         ConditionExpression: "attribute_exists(batchId)",
       })
     ).catch((err) => {
-      if (err.name === "ConditionalCheckFailedException") return null;
+      if (err.name === "ConditionalCheckFailedException") {
+        // Swallowed deliberately rather than returning 404 -- but that
+        // means the response below looks like a successful update even
+        // when batchId didn't exist (farmId mismatch, typo, already
+        // deleted). Logging it is the only way to tell those apart from a
+        // real update after the fact.
+        logger.warn("batch_patch_condition_failed", { farmId, batchId });
+        return null;
+      }
       throw err;
     });
 

@@ -228,7 +228,7 @@ export function AccountPanel() {
         {/* Only the session on this device can be listed. Sessions aren't
             recorded server-side, so any other device would be invented. */}
         <p className="text-xs text-stone-500 mt-3">
-          Only this device can be shown. FarmBook does not yet keep a record of sign-ins on your
+          Only this device can be shown. TrackFarm does not yet keep a record of sign-ins on your
           other devices.
         </p>
 

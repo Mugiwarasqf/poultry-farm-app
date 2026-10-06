@@ -504,7 +504,7 @@ export function OnboardingPage({ onComplete }) {
 
           {/* Bottom Security / Trust note */}
           <div className="w-full text-center relative z-10 text-xs text-neutral-400">
-            © {new Date().getFullYear()} FarmBook • All rights reserved
+            © {new Date().getFullYear()} TrackFarm • All rights reserved
           </div>
         </div>
       </div>

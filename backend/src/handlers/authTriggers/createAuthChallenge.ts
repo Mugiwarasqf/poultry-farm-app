@@ -1,6 +1,8 @@
 import type { CreateAuthChallengeTriggerHandler } from "aws-lambda";
 import { randomInt } from "node:crypto";
 import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
+import { isSuppressed } from "../../lib/suppression";
+import { logger } from "../../lib/logger";
 
 const ses = new SESClient({});
 const SENDER_EMAIL = process.env.SES_SENDER_EMAIL!;
@@ -25,16 +27,28 @@ export const handler: CreateAuthChallengeTriggerHandler = async (event) => {
   const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
   const email = event.request.userAttributes.email;
 
-  await ses.send(
-    new SendEmailCommand({
-      Source: SENDER_EMAIL,
-      Destination: { ToAddresses: [email] },
-      Message: {
-        Subject: { Data: "Your FarmBook code" },
-        Body: { Text: { Data: `Your FarmBook code is ${code}.` } },
-      },
-    })
-  );
+  // The challenge still has to be set up below even if we skip the send —
+  // DefineAuthChallenge already committed to this flow, and Cognito
+  // expects a real challenge back. A suppressed address just never
+  // receives the code; that's the correct (if unhelpful to that one user)
+  // outcome, since an address that permanently bounced or complained
+  // can't be reached anyway, and re-sending to it would hurt the sending
+  // domain's reputation for every real user. See lib/suppression.ts.
+  if (await isSuppressed(email)) {
+    logger.warn("otp_send_skipped_suppressed", { email });
+  } else {
+    await ses.send(
+      new SendEmailCommand({
+        Source: SENDER_EMAIL,
+        Destination: { ToAddresses: [email] },
+        Message: {
+          Subject: { Data: "Your TrackFarm code" },
+          Body: { Text: { Data: `Your TrackFarm code is ${code}.` } },
+        },
+      })
+    );
+    logger.info("otp_sent", { email });
+  }
 
   event.response.publicChallengeParameters = {};
   event.response.privateChallengeParameters = { answer: code };

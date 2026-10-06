@@ -1,4 +1,5 @@
 import type { DefineAuthChallengeTriggerHandler } from "aws-lambda";
+import { logger } from "../../lib/logger";
 
 // Cognito custom-auth trigger 1 of 3 (see infra/modules/cognito/). Drives
 // the state machine for the email/OTP login: issue a challenge, check the
@@ -24,6 +25,7 @@ export const handler: DefineAuthChallengeTriggerHandler = async (event) => {
   }
 
   if (session.length >= MAX_ATTEMPTS) {
+    logger.warn("auth_max_attempts_exceeded", { email: event.userName, attempts: session.length });
     event.response.issueTokens = false;
     event.response.failAuthentication = true;
     return event;

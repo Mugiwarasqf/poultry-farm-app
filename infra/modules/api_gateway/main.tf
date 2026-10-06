@@ -265,3 +265,27 @@ resource "aws_apigatewayv2_route" "sync_batch" {
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
   authorization_type = "JWT"
 }
+
+# api.<domain_name> instead of the raw *.execute-api.amazonaws.com
+# endpoint, added once trackfarm.cc was bought (04/10/2026) — mainly so a
+# future infra rebuild (this account has had several full
+# destroy/recreate cycles) can't silently change the URL every app build
+# already points at. REGIONAL, not EDGE: this account's traffic is
+# Nigeria-concentrated, not global, so there's no latency benefit to
+# routing through CloudFront's edge network for API calls the way there
+# is for the static frontend.
+resource "aws_apigatewayv2_domain_name" "api" {
+  domain_name = "api.${var.domain_name}"
+
+  domain_name_configuration {
+    certificate_arn = var.acm_certificate_arn
+    endpoint_type   = "REGIONAL"
+    security_policy = "TLS_1_2"
+  }
+}
+
+resource "aws_apigatewayv2_api_mapping" "api" {
+  api_id      = aws_apigatewayv2_api.main.id
+  domain_name = aws_apigatewayv2_domain_name.api.id
+  stage       = aws_apigatewayv2_stage.default.id
+}

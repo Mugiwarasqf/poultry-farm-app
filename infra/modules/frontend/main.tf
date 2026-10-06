@@ -137,25 +137,28 @@ resource "aws_s3_object" "config" {
   # changing, so it needs the same revalidate-on-every-request treatment.
   cache_control = "no-cache"
   content = templatefile(var.config_template, {
-    api_base  = var.api_base
-    client_id = var.cognito_client_id
+    api_base       = var.api_base
+    client_id      = var.cognito_client_id
+    cognito_region = var.cognito_region
   })
 }
 
 # CloudFront in front of the S3 website endpoint, added specifically to get
-# free HTTPS on a *.cloudfront.net domain — no custom domain or ACM
-# certificate needed. This exists because mobile browsers default to (or
-# outright enforce) https:// even when a bare domain is typed, and the S3
-# website endpoint above only ever answers on plain HTTP — real users on
-# phones couldn't load the site at all without this. The origin has to be
-# a "custom origin" (not an S3 origin) because S3 *website* endpoints are
-# plain HTTP websites, not the S3 REST API CloudFront's native S3 origin
-# type expects.
+# free HTTPS — originally on a *.cloudfront.net domain, now on
+# var.domain_name (trackfarm.cc, bought 04/10/2026) once its ACM cert
+# validates, see infra/acm.tf. This exists because mobile browsers
+# default to (or outright enforce) https:// even when a bare domain is
+# typed, and the S3 website endpoint above only ever answers on plain
+# HTTP — real users on phones couldn't load the site at all without this.
+# The origin has to be a "custom origin" (not an S3 origin) because S3
+# *website* endpoints are plain HTTP websites, not the S3 REST API
+# CloudFront's native S3 origin type expects.
 resource "aws_cloudfront_distribution" "site" {
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
   comment             = "${var.project_name}-${var.environment} frontend"
+  aliases             = [var.domain_name]
 
   origin {
     origin_id   = "s3-website"
@@ -211,9 +214,8 @@ resource "aws_cloudfront_distribution" "site" {
   }
 
   viewer_certificate {
-    # No custom domain yet — the free *.cloudfront.net certificate is
-    # exactly what solves the mobile-HTTPS problem without needing a
-    # registered domain or an ACM certificate request.
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = var.acm_certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 }

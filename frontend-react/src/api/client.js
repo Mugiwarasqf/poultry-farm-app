@@ -25,10 +25,12 @@ export function clearTokens() {
 }
 
 function cognitoRegion() {
-  const base = config.apiBase;
-  if (!base) return null;
-  const m = base.match(/execute-api\.([a-z0-9-]+)\.amazonaws\.com/);
-  return m ? m[1] : null;
+  // Used to be parsed out of apiBase's hostname (execute-api.<region>.amazonaws.com)
+  // -- broke silently the moment apiBase became a custom domain (api.trackfarm.cc)
+  // instead of the raw API Gateway URL, which made every silent refresh below
+  // fail and log users out as soon as their idToken naturally expired. Config
+  // now carries it explicitly instead of this being inferred from a URL shape.
+  return config.cognitoRegion || null;
 }
 
 async function refreshIdToken() {

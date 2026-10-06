@@ -2,6 +2,7 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer } from "aws-lambda";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { ddb, tables } from "../../lib/dynamo";
 import { badRequest, ok } from "../../lib/http";
+import { logger } from "../../lib/logger";
 import { checkRecordDateOf } from "../../lib/dates";
 
 // POST /sync/batch — docs/10-build-plan.md §6. The body is JSON Lines (one
@@ -69,6 +70,12 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
       }
     })
   );
+
+  const counts = results.reduce(
+    (acc, r) => ({ ...acc, [r.status]: (acc[r.status] ?? 0) + 1 }),
+    {} as Record<string, number>
+  );
+  logger.info("sync_batch_complete", { lines: lines.length, ...counts });
 
   return ok({ results });
 }

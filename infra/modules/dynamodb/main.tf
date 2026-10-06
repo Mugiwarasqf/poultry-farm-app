@@ -205,3 +205,20 @@ resource "aws_dynamodb_table" "sick_bay" {
     type = "S"
   }
 }
+
+# Addresses that permanently bounced or complained, so the three
+# email-sending handlers (createAuthChallenge, vaccinationReminders,
+# entryNudges) can skip them instead of continuing to send and damaging
+# this domain's SES sending reputation — see infra/modules/ses's SNS
+# topic and backend/src/handlers/sesEvents/index.ts, which is what
+# populates this table.
+resource "aws_dynamodb_table" "suppressed_emails" {
+  name         = "${var.project_name}-${var.environment}-suppressed-emails"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "email"
+
+  attribute {
+    name = "email"
+    type = "S"
+  }
+}

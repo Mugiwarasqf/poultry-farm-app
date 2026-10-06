@@ -24,6 +24,7 @@ const entries = {
   "auth-trigger-verify-challenge": "src/handlers/authTriggers/verifyAuthChallengeResponse.ts",
   "scheduled-vaccination-reminders": "src/handlers/scheduled/vaccinationReminders.ts",
   "scheduled-entry-nudges": "src/handlers/scheduled/entryNudges.ts",
+  "ses-events": "src/handlers/sesEvents/index.ts",
 };
 
 async function main() {

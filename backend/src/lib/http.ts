@@ -1,4 +1,5 @@
 import type { APIGatewayProxyEventV2WithJWTAuthorizer } from "aws-lambda";
+import { logger } from "./logger";
 
 export function json(statusCode: number, body: unknown) {
   return {
@@ -28,6 +29,12 @@ export function farmIdFromEvent(
   const claims = event.requestContext.authorizer?.jwt?.claims ?? {};
   const farmId = claims["custom:farmId"];
   if (typeof farmId !== "string" || farmId.length === 0) {
+    // Rare, and worth its own structured line rather than relying only on
+    // the thrown error's stack trace — this is the one check standing
+    // between a request and reading/writing another farm's data (see this
+    // function's own doc comment), so a spike in these is worth being able
+    // to alert on, not just notice after the fact in a raw exception.
+    logger.error("missing_farm_id_claim", { path: event.rawPath, sub: claims.sub });
     throw new Error("missing custom:farmId claim on authenticated request");
   }
   return farmId;

@@ -2,6 +2,8 @@ import type { ScheduledHandler } from "aws-lambda";
 import { QueryCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { SendEmailCommand, SESClient } from "@aws-sdk/client-ses";
 import { ddb, tables } from "../../lib/dynamo";
+import { isSuppressed } from "../../lib/suppression";
+import { logger } from "../../lib/logger";
 
 const ses = new SESClient({});
 const SENDER_EMAIL = process.env.SES_SENDER_EMAIL!;
@@ -25,6 +27,11 @@ export const handler: ScheduledHandler = async () => {
 
   const farms = await ddb.send(new ScanCommand({ TableName: tables.farms }));
 
+  let sent = 0;
+  let skippedSuppressed = 0;
+  let skippedUpToDate = 0;
+  let skippedNoActiveBatches = 0;
+
   for (const farm of farms.Items ?? []) {
     const batches = await ddb.send(
       new QueryCommand({
@@ -35,7 +42,10 @@ export const handler: ScheduledHandler = async () => {
         ExpressionAttributeValues: { ":farmId": farm.farmId, ":active": "active" },
       })
     );
-    if ((batches.Items?.length ?? 0) === 0) continue;
+    if ((batches.Items?.length ?? 0) === 0) {
+      skippedNoActiveBatches++;
+      continue;
+    }
 
     let mostRecentDate: string | null = null;
     for (const batch of batches.Items ?? []) {
@@ -55,6 +65,11 @@ export const handler: ScheduledHandler = async () => {
     }
 
     if (!mostRecentDate || mostRecentDate < cutoff) {
+      if (await isSuppressed(farm.ownerEmail)) {
+        logger.warn("entry_nudge_skipped_suppressed", { email: farm.ownerEmail, farmId: farm.farmId });
+        skippedSuppressed++;
+        continue;
+      }
       await ses.send(
         new SendEmailCommand({
           Source: SENDER_EMAIL,
@@ -69,6 +84,17 @@ export const handler: ScheduledHandler = async () => {
           },
         })
       );
+      sent++;
+    } else {
+      skippedUpToDate++;
     }
   }
+
+  logger.info("entry_nudges_run_complete", {
+    farmsScanned: farms.Items?.length ?? 0,
+    sent,
+    skippedSuppressed,
+    skippedUpToDate,
+    skippedNoActiveBatches,
+  });
 };

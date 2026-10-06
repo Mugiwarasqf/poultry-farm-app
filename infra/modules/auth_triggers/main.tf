@@ -25,7 +25,14 @@ data "aws_iam_policy_document" "assume_role" {
 data "aws_iam_policy_document" "ses_send_email" {
   statement {
     actions   = ["ses:SendEmail", "ses:SendRawEmail"]
-    resources = [var.ses_identity_arn]
+    resources = var.ses_identity_arns
+  }
+}
+
+data "aws_iam_policy_document" "read_suppressed_emails" {
+  statement {
+    actions   = ["dynamodb:GetItem"]
+    resources = [var.suppressed_emails_table_arn]
   }
 }
 
@@ -49,6 +56,10 @@ resource "aws_iam_role_policy_attachment" "ses_only_basic" {
 resource "aws_iam_role_policy" "ses_only_send" {
   role   = aws_iam_role.ses_only.name
   policy = data.aws_iam_policy_document.ses_send_email.json
+}
+resource "aws_iam_role_policy" "ses_only_read_suppressed" {
+  role   = aws_iam_role.ses_only.name
+  policy = data.aws_iam_policy_document.read_suppressed_emails.json
 }
 
 data "archive_file" "define_challenge" {
@@ -86,7 +97,10 @@ resource "aws_lambda_function" "create_challenge" {
   filename         = data.archive_file.create_challenge.output_path
   source_code_hash = data.archive_file.create_challenge.output_base64sha256
   environment {
-    variables = { SES_SENDER_EMAIL = var.ses_sender_email }
+    variables = {
+      SES_SENDER_EMAIL        = var.ses_sender_email
+      SUPPRESSED_EMAILS_TABLE = var.suppressed_emails_table_name
+    }
   }
 }
 

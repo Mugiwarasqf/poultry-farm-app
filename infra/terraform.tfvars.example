@@ -5,7 +5,25 @@ aws_region   = "eu-west-1"
 environment  = "beta"
 project_name = "poultry-farm-app"
 
-# Required, no default — must be an inbox you can actually check. SES
-# emails this address a confirmation link that has to be clicked before
-# it can send OTP codes or notifications. See infra/modules/ses/main.tf.
-ses_sender_email = "you@example.com"
+# Required, no default — the literal From address the app sends with.
+# Not an inbox anyone needs to check; authorized by the domain identity
+# below once that's verified, not by its own SES identity. See
+# infra/modules/ses/main.tf's header comment.
+ses_sender_email = "noreply@trackfarm.cc"
+
+# Required, no default — real, checkable inboxes (everyone who needs to
+# test-login to this app), each verified as its own SES identity so it
+# can receive mail while this account is in the SES sandbox. Keep these
+# separate from ses_sender_email above — see infra/modules/ses/main.tf's
+# header comment for the bug that happens if these two ever get collapsed
+# into one again.
+ses_test_recipient_emails = [
+  "you@example.com",
+]
+
+# Required, no default — the bare apex serves the frontend, api.<this>
+# serves the backend. See acm.tf's header comment for the two-step
+# `terraform apply` this requires (DNS is kept on the registrar, not
+# migrated to Route 53, so the ACM validation CNAME records have to be
+# added by hand).
+domain_name = "trackfarm.cc"

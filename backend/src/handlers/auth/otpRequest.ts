@@ -7,6 +7,7 @@ import {
   UserNotFoundException,
 } from "@aws-sdk/client-cognito-identity-provider";
 import { badRequest, ok, serverError } from "../../lib/http";
+import { logger } from "../../lib/logger";
 
 const cognito = new CognitoIdentityProviderClient({});
 const CLIENT_ID = process.env.COGNITO_CLIENT_ID!;
@@ -48,14 +49,14 @@ export async function handler(event: APIGatewayProxyEventV2) {
         );
         return ok({ session: await startCustomAuth(email) });
       } catch (createErr: any) {
-        console.error("Error auto-provisioning user:", createErr);
+        logger.error("otp_request_provision_failed", { email, code: createErr.name, message: createErr.message });
         return serverError(createErr.message || "Failed to provision Cognito user", {
           code: createErr.name,
         });
       }
     }
 
-    console.error("Error starting custom auth:", err);
+    logger.error("otp_request_failed", { email, code: err.name, message: err.message });
     return serverError(err.message || "Failed to start authentication challenge", {
       code: err.name,
     });

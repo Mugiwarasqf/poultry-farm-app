@@ -311,7 +311,7 @@ export const notificationSource = {
     // than showing a misleading "all caught up".
     const anyLoaded = perBatch.some((p) => p.schedule || p.feed || p.eggs || p.mortality);
     if (active.length > 0 && !anyLoaded) {
-      throw new Error('Could not reach FarmBook to check for notifications.');
+      throw new Error('Could not reach TrackFarm to check for notifications.');
     }
 
     const purchases = await safe(getFeedPurchases(), []);

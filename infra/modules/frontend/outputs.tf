@@ -1,6 +1,16 @@
 output "url" {
-  description = "HTTPS URL for the v1 frontend, via CloudFront (free *.cloudfront.net certificate)."
+  description = "HTTPS URL for the v1 frontend, via CloudFront's own *.cloudfront.net domain — stays valid regardless of custom-domain DNS state, useful as a fallback/debug URL."
   value       = "https://${aws_cloudfront_distribution.site.domain_name}"
+}
+
+output "custom_domain_url" {
+  description = "The real, user-facing URL — only resolves once the apex ALIAS record is added in Namecheap pointing at the CloudFront domain above (url output)."
+  value       = "https://${var.domain_name}"
+}
+
+output "cloudfront_domain_name" {
+  description = "Value to point var.domain_name's ALIAS record at in Namecheap (apex domains can't use a plain CNAME — see infra/CLAUDE.md or the handoff notes for why)."
+  value       = aws_cloudfront_distribution.site.domain_name
 }
 
 output "s3_direct_url" {
