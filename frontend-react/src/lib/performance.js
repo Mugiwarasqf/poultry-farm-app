@@ -56,6 +56,7 @@ function eggAssessment({ eggLogs, currentBirds, endDate, ageWeeks }) {
       detail: ageWeeks != null && ageWeeks < 18
         ? `At ${ageWeeks} weeks the birds are too young to lay; most start around 18–20 weeks.`
         : 'Log daily egg collections and the laying rate will show here.',
+      bars: [],
       metrics: [],
     };
   }
@@ -70,8 +71,10 @@ function eggAssessment({ eggLogs, currentBirds, endDate, ageWeeks }) {
     rating,
     headline: layingRate == null ? 'Egg output' : `Laying at ${pct(layingRate)}`,
     detail: 'Laying rate is eggs per bird per day since laying began. Well-run layer flocks hold 80% or more at peak; under 50% needs looking into.',
+    bars: layingRate == null ? [] : [
+      { label: 'Laying rate', value: layingRate, display: pct(layingRate), max: 100, zones: [50, 65, 80], target: 80, unit: '%' },
+    ],
     metrics: [
-      { label: 'Laying rate', value: layingRate == null ? '-' : pct(layingRate) },
       { label: 'Eggs per day', value: Math.round(perDay).toLocaleString() },
       { label: 'Eggs per bird', value: currentBirds ? (total / currentBirds).toFixed(1) : '-' },
       { label: 'Total eggs', value: total.toLocaleString() },
@@ -93,12 +96,47 @@ function profitAssessment({ batch, costs }) {
     detail:
       'Profit is sales minus the cost of the birds, feed, vaccines and vitamins recorded for this batch. A margin above 25% is excellent; below zero is a loss.' +
       (missingBirdCost ? ' The cost of the birds was not recorded, so profit is overstated.' : ''),
+    // A loss draws an empty bar (scale starts at 0); the value label still shows it.
+    bars: [
+      { label: 'Profit margin', value: margin, display: pct(margin), max: 50, zones: [0, 10, 25], target: 25, unit: '%' },
+    ],
     metrics: [
       { label: 'Sales', value: naira(revenue) },
       { label: 'Total costs', value: naira(totalCost) },
-      { label: 'Profit margin', value: pct(margin) },
       { label: 'Profit per bird sold', value: sold ? naira(profit / sold) : '-' },
     ],
+  };
+}
+
+/**
+ * Mortality as a share of birds placed. Shown instead of survival so the
+ * bar starts at zero: 3% mortality is the same line as 97% survival.
+ */
+function mortalityBar(survival) {
+  if (survival == null) return null;
+  const mortality = Math.max(0, 100 - survival);
+  return {
+    label: 'Mortality',
+    value: mortality,
+    display: pct(mortality),
+    max: 15,
+    zones: [3, 7, 12],
+    target: 3,
+    lowerIsBetter: true,
+    unit: '%',
+  };
+}
+
+function fcrBar(fcr) {
+  if (fcr == null) return null;
+  return {
+    label: 'Feed conversion',
+    value: fcr,
+    display: `${fcr} : 1`,
+    max: 3,
+    zones: [1.7, 1.9, 2.2],
+    target: 1.7,
+    lowerIsBetter: true,
   };
 }
 
@@ -116,9 +154,8 @@ function growthAssessment({ survival, fcr, costPerBird, closed }) {
     detail: closed
       ? 'Add the sales from this batch to see its profit. Until then it is judged on survival and feed conversion.'
       : 'Profit is worked out when you complete the batch and record its sales. Until then it is judged on survival (97%+ is excellent) and feed conversion (1.7 or lower is excellent for broilers).',
+    bars: [mortalityBar(survival), fcrBar(fcr)].filter(Boolean),
     metrics: [
-      { label: 'Survival', value: survival == null ? '-' : pct(survival) },
-      { label: 'Feed conversion', value: fcr != null ? `${fcr} : 1` : '-' },
       { label: 'Cost per bird so far', value: costPerBird == null ? '-' : naira(costPerBird) },
     ],
   };
@@ -133,7 +170,9 @@ function growthAssessment({ survival, fcr, costPerBird, closed }) {
  * @param {number|null} input.fcr
  * @param {number|null} input.ageWeeks
  * @param {{birds:number, feed:number, vaccines:number, supplements:number}} input.costs
- * @returns {{ rating: Rating, headline: string, detail: string, basis: string, metrics: {label:string, value:string}[], extra?: object }}
+ * @returns {{ rating: Rating, headline: string, detail: string, basis: string,
+ *   bars: Array<{label:string, value:number, display:string, max:number, zones:number[], target:number, lowerIsBetter?:boolean}>,
+ *   metrics: {label:string, value:string}[] }}
  */
 export function assessPerformance({ purpose, batch, eggLogs = [], currentBirds, fcr, ageWeeks, costs }) {
   const closed = batch.status === 'closed';
@@ -159,7 +198,8 @@ export function assessPerformance({ purpose, batch, eggLogs = [], currentBirds, 
     if (profit) {
       return {
         ...profit,
-        metrics: [...profit.metrics, ...eggs.metrics.slice(0, 2)],
+        bars: [...profit.bars, ...(eggs.bars || [])],
+        metrics: [...profit.metrics, ...eggs.metrics.slice(0, 1)],
         basis: 'Sales and profit, plus egg output',
       };
     }
@@ -174,8 +214,8 @@ export function assessPerformance({ purpose, batch, eggLogs = [], currentBirds, 
     headline: survival == null ? 'Not enough data' : `${pct(survival)} of birds alive`,
     detail: 'Judged on how many birds survive (97%+ is excellent) and what each one has cost to raise.',
     basis: 'Survival and cost per bird',
+    bars: [mortalityBar(survival)].filter(Boolean),
     metrics: [
-      { label: 'Survival', value: survival == null ? '-' : pct(survival) },
       { label: 'Birds alive', value: currentBirds.toLocaleString() },
       { label: 'Cost per bird', value: costPerBird == null ? '-' : naira(costPerBird) },
     ],

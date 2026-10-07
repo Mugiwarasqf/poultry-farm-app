@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { getTokens, setTokens, clearTokens } from '../api/client';
+import { clearOfflineRecords } from '../lib/pwa';
 import { requestOtp, verifyOtp } from '../api/auth';
 import { getFarm } from '../api/farms';
 import { setCustomBirdTypes } from '../lib/batch';
@@ -141,6 +142,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     clearTokens();
+    clearOfflineRecords();
     localStorage.removeItem('farmbook_onboarded');
     setIdToken(null);
     setFarmId(null);

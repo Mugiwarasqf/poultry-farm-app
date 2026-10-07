@@ -3,6 +3,7 @@ import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { ddb, tables } from "../../lib/dynamo";
 import { badRequest, created, farmIdFromEvent, ok } from "../../lib/http";
 import { entryId } from "../../lib/ids";
+import { checkRecordDate } from "../../lib/dates";
 
 // GET/POST /feed-stock — farm-level (farmId from the JWT, no {id} in the
 // path, same pattern as /batches), matching frontend-react's
@@ -33,6 +34,8 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
     if (!body.date || !body.feedType || typeof body.bags !== "number" || typeof body.bagSizeKg !== "number") {
       return badRequest("date, feedType, bags, and bagSizeKg are required");
     }
+    const dateError = checkRecordDate(body.date);
+    if (dateError) return badRequest(dateError);
 
     const item = {
       farmId,

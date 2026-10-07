@@ -4,6 +4,7 @@ import { ddb, tables } from "../../lib/dynamo";
 import { badRequest, created, notFound, ok } from "../../lib/http";
 import { entryId } from "../../lib/ids";
 import { pickOptional } from "../../lib/optionalFields";
+import { checkRecordDate } from "../../lib/dates";
 import type { SickBayCase } from "../../lib/types";
 
 // GET/POST /batches/{id}/sick-bay, PATCH /batches/{id}/sick-bay/{caseId}.
@@ -40,9 +41,8 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
     if (!body.dateIsolated || !(Number.isInteger(birdCount) && birdCount > 0)) {
       return badRequest("dateIsolated and a whole birdCount above zero are required");
     }
-    if (String(body.dateIsolated) > new Date().toISOString().slice(0, 10)) {
-      return badRequest("dateIsolated cannot be in the future");
-    }
+    const dateError = checkRecordDate(body.dateIsolated, "dateIsolated");
+    if (dateError) return badRequest(dateError);
 
     const item: SickBayCase = {
       batchId,

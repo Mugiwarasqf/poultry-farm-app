@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { X, ChevronLeft, Calendar, Check, ArrowRight, Droplets, Wheat, AlertTriangle } from 'lucide-react';
+import { X, ChevronLeft, Check, ArrowRight, Droplets, AlertTriangle } from 'lucide-react';
 import { CalendarPicker } from './CalendarPicker';
 import { PillIcon } from './PillIcon';
 import { useToast } from './Toast';
 import { useBatches } from '../../context/BatchContext';
 import { SUPPLEMENT_TYPES, METHODS, REASONS, findSupplementType, addSupplement, toIso, describeDose } from '../../lib/supplements';
 import { birdTypeLabel } from '../../lib/batch';
+import { FeedIcon } from './FeedIcon';
+import { CalendarIcon } from './CalendarIcon';
 
 const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400';
 const LABEL = 'text-xs font-bold text-stone-800 block mb-1.5';
@@ -174,7 +176,7 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
           {step === 2 && (
             <>
               <div className="flex items-center gap-2.5 px-4 py-2.5 bg-[#EAF5EF] border border-[#CFE8D9] rounded-2xl">
-                <Calendar size={15} className="text-[#0D5C3A] shrink-0" />
+                <CalendarIcon size={15} className="text-[#0D5C3A] shrink-0" />
                 <span className="text-sm font-bold text-[#0D472B]">
                   {days > 1 ? `${formatShort(date)} to ${formatShort(lastDay)}` : formatShort(date)}
                 </span>
@@ -217,7 +219,7 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { id: 'water', icon: Droplets },
-                        { id: 'feed', icon: Wheat },
+                        { id: 'feed', icon: FeedIcon },
                       ].map((m) => (
                         <button
                           key={m.id}

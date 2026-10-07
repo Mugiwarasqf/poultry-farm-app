@@ -119,7 +119,10 @@ resource "aws_s3_object" "dist" {
   # stale index.html (pointing at a since-deleted JS bundle) being served
   # for hours after a deploy. no-cache doesn't disable caching, it just
   # forces a conditional revalidation against S3's ETag on every request.
-  cache_control = each.value == "index.html" ? "no-cache" : null
+  # sw.js and manifest.json have the same fixed-name problem, and a stale
+  # sw.js is worse still: the browser would keep running an old service
+  # worker that serves an outdated cached app.
+  cache_control = contains(["index.html", "sw.js", "manifest.json"], each.value) ? "no-cache" : null
 }
 
 # Not part of dist_files above — this one's content is generated from

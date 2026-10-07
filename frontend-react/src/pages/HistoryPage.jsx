@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Calendar,
   ChevronDown,
   ChevronRight,
-  History,
-  MapPin,
   Search,
 } from 'lucide-react';
 import { useBatches } from '../context/BatchContext';
@@ -13,6 +10,9 @@ import { BirdIcon } from '../components/ui/BirdIcon';
 import { BatchHistoryDetail } from '../components/history/BatchHistoryDetail';
 import { COMPLETED_PILL_CLASS, batchImage, formatDate, typePillClass, birdTypeLabel, typeFilterOptions } from '../lib/batch';
 import { useIsDesktop } from '../lib/useMediaQuery';
+import { CalendarIcon } from '../components/ui/CalendarIcon';
+import { LocationIcon } from '../components/ui/LocationIcon';
+import { HistoryIcon } from '../components/ui/HistoryIcon';
 
 function BatchRow({ batch, selected, onSelect }) {
   const type = (batch.type || 'other').toLowerCase();
@@ -49,7 +49,7 @@ function BatchRow({ batch, selected, onSelect }) {
         </div>
 
         <div className="flex items-center gap-1.5 text-xs text-stone-500">
-          <Calendar size={12} strokeWidth={3} className="text-stone-500 shrink-0" />
+          <CalendarIcon size={12} strokeWidth={3} className="text-stone-500 shrink-0" />
           <span className="truncate">
             {formatDate(batch.startDate)} – {batch.closedAt ? formatDate(batch.closedAt) : 'Closed'}
           </span>
@@ -61,7 +61,7 @@ function BatchRow({ batch, selected, onSelect }) {
             {Number(batch.birdCount || 0).toLocaleString()} birds
           </span>
           <span className="inline-flex items-center gap-1.5 min-w-0">
-            <MapPin size={12} strokeWidth={3} className="text-black shrink-0" />
+            <LocationIcon size={12} strokeWidth={3} className="text-black shrink-0" />
             <span className="truncate">{batch.housing || 'No house recorded'}</span>
           </span>
         </div>
@@ -152,7 +152,7 @@ export function HistoryPage() {
           </div>
 
           <div className="relative shrink-0">
-            <Calendar size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none stroke-[3] " />
+            <CalendarIcon size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none stroke-[3] " />
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
@@ -181,7 +181,7 @@ export function HistoryPage() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 px-4 bg-white rounded-xl shadow-sm">
             <div className="w-14 h-14 mx-auto bg-stone-100 rounded-xl flex items-center justify-center mb-3">
-              <History size={24} strokeWidth={2.5} className="text-stone-400" />
+              <HistoryIcon size={24} strokeWidth={2.5} className="text-stone-400" />
             </div>
             <h3 className="text-base font-bold text-stone-900 font-heading mb-1">
               {closedBatches.length === 0 ? 'No completed batches yet' : 'No batches match your search'}
@@ -214,7 +214,7 @@ export function HistoryPage() {
         ) : (
           <div className="bg-white rounded-xl shadow-sm p-10 text-center">
             <div className="w-14 h-14 mx-auto bg-stone-100 rounded-xl flex items-center justify-center mb-3">
-              <History size={24} strokeWidth={2.5} className="text-stone-400" />
+              <HistoryIcon size={24} strokeWidth={2.5} className="text-stone-400" />
             </div>
             <h3 className="text-base font-bold text-stone-900 font-heading mb-1">
               Select a batch

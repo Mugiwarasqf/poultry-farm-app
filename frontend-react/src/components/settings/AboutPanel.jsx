@@ -1,5 +1,6 @@
 import { useAuth } from '../../context/AuthContext';
 import { SettingsCard, DetailRow } from './ui';
+import { InstallRow } from '../pwa/InstallCard';
 
 export function AboutPanel() {
   const { farmId } = useAuth();

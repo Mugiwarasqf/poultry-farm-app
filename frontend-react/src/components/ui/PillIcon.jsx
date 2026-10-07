@@ -2,7 +2,7 @@
 export function PillIcon({ size = 16, strokeWidth, className = '', style, ...props }) {
   return (
     <img
-      src="/icon/pill.jpeg"
+      src="/icon/pill.png"
       alt=""
       aria-hidden="true"
       width={size}

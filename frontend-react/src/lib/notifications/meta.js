@@ -36,16 +36,16 @@ import {
 export const NOTIFICATION_META = {
   batch_completed: { category: 'batches', tint: 'bg-emerald-100', icon: CircleCheck },
   bird_lost: { category: 'batches', tint: 'bg-rose-100', icon: Bird },
-  vaccination_due: { category: 'reminders', tint: 'bg-sky-100', icon: Syringe },
+  vaccination_due: { category: 'reminders', tint: 'bg-sky-100', icon: Syringe, file: '/icon/injection.png' },
   vaccination_overdue: { category: 'health', tint: 'bg-rose-100', icon: TriangleAlert },
-  supplement_added: { category: 'health', tint: 'bg-violet-100', icon: Pill },
+  supplement_added: { category: 'health', tint: 'bg-violet-100', icon: Pill, file: '/icon/pill.png' },
   withdrawal_ended: { category: 'health', tint: 'bg-emerald-100', icon: ShieldCheck },
   feed_logged: { category: 'inventory', tint: 'bg-amber-100', icon: ClipboardList },
-  feed_low: { category: 'inventory', tint: 'bg-emerald-100', icon: Package },
+  feed_low: { category: 'inventory', tint: 'bg-emerald-100', icon: Package, file: '/icon/chicken-rice.png' },
   feed_out: { category: 'inventory', tint: 'bg-amber-100', icon: PackageX },
   logging_reminder: { category: 'reminders', tint: 'bg-amber-100', icon: AlarmClock },
   report_ready: { category: 'system', tint: 'bg-sky-100', icon: FileText },
-  system_update: { category: 'system', tint: 'bg-stone-100', icon: Settings },
+  system_update: { category: 'system', tint: 'bg-stone-100', icon: Settings, file: '/icon/icons8-settings-48.png' },
 };
 
 const FALLBACK = { category: 'system', tint: 'bg-stone-100', icon: Settings };

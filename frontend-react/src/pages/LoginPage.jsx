@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export function LoginPage({ onBack }) {
@@ -89,7 +90,7 @@ export function LoginPage({ onBack }) {
             onClick={handleBack}
             className="inline-flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-neutral-950 transition-colors cursor-pointer group"
           >
-            <span className="transition-transform group-hover:-translate-x-0.5">←</span>
+            <ChevronLeft size={16} className="transition-transform group-hover:-translate-x-0.5" />
             <span>Back to homepage</span>
           </button>
 

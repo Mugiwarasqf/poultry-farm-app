@@ -1,6 +1,15 @@
 import { api } from './client';
 import { QUEUEABLE_RESOURCES, enqueueLogEntry } from '../lib/offlineQueue';
 
+// Fired after any log entry is saved, so pages that aggregate logs across
+// batches (Inventory) can refresh without a reload.
+export const LOGS_CHANGED_EVENT = 'farmbook:logs-changed';
+
+function notifyLogsChanged(resource, batchId) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(LOGS_CHANGED_EVENT, { detail: { resource, batchId } }));
+}
+
 // Generic log resource calls — same shape for mortality, feed, eggs, vaccinations
 export async function getLogEntries(batchId, resource) {
   const data = await api('GET', `/batches/${batchId}/${resource}`);
@@ -32,8 +41,9 @@ function isNetworkError(err) {
  * telling someone it was saved when it wasn't is the worst outcome.
  */
 async function createWithQueueFallback(batchId, resource, data) {
+  let result;
   try {
-    return await api('POST', `/batches/${batchId}/${resource}`, data);
+    result = await api('POST', `/batches/${batchId}/${resource}`, data);
   } catch (err) {
     if (!isNetworkError(err) || !QUEUEABLE_RESOURCES.includes(resource)) throw err;
 
@@ -42,6 +52,8 @@ async function createWithQueueFallback(batchId, resource, data) {
 
     return { ...data, batchId, entryId: record.entryId, queued: true };
   }
+  notifyLogsChanged(resource, batchId);
+  return result;
 }
 
 export function createLogEntry(batchId, resource, data) {

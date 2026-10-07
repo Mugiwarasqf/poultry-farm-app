@@ -1,32 +1,26 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft,
-  Calendar,
+  ChevronLeft,
   Clock,
-  Egg,
-  Wheat,
   Activity,
   CheckCircle2,
   Plus,
   TrendingDown,
   TrendingUp,
   Trash2,
-  MapPin,
   ShoppingCart,
-  Syringe,
   Percent,
-  Scale,
-  Package,
   FileText,
   Download,
   Flag,
   RotateCcw,
   Stethoscope,
 } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useBatches } from '../context/BatchContext';
 import { useAuth } from '../context/AuthContext';
 import { CompleteBatchModal } from '../components/ui/CompleteBatchModal';
+import { PerformanceBars } from '../components/ui/PerformanceBars';
 import { SickBayTab } from '../components/sickbay/SickBayTab';
 import { assessPerformance, RATING_STYLES } from '../lib/performance';
 import { penForBatch } from '../lib/pens';
@@ -50,6 +44,12 @@ import { EGGS_PER_CRATE, FEED_BAG_KG, batchAge, batchImage, computeFCR, daysActi
 import { downloadTableReport } from '../lib/report';
 import { FeedUsageModal } from '../components/ui/FeedUsageModal';
 import { FeedPurchaseModal } from '../components/ui/FeedPurchaseModal';
+import { VaccineIcon } from '../components/ui/VaccineIcon';
+import { FeedIcon } from '../components/ui/FeedIcon';
+import { EggIcon } from '../components/ui/EggIcon';
+import { WeightIcon } from '../components/ui/WeightIcon';
+import { PenIcon } from '../components/ui/PenIcon';
+import { CalendarIcon } from '../components/ui/CalendarIcon';
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -243,7 +243,7 @@ export function BatchDetailPage() {
           to="/dashboard"
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0D5C3A] text-white rounded-xl text-xs font-semibold"
         >
-          <ArrowLeft size={16} /> Return to Home
+          <ChevronLeft size={16} /> Return to Home
         </Link>
       </div>
     );
@@ -287,6 +287,7 @@ export function BatchDetailPage() {
   // Handlers for logging
   const handleLogMortality = async (e) => {
     e.preventDefault();
+    if (logDate > todayIso) return toast("You can't record something for a future date", 'error');
     if (!mortCount || Number(mortCount) <= 0) return toast('Please enter count', 'error');
     try {
       const createdItem = await createLog(batchId, 'mortality', {
@@ -316,6 +317,7 @@ export function BatchDetailPage() {
 
   const handleLogEggs = async (e) => {
     e.preventDefault();
+    if (logDate > todayIso) return toast("You can't record something for a future date", 'error');
     const batchType = (batch?.type || '').toLowerCase();
     if (!laysEggs(batchType)) return toast(`Egg logging isn't set up for ${birdTypeLabel(batchType)} batches`, 'error');
     if (!eggCrates && !looseEggs) return toast('Enter crates or loose eggs', 'error');
@@ -345,6 +347,7 @@ export function BatchDetailPage() {
 
   const handleLogWeight = async (e) => {
     e.preventDefault();
+    if (logDate > todayIso) return toast("You can't record something for a future date", 'error');
     if (!avgWeightKg || Number(avgWeightKg) <= 0) return toast('Enter the average bird weight', 'error');
     try {
       const createdItem = await createLog(batchId, 'weight', {
@@ -481,13 +484,13 @@ export function BatchDetailPage() {
 
   // Every log type merged for the Daily Logs tab, newest first.
   const dailyLogs = [
-    ...feedLogs.map((e) => ({ date: e.date, kind: 'Feed logged', detail: `${e.feedType || 'Feed'} - ${formatBags(feedBags(e))}`, icon: Wheat })),
+    ...feedLogs.map((e) => ({ date: e.date, kind: 'Feed logged', detail: `${e.feedType || 'Feed'} - ${formatBags(feedBags(e))}`, icon: FeedIcon })),
     ...mortalityLogs.map((e) => ({ date: e.date, kind: 'Mortality recorded', detail: `${Number(e.count) || 0} birds${e.note ? ` (${e.note})` : ''}`, icon: TrendingDown })),
-    ...weightHistory.map((w) => ({ date: w.date, kind: 'Weight recorded', detail: `${formatKg(w.averageWeightKg)} average${w.sampleSize ? ` (${w.sampleSize} birds weighed)` : ''}`, icon: Scale })),
-    ...eggLogs.map((e) => ({ date: e.date, kind: 'Eggs recorded', detail: `${Number(e.crates) || 0} crates, ${Number(e.looseEggs) || 0} loose`, icon: Egg })),
+    ...weightHistory.map((w) => ({ date: w.date, kind: 'Weight recorded', detail: `${formatKg(w.averageWeightKg)} average${w.sampleSize ? ` (${w.sampleSize} birds weighed)` : ''}`, icon: WeightIcon })),
+    ...eggLogs.map((e) => ({ date: e.date, kind: 'Eggs recorded', detail: `${Number(e.crates) || 0} crates, ${Number(e.looseEggs) || 0} loose`, icon: EggIcon })),
     ...multivitaminLogs.map((m) => ({ date: m.date, kind: `${findSupplementType(m.type)?.label || 'Vitamin'} given`, detail: [m.product, describeDose(m)].filter(Boolean).join(' - '), icon: PillIcon })),
-    ...vaccinationHistory.map((v) => ({ date: v.date, kind: 'Vaccination given', detail: [v.vaccineName, v.doseNumber, ROUTES[v.route]?.label].filter(Boolean).join(' - '), icon: Syringe })),
-    ...dueVaccines.map((s) => ({ date: s.dueDate, kind: 'Vaccination due', detail: [s.vaccineName, s.doseNumber].filter(Boolean).join(' - '), icon: Syringe })),
+    ...vaccinationHistory.map((v) => ({ date: v.date, kind: 'Vaccination given', detail: [v.vaccineName, v.doseNumber, ROUTES[v.route]?.label].filter(Boolean).join(' - '), icon: VaccineIcon })),
+    ...dueVaccines.map((s) => ({ date: s.dueDate, kind: 'Vaccination due', detail: [s.vaccineName, s.doseNumber].filter(Boolean).join(' - '), icon: VaccineIcon })),
   ]
     .filter((item) => item.date)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -667,7 +670,7 @@ export function BatchDetailPage() {
         to="/batches"
         className="inline-flex items-center gap-2 text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors"
       >
-        <ArrowLeft size={16} strokeWidth={2.5} />
+        <ChevronLeft size={16} strokeWidth={2.5} />
         <span>Back to Batches</span>
       </Link>
 
@@ -687,7 +690,7 @@ export function BatchDetailPage() {
               </div>
               <div className="space-y-1.5 text-xs text-stone-600">
                 <div className="inline-flex items-center gap-1.5">
-                  <Calendar size={13} strokeWidth={2.5} className="text-stone-500" />
+                  <CalendarIcon size={13} strokeWidth={2.5} className="text-stone-500" />
                   {formatDate(batch.startDate)} - {batch.closedAt ? formatDate(batch.closedAt) : 'Ongoing'}
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
@@ -696,7 +699,7 @@ export function BatchDetailPage() {
                     {Number(batch.birdCount || 0).toLocaleString()} birds
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <MapPin size={13} strokeWidth={2.5} className="text-stone-500" />
+                    <PenIcon size={13} />
                     {batchPen?.name || batch.housing || 'No pen recorded'}
                   </span>
                 </div>
@@ -805,13 +808,13 @@ export function BatchDetailPage() {
                     suffix={lossPercent == null ? null : '(' + lossPercent + '%)'}
                   />
                   <SummaryTile
-                    icon={Egg}
+                    icon={EggIcon}
                     label="Average Egg Production"
                     value={avgEggsPerDay == null ? '-' : avgEggsPerDay.toLocaleString()}
                     hint={isLayer ? '(Per day)' : '(Egg-laying birds only)'}
                   />
                   <SummaryTile
-                    icon={Package}
+                    icon={EggIcon}
                     label="Total Eggs Collected"
                     value={totalEggs.toLocaleString()}
                     hint={totalEggs > 0 && avgEggsPerDay ? '(avg. ' + avgEggsPerDay + '/day)' : null}
@@ -819,46 +822,51 @@ export function BatchDetailPage() {
                 </div>
               </div>
               <div className="bg-white rounded-xl shadow-sm p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-                  <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
                     <h2 className="text-base font-bold text-stone-950 font-heading">Production Performance</h2>
-                    <p className="text-xs text-stone-500 mt-0.5">
-                      Based on: <span className="font-semibold text-stone-700">{performance.basis}</span>
-                      {' · '}{birdTypeLabel(batchType)} batches are raised for {purpose === 'dual' ? 'eggs and meat' : purpose === 'other' ? 'other purposes' : purpose}
+                    <p className="text-xs text-stone-500 mt-0.5 truncate">
+                      <span className="font-semibold text-stone-800">{performance.headline}</span>
+                      <span className="text-stone-300"> · </span>
+                      {performance.basis}
                     </p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold border shrink-0 ${ratingStyle.pill}`}>
+                  <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold border shrink-0 ${ratingStyle.pill}`}>
                     {ratingStyle.label}
                   </span>
                 </div>
 
-                <div className="rounded-xl bg-stone-50 border border-stone-100 p-4 sm:p-5 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <span className={`mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 ${ratingStyle.bar}`} aria-hidden="true" />
-                    <div className="min-w-0">
-                      <div className="text-base font-bold text-stone-950 font-heading">{performance.headline}</div>
-                      <p className="text-xs text-stone-500 mt-1 leading-relaxed">{performance.detail}</p>
-                    </div>
+                {performance.bars?.length > 0 && (
+                  <div className="mt-4">
+                    <PerformanceBars bars={performance.bars} />
                   </div>
+                )}
 
-                  {performance.metrics.length > 0 && (
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-                      {performance.metrics.map((m) => (
-                        <div key={m.label} className="rounded-lg bg-white border border-stone-200 px-3 py-2.5 min-w-0">
-                          <div className="text-[11px] text-stone-500 truncate">{m.label}</div>
-                          <div className="text-sm font-bold text-stone-950 mt-0.5 truncate">{m.value}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                {performance.metrics.length > 0 && (
+                  <dl className="mt-3 pt-3 border-t border-stone-100 flex flex-wrap gap-x-6 gap-y-2">
+                    {performance.metrics.map((m) => (
+                      <div key={m.label} className="min-w-0">
+                        <dt className="text-[11px] text-stone-500">{m.label}</dt>
+                        <dd className="text-sm font-semibold text-stone-950 tabular-nums">{m.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
 
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                  <details className="group text-[11px] text-stone-500">
+                    <summary className="cursor-pointer select-none list-none hover:text-stone-800 inline-flex items-center gap-1">
+                      <span className="group-open:rotate-90 transition-transform">›</span> How this is judged
+                    </summary>
+                    <p className="mt-1.5 max-w-xl leading-relaxed">{performance.detail}</p>
+                  </details>
                   {(purpose === 'meat' || purpose === 'dual') && !closed && (
                     <button
                       type="button"
                       onClick={() => setShowCompleteModal(true)}
-                      className="text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
+                      className="text-[11px] font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
                     >
-                      Sold the birds? Complete the batch to record sales and see profit.
+                      Record sales to see profit
                     </button>
                   )}
                 </div>
@@ -868,17 +876,17 @@ export function BatchDetailPage() {
                 <h2 className="text-base font-bold text-stone-950 font-heading mb-2">Key Insights</h2>
                 <div>
                   <InsightRow
-                    icon={Egg}
+                    icon={EggIcon}
                     label="Peak egg production (if applicable)"
                     value={peakEggDay == null ? '-' : peakEggDay.toLocaleString() + ' eggs'}
                   />
                   <InsightRow icon={Percent} label="Feed conversion ratio" sub={fcrNote} value={fcrValue} />
                   <InsightRow
-                    icon={Wheat}
+                    icon={FeedIcon}
                     label="Total feed used"
                     value={totalFeedBags > 0 ? formatBags(totalFeedBags) : '-'}
                   />
-                  <InsightRow icon={Syringe} label="Total vaccination records" value={doneVaccinations} />
+                  <InsightRow icon={VaccineIcon} label="Total vaccination records" value={doneVaccinations} />
                 </div>
               </div>
             </>
@@ -918,13 +926,13 @@ export function BatchDetailPage() {
                 </button>
               </div>
               {feedLogs.length === 0 ? (
-                <EmptyState icon={Wheat} title="No feed recorded for this batch yet." />
+                <EmptyState icon={FeedIcon} title="No feed recorded for this batch yet." />
               ) : (
                 <div>
                   {feedLogs.map((entry, index) => (
                     <LogRow
                       key={entry.entryId || index}
-                      icon={Wheat}
+                      icon={FeedIcon}
                       primary={[entry.feedType || 'Feed', entry.brand].filter(Boolean).join(' · ')}
                       secondary={formatDate(entry.date)}
                       value={formatBags(feedBags(entry))}
@@ -972,7 +980,7 @@ export function BatchDetailPage() {
                         onClick={() => openVaccination({ mode: date > todayIso ? 'schedule' : 'record', date })}
                         className="px-2.5 h-7 rounded-lg bg-[#0D5C3A] hover:bg-[#094229] text-white text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <Syringe size={12} /> Vaccine
+                        <VaccineIcon size={12} /> Vaccine
                       </button>
                       <button
                         type="button"
@@ -989,7 +997,7 @@ export function BatchDetailPage() {
               <div className="bg-white rounded-xl shadow-sm p-5">
                 <h2 className="text-base font-bold text-stone-950 font-heading mb-2">Due</h2>
                 {dueVaccines.length === 0 ? (
-                  <EmptyState icon={Syringe} title="No vaccinations due." description="Schedule the next one so you get a reminder." />
+                  <EmptyState icon={VaccineIcon} title="No vaccinations due." description="Schedule the next one so you get a reminder." />
                 ) : (
                   <div>
                     {dueVaccines.map((item) => {
@@ -998,7 +1006,7 @@ export function BatchDetailPage() {
                         <div key={item.scheduleId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 py-3.5 border-b border-stone-100 last:border-0">
                           <div className="flex items-start sm:items-center gap-3 min-w-0">
                             <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${overdue ? 'bg-rose-50' : 'bg-[#EAF5EF]'}`}>
-                              <Syringe size={16} strokeWidth={2.5} className={overdue ? 'text-rose-600' : 'text-[#0D5C3A]'} />
+                              <VaccineIcon size={16} strokeWidth={2.5} className={overdue ? 'text-rose-600' : 'text-[#0D5C3A]'} />
                             </div>
                             <div className="min-w-0">
                               <div className="text-sm font-semibold text-stone-900 break-words">
@@ -1027,13 +1035,13 @@ export function BatchDetailPage() {
               <div className="bg-white rounded-xl shadow-sm p-5">
                 <h2 className="text-base font-bold text-stone-950 font-heading mb-2">Vaccination History</h2>
                 {vaccinationHistory.length === 0 ? (
-                  <EmptyState icon={Syringe} title="No vaccinations recorded for this batch yet." />
+                  <EmptyState icon={VaccineIcon} title="No vaccinations recorded for this batch yet." />
                 ) : (
                   <div>
                     {vaccinationHistory.map((v) => (
                       <LogRow
                         key={v.key}
-                        icon={Syringe}
+                        icon={VaccineIcon}
                         primary={`${v.vaccineName}${v.doseNumber ? ` · ${v.doseNumber}` : ''}`}
                         secondary={[
                           ROUTES[v.route]?.label,
@@ -1143,7 +1151,7 @@ export function BatchDetailPage() {
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   <SummaryTile
-                    icon={Scale}
+                    icon={WeightIcon}
                     label="Latest average"
                     value={latestWeight ? formatKg(latestWeight.averageWeightKg) : '-'}
                     hint={latestWeight ? formatDate(latestWeight.date) : 'No weigh-ins yet'}
@@ -1173,7 +1181,7 @@ export function BatchDetailPage() {
                 <h2 className="text-base font-bold text-stone-950 font-heading mb-2">Weigh-ins</h2>
                 {weightHistory.length === 0 ? (
                   <EmptyState
-                    icon={Scale}
+                    icon={WeightIcon}
                     title="No weigh-ins recorded for this batch yet."
                     description="Weigh a handful of birds, record the average, and repeat every week or two to track growth."
                   />
@@ -1182,7 +1190,7 @@ export function BatchDetailPage() {
                     {[...weightHistory].reverse().map((w, index) => (
                       <LogRow
                         key={w.entryId || index}
-                        icon={Scale}
+                        icon={WeightIcon}
                         primary={`${formatKg(w.averageWeightKg)} average`}
                         secondary={[
                           w.change == null ? 'First weigh-in' : `${formatChange(w.change)} since previous`,
@@ -1204,9 +1212,9 @@ export function BatchDetailPage() {
           <div className="bg-white rounded-xl shadow-sm p-5">
             <h2 className="text-base font-bold text-stone-950 font-heading mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-3">
-              <QuickAction icon={Wheat} label="Log Feed" onClick={() => setLogModal('feed')} />
+              <QuickAction icon={FeedIcon} label="Log Feed" onClick={() => setLogModal('feed')} />
               <QuickAction icon={PillIcon} label="Log Vitamin" onClick={() => setLogModal('multivitamin')} />
-              <QuickAction icon={Syringe} label="Log Vaccination" onClick={() => openVaccination()} />
+              <QuickAction icon={VaccineIcon} label="Log Vaccination" onClick={() => openVaccination()} />
               <QuickAction icon={BirdIcon} label="Log Mortality" onClick={() => setLogModal('mortality')} />
               <QuickAction
                 icon={Stethoscope}
@@ -1216,8 +1224,8 @@ export function BatchDetailPage() {
                   setSickBaySignal((n) => n + 1);
                 }}
               />
-              {isLayer && <QuickAction icon={Egg} label="Log Eggs" onClick={() => setLogModal('eggs')} />}
-              <QuickAction icon={Scale} label="Log Weight" onClick={() => setLogModal('weight')} />
+              {isLayer && <QuickAction icon={EggIcon} label="Log Eggs" onClick={() => setLogModal('eggs')} />}
+              <QuickAction icon={WeightIcon} label="Log Weight" onClick={() => setLogModal('weight')} />
             </div>
           </div>
 
@@ -1266,6 +1274,7 @@ export function BatchDetailPage() {
             <label className="text-xs font-bold text-neutral-800 block mb-1">Date</label>
             <input
               type="date"
+              max={todayIso}
               value={logDate}
               onChange={e => setLogDate(e.target.value)}
               className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
@@ -1309,6 +1318,7 @@ export function BatchDetailPage() {
               <label className="text-xs font-bold text-neutral-800 block mb-1">Date</label>
               <input
                 type="date"
+                max={todayIso}
                 value={logDate}
                 onChange={e => setLogDate(e.target.value)}
                 className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"
@@ -1353,6 +1363,7 @@ export function BatchDetailPage() {
             <label className="text-xs font-bold text-neutral-800 block mb-1">Date</label>
             <input
               type="date"
+              max={todayIso}
               value={logDate}
               onChange={e => setLogDate(e.target.value)}
               className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-sm"

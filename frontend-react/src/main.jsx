@@ -6,8 +6,12 @@ import { BatchProvider } from './context/BatchContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ToastProvider } from './components/ui/Toast';
 import App from './App';
+import { registerServiceWorker } from './lib/pwa';
 
 import './styles/index.css';
+
+// Installed-app support: offline start, saved records, update notice.
+registerServiceWorker();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

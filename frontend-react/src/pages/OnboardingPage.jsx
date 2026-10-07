@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Pencil, Calendar, ArrowLeft, ArrowRight, Check, Drumstick, Egg, Bird } from 'lucide-react';
+import { User, Pencil, Calendar, ArrowRight, Check, Drumstick, Egg, Bird } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useBatches } from '../context/BatchContext';
 import { updateFarm } from '../api/farms';

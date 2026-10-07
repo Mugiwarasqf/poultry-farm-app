@@ -1,24 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Plus,
   Search,
   ChevronDown,
   ChevronRight,
-  Calendar,
-  MapPin,
   CheckCircle2,
   Clock,
-  Egg,
-  Wheat,
   TrendingUp,
-  Layers,
   Lock,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useBatches } from '../context/BatchContext';
 import { getLogs } from '../api/logs';
 import { BirdIcon } from '../components/ui/BirdIcon';
 import { EGGS_PER_CRATE, batchAge, batchImage, daysActive, formatDate, typePillClass, birdTypeLabel, typeFilterOptions, feedBags, formatBags } from '../lib/batch';
+import { FeedIcon } from '../components/ui/FeedIcon';
+import { EggIcon } from '../components/ui/EggIcon';
+import { BatchIcon } from '../components/ui/BatchIcon';
+import { CalendarIcon } from '../components/ui/CalendarIcon';
+import { LocationIcon } from '../components/ui/LocationIcon';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'All Statuses' },
@@ -147,13 +147,13 @@ function BatchCard({ batch, metric }) {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <Calendar size={13} strokeWidth={2.5} className="text-stone-500 shrink-0" />
+                <CalendarIcon size={13} strokeWidth={2.5} className="text-stone-500 shrink-0" />
                 <span className="truncate">
                   {formatDate(batch.startDate)} – {batch.closedAt ? formatDate(batch.closedAt) : 'Ongoing'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <MapPin size={13} strokeWidth={2.5} className="text-stone-500 shrink-0" />
+                <LocationIcon size={13} strokeWidth={2.5} className="text-stone-500 shrink-0" />
                 <span className="truncate">{batch.housing || 'No house recorded'}</span>
               </div>
             </div>
@@ -265,7 +265,7 @@ export function BatchesPage() {
         0
       );
       return {
-        icon: Egg,
+        icon: EggIcon,
         label: 'Total Eggs Collected',
         value: total.toLocaleString(),
         detail: days ? `(avg. ${Math.round(total / days).toLocaleString()}/day)` : null,
@@ -275,7 +275,7 @@ export function BatchesPage() {
     if (type === 'broiler') {
       const totalBags = entries.reduce((sum, e) => sum + feedBags(e), 0);
       return {
-        icon: Wheat,
+        icon: FeedIcon,
         label: 'Total Feed Used',
         value: formatBags(totalBags),
         detail: birds && totalBags ? `(about ${Math.round(birds / totalBags).toLocaleString()} birds per bag)` : null,
@@ -345,7 +345,7 @@ export function BatchesPage() {
       ) : visible.length === 0 ? (
         <div className="text-center py-16 px-4 bg-white rounded-xl border border-stone-200 shadow-xs">
           <div className="w-14 h-14 mx-auto bg-stone-100 rounded-xl flex items-center justify-center mb-3">
-            <Layers size={24} strokeWidth={2.5} className="text-stone-400" />
+            <BatchIcon size={24} strokeWidth={2.5} className="text-stone-400" />
           </div>
           <h3 className="text-base font-bold text-stone-900 font-heading mb-1">
             {batches.length === 0 ? 'No batches yet' : 'No batches match your filters'}

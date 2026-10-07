@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, History } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useBatches } from '../context/BatchContext';
 import { BatchHistoryDetail } from '../components/history/BatchHistoryDetail';
 import { useIsDesktop } from '../lib/useMediaQuery';
+import { HistoryIcon } from '../components/ui/HistoryIcon';
 
 /**
  * Full-screen batch history detail — the small-screen counterpart to the side
@@ -34,7 +35,7 @@ export function BatchHistoryDetailPage() {
     return (
       <div className="max-w-md mx-auto text-center py-16 px-4">
         <div className="w-14 h-14 mx-auto bg-stone-100 rounded-xl flex items-center justify-center mb-3">
-          <History size={24} className="text-stone-400" />
+          <HistoryIcon size={24} className="text-stone-400" />
         </div>
         <h2 className="text-base font-bold text-stone-900 font-heading mb-1">Batch not found</h2>
         <p className="text-sm text-stone-500 mb-6">
@@ -45,7 +46,7 @@ export function BatchHistoryDetailPage() {
           onClick={() => navigate('/history')}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#0D5C3A] hover:bg-[#094229] transition-colors cursor-pointer"
         >
-          <ArrowLeft size={16} />
+          <ChevronLeft size={16} />
           <span>Back to History</span>
         </button>
       </div>

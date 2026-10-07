@@ -3,6 +3,7 @@ import { PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { ddb } from "./dynamo";
 import { badRequest, created, ok } from "./http";
 import { entryId } from "./ids";
+import { checkRecordDateOf } from "./dates";
 
 /**
  * Mortality, feed, eggs, and vaccination-history all share the same shape:
@@ -26,6 +27,9 @@ export function makeLogResourceHandler<TExtra extends object>(opts: {
           KeyConditionExpression: "batchId = :batchId",
           ExpressionAttributeValues: { ":batchId": batchId },
           ScanIndexForward: false, // entryId is time-prefixed, so this is newest-first
+          // Strongly consistent: a page opened right after a save (e.g.
+          // Inventory after logging eggs) must see the entry just written.
+          ConsistentRead: true,
         })
       );
       const items = result.Items ?? [];
@@ -36,6 +40,8 @@ export function makeLogResourceHandler<TExtra extends object>(opts: {
       const body = JSON.parse(event.body ?? "{}");
       const fields = opts.buildItem(batchId, body);
       if ("error" in fields) return badRequest(fields.error);
+      const dateError = checkRecordDateOf(fields as Record<string, unknown>);
+      if (dateError) return badRequest(dateError);
 
       const item = {
         batchId,
