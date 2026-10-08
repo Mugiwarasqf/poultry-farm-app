@@ -92,10 +92,16 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Deliberately NOT "farm?.name !== 'My Farm'" -- that used to be here as
+  // a fallback for when `onboarded` wasn't a reliable field, but every new
+  // signup starts with that exact placeholder name, so saving any real
+  // name on step 1 of 4 ("farm-name") tripped it immediately, flipping
+  // isOnboarded true three steps early and bouncing the route guard in
+  // App.jsx straight to /dashboard mid-onboarding. onboarded is properly,
+  // explicitly set by OnboardingPage's last step now -- trust it.
   const isOnboarded = Boolean(
     farm?.onboarded ||
-    localStorage.getItem('farmbook_onboarded') === 'true' ||
-    (farm?.name && farm.name !== 'My Farm')
+    localStorage.getItem('farmbook_onboarded') === 'true'
   );
 
   const applySession = useCallback(async (data) => {
