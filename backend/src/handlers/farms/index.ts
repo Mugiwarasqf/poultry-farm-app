@@ -4,6 +4,8 @@ import { ddb, tables } from "../../lib/dynamo";
 import { badRequest, farmIdFromEvent, notFound, ok } from "../../lib/http";
 import type { BirdPurpose, CustomBirdType, Farm, Pen } from "../../lib/types";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // GET/PATCH /farms/{id} — didn't exist until now (a frontend PATCH to this
 // route was 404ing). farmId always comes from the caller's own JWT claim
 // (farmIdFromEvent), never from the {id} in the path — the path segment
@@ -24,7 +26,7 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
   if (method === "PATCH") {
     const body = JSON.parse(event.body ?? "{}");
     const allowed: Array<keyof Farm> = [
-      "name", "farmerName", "location", "phone", "birdType", "onboarded", "pens", "birdTypes",
+      "name", "farmerName", "location", "phone", "birdType", "onboarded", "pens", "birdTypes", "ownerEmail",
     ];
     const updates = allowed.filter((key) => body[key] !== undefined);
     if (updates.length === 0) return badRequest("no updatable fields provided");
@@ -32,6 +34,7 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
     // Lists are stored as given only after cleaning: known keys, trimmed
     // text, sane sizes. Anything malformed is a 400 rather than half-saved.
     const values: Record<string, unknown> = {};
+    const removeKeys: string[] = [];
     for (const key of updates) {
       if (key === "pens") {
         const pens = cleanPens(body.pens);
@@ -44,23 +47,44 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
       } else if (key === "onboarded") {
         values.onboarded = Boolean(body.onboarded);
         if (body.onboarded === true) values.onboardedAt = new Date().toISOString();
+      } else if (key === "ownerEmail") {
+        const email = typeof body.ownerEmail === "string" ? body.ownerEmail.trim().toLowerCase() : "";
+        if (!EMAIL_RE.test(email)) return badRequest("ownerEmail must be a valid email address");
+        values.ownerEmail = email;
+        // A fresh address hasn't bounced yet -- clear the flag from
+        // whatever the old one did. sesEvents/index.ts sets it again if
+        // this new address bounces too. Doesn't touch what the farmer
+        // signs in with (Cognito's username), only where reminders and
+        // password-reset codes go -- see AccountPanel.jsx's hint text.
+        removeKeys.push("emailBounced", "emailBouncedAt");
       } else {
         values[key] = typeof body[key] === "string" ? body[key].trim().slice(0, 200) : body[key];
       }
     }
-    const keys = Object.keys(values);
+    const setKeys = Object.keys(values);
+    const expressionParts: string[] = [];
+    if (setKeys.length > 0) {
+      expressionParts.push(`SET ${setKeys.map((k, i) => `#${k} = :v${i}`).join(", ")}`);
+    }
+    if (removeKeys.length > 0) {
+      expressionParts.push(`REMOVE ${removeKeys.map((k) => `#${k}`).join(", ")}`);
+    }
 
     await ddb.send(
       new UpdateCommand({
         TableName: tables.farms,
         Key: { farmId },
-        UpdateExpression: `SET ${keys.map((k, i) => `#${k} = :v${i}`).join(", ")}`,
-        ExpressionAttributeNames: Object.fromEntries(keys.map((k) => [`#${k}`, k])),
-        ExpressionAttributeValues: Object.fromEntries(keys.map((k, i) => [`:v${i}`, values[k]])),
+        UpdateExpression: expressionParts.join(" "),
+        ExpressionAttributeNames: Object.fromEntries(
+          [...setKeys, ...removeKeys].map((k) => [`#${k}`, k])
+        ),
+        ...(setKeys.length > 0
+          ? { ExpressionAttributeValues: Object.fromEntries(setKeys.map((k, i) => [`:v${i}`, values[k]])) }
+          : {}),
       })
     );
 
-    return ok({ farmId, updated: keys });
+    return ok({ farmId, updated: [...setKeys, ...removeKeys] });
   }
 
   return badRequest(`unsupported method ${method}`);

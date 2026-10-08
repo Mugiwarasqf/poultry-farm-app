@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Pencil, Check, X, Monitor, Smartphone, LogOut, KeyRound } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { updateFarm } from '../../api/farms';
 import { useToast } from '../ui/Toast';
+import { isValidEmailFormat } from '../../lib/authValidation';
 import {
   SettingsCard,
   FieldGrid,
@@ -46,14 +48,16 @@ function describeThisDevice() {
 }
 
 export function AccountPanel() {
-  const { farm, farmId, updateFarmProfile, logout } = useAuth();
+  const { farm, farmId, updateFarmProfile, logout, emailBounced } = useAuth();
   const toast = useToast();
+  const navigate = useNavigate();
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [fullName, setFullName] = useState(farm?.farmerName || '');
   const [phone, setPhone] = useState(farm?.phone || '');
+  const [emailAddress, setEmailAddress] = useState(farm?.ownerEmail || '');
   const [role, setRole] = useState(() => {
     try {
       return localStorage.getItem(ROLE_STORAGE_KEY) || ROLES[0];
@@ -68,7 +72,8 @@ export function AccountPanel() {
     if (editing) return;
     setFullName(farm?.farmerName || '');
     setPhone(farm?.phone || '');
-  }, [farm?.farmerName, farm?.phone, editing]);
+    setEmailAddress(farm?.ownerEmail || '');
+  }, [farm?.farmerName, farm?.phone, farm?.ownerEmail, editing]);
 
   const email = farm?.ownerEmail || farm?.email || '';
   const displayName = farm?.farmerName || farm?.name || 'Your account';
@@ -77,18 +82,30 @@ export function AccountPanel() {
   const handleCancel = () => {
     setFullName(farm?.farmerName || '');
     setPhone(farm?.phone || '');
+    setEmailAddress(farm?.ownerEmail || '');
     setEditing(false);
   };
 
   const handleSave = async () => {
+    if (emailAddress.trim() && !isValidEmailFormat(emailAddress)) {
+      toast('Enter a valid email address', 'error');
+      return;
+    }
     setSaving(true);
     try {
+      const emailChanged = emailAddress.trim() && emailAddress.trim() !== farm?.ownerEmail;
       const updates = {
         farmerName: fullName.trim() || undefined,
         phone: phone.trim() || undefined,
+        ownerEmail: emailAddress.trim() || undefined,
       };
 
-      updateFarmProfile(updates);
+      // The server clears emailBounced on a changed address (see
+      // farms/index.ts's PATCH handler), but it only returns which keys
+      // changed, not the full record -- mirror that here so the banner
+      // disappears immediately instead of waiting for the next full
+      // farm reload.
+      updateFarmProfile(emailChanged ? { ...updates, emailBounced: false } : updates);
       try {
         localStorage.setItem(ROLE_STORAGE_KEY, role);
       } catch {
@@ -170,9 +187,19 @@ export function AccountPanel() {
 
           <Field
             label="Email Address"
-            hint="This is your sign-in address and cannot be changed here."
+            hint={
+              emailBounced
+                ? "We couldn't deliver to this address — fix it so reminders and password reset work again."
+                : "Where reminders and account notices go. Doesn't change what you sign in with."
+            }
           >
-            <TextInput value={email} disabled readOnly />
+            <TextInput
+              type="email"
+              value={emailAddress}
+              onChange={(e) => setEmailAddress(e.target.value)}
+              disabled={!editing}
+              placeholder="farmer@example.com"
+            />
           </Field>
 
           <Field label="Role" hint="Saved on this device only.">
@@ -187,10 +214,10 @@ export function AccountPanel() {
         <div className="mt-6">
           <InsetPanel
             title="Sign-in Security"
-            description="You sign in with a one-time code sent to your email address, so there is no password to change."
+            description="You sign in with your email and password."
             action={
-              <SecondaryButton icon={KeyRound} disabled>
-                No password set
+              <SecondaryButton icon={KeyRound} onClick={() => navigate('/forgot-password')}>
+                Change password
               </SecondaryButton>
             }
           />

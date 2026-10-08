@@ -84,7 +84,7 @@ function Navbar() {
                 Log in
               </a>
               <a
-                href="#signup"
+                href="/signup"
                 className="rounded-full bg-black px-5 py-2.5 text-center text-[14px] font-semibold text-white"
               >
                 Get started
@@ -128,7 +128,7 @@ function Hero() {
         </p>
 
         <a
-          href="/login"
+          href="/signup"
           className="hero-cta mt-9 inline-flex items-center gap-2 rounded-full bg-black py-3.5 pl-6 pr-3 text-[15px] font-semibold text-white transition-colors hover:bg-coal-500"
         >
           Get started free

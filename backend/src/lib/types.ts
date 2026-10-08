@@ -30,6 +30,15 @@ export interface Farm {
    */
   birdTypes?: CustomBirdType[];
   createdAt: string;
+  /**
+   * Set when SES reports a permanent bounce or complaint for ownerEmail
+   * (backend/src/handlers/sesEvents/index.ts) — surfaced in the app as a
+   * "we couldn't reach your email" banner so a mistyped address at signup
+   * doesn't become a silent, permanent dead end (notifications and
+   * password-reset both depend on this address actually working).
+   */
+  emailBounced?: boolean;
+  emailBouncedAt?: string;
 }
 
 export interface Pen {

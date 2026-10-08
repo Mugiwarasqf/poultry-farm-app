@@ -1,29 +1,28 @@
-# Email/OTP auth. **This reverses a deliberate earlier decision**:
-# docs/CLAUDE.md originally documented "Cognito, phone-number/OTP auth,
-# fits this audience better than email" — grounded in the
-# low-digital-literacy survey findings, not a default. The switch to
-# email (31/08/2026) was a pragmatic call after SNS SMS sending failed
-# account-wide ("No origination entities available to send" in both
-# eu-west-1 and us-east-1), not new user research contradicting the
-# original finding. Flagged prominently in docs/CLAUDE.md too — worth
-# reconsidering once/if the SNS issue gets resolved.
+# Email+password auth (changed 08/10/2026). The previous two approaches
+# both hit real platform walls documented in docs/11-platform-obstacles.md:
+# phone/SMS failed account-wide ("No origination entities available to
+# send"), and the fallback, passwordless email/OTP, worked but then sat
+# behind AWS SES's production-access denial plus Apple/iCloud outright
+# rejecting mail from the new domain. Password auth needs no per-login
+# message delivery at all, sidestepping both.
 #
-# Passwordless via Cognito's CUSTOM_AUTH challenge flow: the three
-# auth_triggers module Lambdas generate, send, and verify the OTP
-# ourselves via direct SES SendEmail — Cognito's own built-in
-# email-sending (the email_configuration block, MFA,
-# auto_verified_attributes) is deliberately unused, since this pool never
-# sends a code itself.
+# This is a real UX tradeoff against this project's own validated
+# research (low-digital-literacy segment, see docs/CLAUDE.md's key
+# findings), not something to treat as a settled improvement -- a
+# password is one more thing to create, remember, and eventually reset
+# for an audience where that's a real cost. Mitigations: a loose password
+# policy below (no required uppercase/symbol), a background welcome email
+# at signup that feeds the bounce/suppression system so a mistyped
+# address surfaces as Farm.emailBounced instead of a silent dead end
+# (backend/src/handlers/auth/signup.ts, sesEvents/index.ts), and
+# Cognito's own built-in forgot-password email (see the lack of an
+# email_configuration block below -- that's what makes it default to
+# COGNITO_DEFAULT instead of requiring this project's own SES setup).
 #
-# Security tradeoff flagged, not silently made: prevent_user_existence_errors
-# is left at its default (LEGACY) rather than ENABLED, because
-# backend/src/handlers/auth/otpRequest.ts relies on catching a distinct
-# UserNotFoundException to auto-provision first-time email addresses with
-# no separate signup screen (the low-digital-literacy findings in
-# docs/CLAUDE.md are why onboarding needs to be one step). ENABLED mode
-# would close the account-enumeration side-channel this trades away, at
-# the cost of that auto-provisioning detection — revisit if that ever
-# becomes the bigger risk.
+# No Lambda triggers at all now -- the three CUSTOM_AUTH trigger Lambdas
+# (defineAuthChallenge/createAuthChallenge/verifyAuthChallengeResponse)
+# and their whole auth_triggers module are gone, along with the
+# lambda_config block that used to wire them in here.
 
 resource "aws_cognito_user_pool" "main" {
   name = "${var.project_name}-${var.environment}"
@@ -31,12 +30,34 @@ resource "aws_cognito_user_pool" "main" {
   username_attributes = ["email"]
   mfa_configuration   = "OFF"
 
-  # AWS's CreateUserPool API supports an AuthSessionValidity setting to
-  # bound how long a CUSTOM_AUTH session stays open, but the installed
-  # AWS provider (hashicorp/aws 5.100.0) doesn't expose it on this
-  # resource yet — so the only bound on an outstanding OTP right now is
-  # defineAuthChallenge.ts's own 3-attempt cap. Revisit once the provider
-  # catches up.
+  # Verified so Cognito will actually treat email as a usable account
+  # recovery channel below -- ForgotPassword requires a verified
+  # mechanism, and signup.ts marks email_verified true itself (no
+  # separate Cognito-sent verification code; see that file's comment on
+  # the friction/safety tradeoff this is).
+  auto_verified_attributes = ["email"]
+
+  account_recovery_setting {
+    recovery_mechanism {
+      name     = "verified_email"
+      priority = 1
+    }
+  }
+
+  # Deliberately loose: a minimum worth having, not maximum strength.
+  # Typing complexity is itself friction for this audience -- no required
+  # uppercase or symbol, just a lowercase letter and a number alongside
+  # the length floor. backend/src/handlers/auth/signup.ts's PASSWORD_RE
+  # mirrors this exactly so the client-rejected and server-rejected cases
+  # match.
+  password_policy {
+    minimum_length                   = 8
+    require_lowercase                = true
+    require_numbers                  = true
+    require_symbols                  = false
+    require_uppercase                = false
+    temporary_password_validity_days = 7
+  }
 
   schema {
     name                     = "farmId"
@@ -48,12 +69,6 @@ resource "aws_cognito_user_pool" "main" {
       max_length = 64
     }
   }
-
-  lambda_config {
-    define_auth_challenge          = var.define_auth_challenge_arn
-    create_auth_challenge          = var.create_auth_challenge_arn
-    verify_auth_challenge_response = var.verify_auth_challenge_arn
-  }
 }
 
 resource "aws_cognito_user_pool_client" "mobile" {
@@ -63,32 +78,5 @@ resource "aws_cognito_user_pool_client" "mobile" {
   # Public client (the mobile app), so no client secret.
   generate_secret = false
 
-  explicit_auth_flows = ["ALLOW_CUSTOM_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
-}
-
-# Cognito needs explicit permission to invoke each trigger — without these
-# the pool's calls into the Lambdas fail with an access-denied error that
-# only shows up at auth time, not at deploy time.
-resource "aws_lambda_permission" "invoke_define_challenge" {
-  statement_id  = "AllowCognitoInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = var.define_auth_challenge_name
-  principal     = "cognito-idp.amazonaws.com"
-  source_arn    = aws_cognito_user_pool.main.arn
-}
-
-resource "aws_lambda_permission" "invoke_create_challenge" {
-  statement_id  = "AllowCognitoInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = var.create_auth_challenge_name
-  principal     = "cognito-idp.amazonaws.com"
-  source_arn    = aws_cognito_user_pool.main.arn
-}
-
-resource "aws_lambda_permission" "invoke_verify_challenge" {
-  statement_id  = "AllowCognitoInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = var.verify_auth_challenge_name
-  principal     = "cognito-idp.amazonaws.com"
-  source_arn    = aws_cognito_user_pool.main.arn
+  explicit_auth_flows = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
 }

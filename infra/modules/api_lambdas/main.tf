@@ -1,7 +1,7 @@
-# The 16 Lambdas that aren't Cognito triggers (those live in the
-# auth_triggers module — see that module's header comment for why they're
-# split out). One function per backend/src/handlers/* entry point;
-# dist/<name> directory names come from backend/esbuild.config.js.
+# Every Lambda this project has, now that email+password auth (08/10/2026)
+# needs no separate Cognito-trigger module (see modules/cognito/main.tf).
+# One function per backend/src/handlers/* entry point; dist/<name>
+# directory names come from backend/esbuild.config.js.
 #
 # IAM is grouped by actual access pattern rather than fully bespoke
 # per-function policies: every DynamoDB-touching function shares one
@@ -67,10 +67,12 @@ data "aws_iam_policy_document" "ses_send_email" {
 data "aws_iam_policy_document" "cognito_admin" {
   statement {
     actions = [
-      "cognito-idp:AdminCreateUser",
-      "cognito-idp:InitiateAuth",
-      "cognito-idp:RespondToAuthChallenge",
+      "cognito-idp:SignUp",
+      "cognito-idp:AdminConfirmSignUp",
       "cognito-idp:AdminUpdateUserAttributes",
+      "cognito-idp:InitiateAuth",
+      "cognito-idp:ForgotPassword",
+      "cognito-idp:ConfirmForgotPassword",
     ]
     resources = [var.cognito_user_pool_arn]
   }
@@ -137,6 +139,12 @@ resource "aws_iam_role_policy" "cognito_dynamo_dynamo" {
   role   = aws_iam_role.cognito_dynamo.name
   policy = data.aws_iam_policy_document.dynamo_rw.json
 }
+# signup.ts (the only cognito_dynamo function that also sends mail) needs
+# this for its background welcome email -- see that file's header comment.
+resource "aws_iam_role_policy" "cognito_dynamo_ses" {
+  role   = aws_iam_role.cognito_dynamo.name
+  policy = data.aws_iam_policy_document.ses_send_email.json
+}
 
 # ---- Zips ---------------------------------------------------------------
 
@@ -200,15 +208,25 @@ data "archive_file" "sync" {
   source_dir  = "${var.backend_dist}/sync"
   output_path = "${path.module}/.build/sync.zip"
 }
-data "archive_file" "auth_otp_request" {
+data "archive_file" "auth_signup" {
   type        = "zip"
-  source_dir  = "${var.backend_dist}/auth-otp-request"
-  output_path = "${path.module}/.build/auth-otp-request.zip"
+  source_dir  = "${var.backend_dist}/auth-signup"
+  output_path = "${path.module}/.build/auth-signup.zip"
 }
-data "archive_file" "auth_otp_verify" {
+data "archive_file" "auth_login" {
   type        = "zip"
-  source_dir  = "${var.backend_dist}/auth-otp-verify"
-  output_path = "${path.module}/.build/auth-otp-verify.zip"
+  source_dir  = "${var.backend_dist}/auth-login"
+  output_path = "${path.module}/.build/auth-login.zip"
+}
+data "archive_file" "auth_forgot_password" {
+  type        = "zip"
+  source_dir  = "${var.backend_dist}/auth-forgot-password"
+  output_path = "${path.module}/.build/auth-forgot-password.zip"
+}
+data "archive_file" "auth_confirm_forgot_password" {
+  type        = "zip"
+  source_dir  = "${var.backend_dist}/auth-confirm-forgot-password"
+  output_path = "${path.module}/.build/auth-confirm-forgot-password.zip"
 }
 data "archive_file" "scheduled_vaccination_reminders" {
   type        = "zip"
@@ -355,25 +373,47 @@ resource "aws_lambda_function" "sync" {
   environment { variables = local.common_env }
 }
 
-resource "aws_lambda_function" "auth_otp_request" {
-  function_name    = "${var.project_name}-${var.environment}-auth-otp-request"
-  role             = aws_iam_role.cognito_only.arn
-  handler          = "index.handler"
-  runtime          = "nodejs20.x"
-  timeout          = 10
-  filename         = data.archive_file.auth_otp_request.output_path
-  source_code_hash = data.archive_file.auth_otp_request.output_base64sha256
-  environment { variables = local.common_env }
-}
-
-resource "aws_lambda_function" "auth_otp_verify" {
-  function_name    = "${var.project_name}-${var.environment}-auth-otp-verify"
+resource "aws_lambda_function" "auth_signup" {
+  function_name    = "${var.project_name}-${var.environment}-auth-signup"
   role             = aws_iam_role.cognito_dynamo.arn
   handler          = "index.handler"
   runtime          = "nodejs20.x"
   timeout          = 10
-  filename         = data.archive_file.auth_otp_verify.output_path
-  source_code_hash = data.archive_file.auth_otp_verify.output_base64sha256
+  filename         = data.archive_file.auth_signup.output_path
+  source_code_hash = data.archive_file.auth_signup.output_base64sha256
+  environment { variables = local.common_env }
+}
+
+resource "aws_lambda_function" "auth_login" {
+  function_name    = "${var.project_name}-${var.environment}-auth-login"
+  role             = aws_iam_role.cognito_only.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  timeout          = 10
+  filename         = data.archive_file.auth_login.output_path
+  source_code_hash = data.archive_file.auth_login.output_base64sha256
+  environment { variables = local.common_env }
+}
+
+resource "aws_lambda_function" "auth_forgot_password" {
+  function_name    = "${var.project_name}-${var.environment}-auth-forgot-password"
+  role             = aws_iam_role.cognito_only.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  timeout          = 10
+  filename         = data.archive_file.auth_forgot_password.output_path
+  source_code_hash = data.archive_file.auth_forgot_password.output_base64sha256
+  environment { variables = local.common_env }
+}
+
+resource "aws_lambda_function" "auth_confirm_forgot_password" {
+  function_name    = "${var.project_name}-${var.environment}-auth-confirm-forgot-password"
+  role             = aws_iam_role.cognito_only.arn
+  handler          = "index.handler"
+  runtime          = "nodejs20.x"
+  timeout          = 10
+  filename         = data.archive_file.auth_confirm_forgot_password.output_path
+  source_code_hash = data.archive_file.auth_confirm_forgot_password.output_base64sha256
   environment { variables = local.common_env }
 }
 

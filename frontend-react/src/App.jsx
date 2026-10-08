@@ -5,6 +5,8 @@ import { AppShell } from './components/layout/AppShell';
 import { LoadingIndicator } from './components/ui/LoadingIndicator';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
+import { SignupPage } from './pages/SignupPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { CreateBatchPage } from './pages/CreateBatchPage';
@@ -65,6 +67,24 @@ export default function App() {
               <LoginPage />
             )
           }
+        />
+        <Route
+          path="/signup"
+          element={
+            isLoggedIn ? (
+              isSetupComplete ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/onboarding" replace />
+              )
+            ) : (
+              <SignupPage />
+            )
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />}
         />
 
         {/* Onboarding Route: existing/onboarded users go directly to dashboard */}

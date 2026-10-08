@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { getTokens, setTokens, clearTokens } from '../api/client';
 import { clearOfflineRecords } from '../lib/pwa';
-import { requestOtp, verifyOtp } from '../api/auth';
+import { signup as apiSignup, login as apiLogin, requestPasswordReset, confirmPasswordReset } from '../api/auth';
 import { getFarm } from '../api/farms';
 import { setCustomBirdTypes } from '../lib/batch';
 
@@ -26,9 +26,6 @@ export function AuthProvider({ children }) {
   // redirect a page refresh away from wherever the farmer was.
   const [farmLoading, setFarmLoading] = useState(Boolean(stored.idToken && stored.farmId));
 
-  // OTP flow state
-  const [otpSession, setOtpSession] = useState(null);
-  const [otpEmail, setOtpEmail] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
 
@@ -101,44 +98,75 @@ export function AuthProvider({ children }) {
     (farm?.name && farm.name !== 'My Farm')
   );
 
-  const sendCode = useCallback(async (email) => {
+  const applySession = useCallback(async (data) => {
+    setTokens({
+      idToken: data.idToken,
+      refreshToken: data.refreshToken,
+      farmId: data.farmId,
+    });
+    setIdToken(data.idToken);
+    setFarmId(data.farmId);
+    setIsLoggedIn(true);
+    await loadFarm(data.farmId);
+  }, [loadFarm]);
+
+  const signup = useCallback(async (email, password) => {
     setAuthLoading(true);
     setAuthError('');
     try {
-      const data = await requestOtp(email);
-      setOtpSession(data.session);
-      setOtpEmail(email);
+      const data = await apiSignup(email, password);
+      await applySession(data);
       return true;
     } catch (e) {
-      setAuthError(e.message || 'Failed to send code');
+      setAuthError(e.message || 'Failed to create account');
+      return false;
+    } finally {
+      setAuthLoading(false);
+    }
+  }, [applySession]);
+
+  const login = useCallback(async (email, password) => {
+    setAuthLoading(true);
+    setAuthError('');
+    try {
+      const data = await apiLogin(email, password);
+      await applySession(data);
+      return true;
+    } catch (e) {
+      setAuthError(e.message || 'Incorrect email or password');
+      return false;
+    } finally {
+      setAuthLoading(false);
+    }
+  }, [applySession]);
+
+  const sendPasswordReset = useCallback(async (email) => {
+    setAuthLoading(true);
+    setAuthError('');
+    try {
+      await requestPasswordReset(email);
+      return true;
+    } catch (e) {
+      setAuthError(e.message || 'Failed to send reset code');
       return false;
     } finally {
       setAuthLoading(false);
     }
   }, []);
 
-  const verifyCode = useCallback(async (code) => {
+  const resetPassword = useCallback(async (email, code, newPassword) => {
     setAuthLoading(true);
     setAuthError('');
     try {
-      const data = await verifyOtp(otpEmail, otpSession, code);
-      setTokens({
-        idToken: data.idToken,
-        refreshToken: data.refreshToken,
-        farmId: data.farmId,
-      });
-      setIdToken(data.idToken);
-      setFarmId(data.farmId);
-      setIsLoggedIn(true);
-      await loadFarm(data.farmId);
+      await confirmPasswordReset(email, code, newPassword);
       return true;
     } catch (e) {
-      setAuthError(e.message || 'Failed to verify code');
+      setAuthError(e.message || 'Failed to reset password');
       return false;
     } finally {
       setAuthLoading(false);
     }
-  }, [otpEmail, otpSession, loadFarm]);
+  }, []);
 
   const logout = useCallback(() => {
     clearTokens();
@@ -148,8 +176,6 @@ export function AuthProvider({ children }) {
     setFarmId(null);
     setFarm(null);
     setIsLoggedIn(false);
-    setOtpSession(null);
-    setOtpEmail('');
   }, []);
 
   const value = {
@@ -159,14 +185,20 @@ export function AuthProvider({ children }) {
     farm,
     farmLoading,
     isOnboarded,
+    // A real but unverified email on file (never clicked a confirmation
+    // link, see signup.ts) that then also bounced when the welcome email
+    // tried to send -- surfaced by SettingsPage/a banner component so a
+    // mistyped address at signup is something the farmer can see and fix,
+    // not a silent dead end for notifications and password reset alike.
+    emailBounced: Boolean(farm?.emailBounced),
     loadFarm,
     updateFarmProfile,
-    otpSession,
-    otpEmail,
     authLoading,
     authError,
-    sendCode,
-    verifyCode,
+    signup,
+    login,
+    sendPasswordReset,
+    resetPassword,
     logout,
     setAuthError,
   };

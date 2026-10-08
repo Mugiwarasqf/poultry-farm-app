@@ -61,15 +61,25 @@ output "functions" {
       arn        = aws_lambda_function.sync.arn
       invoke_arn = aws_lambda_function.sync.invoke_arn
     }
-    auth_otp_request = {
-      name       = aws_lambda_function.auth_otp_request.function_name
-      arn        = aws_lambda_function.auth_otp_request.arn
-      invoke_arn = aws_lambda_function.auth_otp_request.invoke_arn
+    auth_signup = {
+      name       = aws_lambda_function.auth_signup.function_name
+      arn        = aws_lambda_function.auth_signup.arn
+      invoke_arn = aws_lambda_function.auth_signup.invoke_arn
     }
-    auth_otp_verify = {
-      name       = aws_lambda_function.auth_otp_verify.function_name
-      arn        = aws_lambda_function.auth_otp_verify.arn
-      invoke_arn = aws_lambda_function.auth_otp_verify.invoke_arn
+    auth_login = {
+      name       = aws_lambda_function.auth_login.function_name
+      arn        = aws_lambda_function.auth_login.arn
+      invoke_arn = aws_lambda_function.auth_login.invoke_arn
+    }
+    auth_forgot_password = {
+      name       = aws_lambda_function.auth_forgot_password.function_name
+      arn        = aws_lambda_function.auth_forgot_password.arn
+      invoke_arn = aws_lambda_function.auth_forgot_password.invoke_arn
+    }
+    auth_confirm_forgot_password = {
+      name       = aws_lambda_function.auth_confirm_forgot_password.function_name
+      arn        = aws_lambda_function.auth_confirm_forgot_password.arn
+      invoke_arn = aws_lambda_function.auth_confirm_forgot_password.invoke_arn
     }
     scheduled_vaccination_reminders = {
       name       = aws_lambda_function.scheduled_vaccination_reminders.function_name

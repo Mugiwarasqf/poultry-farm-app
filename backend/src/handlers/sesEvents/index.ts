@@ -1,5 +1,5 @@
 import type { SNSHandler } from "aws-lambda";
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { ddb, tables } from "../../lib/dynamo";
 import { logger } from "../../lib/logger";
 
@@ -60,4 +60,34 @@ async function suppress(email: string, reason: "bounce" | "complaint") {
     })
   );
   logger.warn("email_suppressed", { email, reason });
+  await flagFarmEmailBounced(email);
+}
+
+// A full Scan is fine at beta scale (a handful of farms) -- same
+// simplification entryNudges.ts already makes for the same table. Farms
+// aren't keyed by email, so there's no cheaper lookup without adding a
+// GSI for what's still a rare event. Surfaced in the app as a "we
+// couldn't reach your email" banner (Farm.emailBounced in lib/types.ts)
+// so a mistyped signup address becomes something the farmer can see and
+// fix, not a silent, permanent dead end.
+async function flagFarmEmailBounced(email: string) {
+  const farms = await ddb.send(
+    new ScanCommand({
+      TableName: tables.farms,
+      FilterExpression: "ownerEmail = :email",
+      ExpressionAttributeValues: { ":email": email },
+      ProjectionExpression: "farmId",
+    })
+  );
+
+  for (const farm of farms.Items ?? []) {
+    await ddb.send(
+      new UpdateCommand({
+        TableName: tables.farms,
+        Key: { farmId: farm.farmId },
+        UpdateExpression: "SET emailBounced = :true, emailBouncedAt = :now",
+        ExpressionAttributeValues: { ":true": true, ":now": new Date().toISOString() },
+      })
+    );
+  }
 }

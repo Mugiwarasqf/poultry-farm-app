@@ -1,17 +1,9 @@
-# Root module: wires the per-service modules together. Dependency order
-# matters here specifically to avoid a module-level cycle — see
-# modules/auth_triggers/main.tf's header comment for why the three
-# Cognito trigger Lambdas are their own module instead of living in
-# api_lambdas alongside the other 16:
+# Root module: wires the per-service modules together.
 #
-#   dynamodb, s3, ses  (no dependencies, can build in any order)
-#       \      |
-#      auth_triggers    (needs ses's identity for create_challenge's IAM +
-#            |           env var, and dynamodb's suppressed_emails table so
-#            |           create_challenge can skip a bounced/complained
-#            |           address — still no dependency on cognito, so the
-#            |           cycle below stays broken)
-#         cognito        (needs auth_triggers' 3 function ARNs)
+#   dynamodb, s3, ses, cognito  (no dependencies, can build in any order --
+#                                 cognito has no Lambda triggers to wire in
+#                                 since the move to email+password auth,
+#                                 08/10/2026, see modules/cognito/main.tf)
 #            |
 #        api_lambdas     (needs dynamodb + cognito + ses outputs)
 #          /      \                 \
@@ -49,36 +41,11 @@ module "ses" {
   environment           = var.environment
 }
 
-module "auth_triggers" {
-  source = "./modules/auth_triggers"
-
-  project_name = var.project_name
-  environment  = var.environment
-  backend_dist = local.backend_dist
-
-  # The domain identity's ARN (for the From address) plus every test
-  # recipient's ARN (SES also checks resource-level authorization against
-  # the *destination* address whenever it's itself a same-account
-  # identity — see infra/modules/ses/outputs.tf's send_identity_arns).
-  ses_identity_arns = module.ses.send_identity_arns
-  ses_sender_email  = module.ses.sender_email
-
-  suppressed_emails_table_name = module.dynamodb.table_names["suppressed_emails"]
-  suppressed_emails_table_arn  = module.dynamodb.suppressed_emails_table_arn
-}
-
 module "cognito" {
   source = "./modules/cognito"
 
   project_name = var.project_name
   environment  = var.environment
-
-  define_auth_challenge_arn  = module.auth_triggers.define_challenge_arn
-  define_auth_challenge_name = module.auth_triggers.define_challenge_name
-  create_auth_challenge_arn  = module.auth_triggers.create_challenge_arn
-  create_auth_challenge_name = module.auth_triggers.create_challenge_name
-  verify_auth_challenge_arn  = module.auth_triggers.verify_challenge_arn
-  verify_auth_challenge_name = module.auth_triggers.verify_challenge_name
 }
 
 module "api_lambdas" {

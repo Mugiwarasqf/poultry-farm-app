@@ -1,29 +1,31 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { isValidEmailFormat } from '../lib/authValidation';
+import { SUPPORT_WHATSAPP_URL } from '../lib/support';
 
 export function LoginPage({ onBack }) {
   const navigate = useNavigate();
-  const { otpSession, authLoading, authError, sendCode, verifyCode, setAuthError } = useAuth();
+  const { authLoading, authError, login, setAuthError } = useAuth();
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleBack = () => {
     if (onBack) onBack();
     else navigate('/');
   };
 
-  const handleRequestOtp = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email.trim()) return setAuthError('Enter your email address');
-    await sendCode(email.trim());
-  };
-
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-    if (!code.trim()) return setAuthError('Enter the 6-digit code from your email');
-    await verifyCode(code.trim());
+    if (!email.trim() || !isValidEmailFormat(email)) {
+      return setAuthError('Enter a valid email address');
+    }
+    if (!password) {
+      return setAuthError('Enter your password');
+    }
+    const ok = await login(email.trim(), password);
+    if (ok) navigate('/dashboard');
   };
 
   return (
@@ -44,7 +46,7 @@ export function LoginPage({ onBack }) {
           <div className="relative z-10">
             <a href="/" className="inline-flex items-center gap-1.5 focus:outline-hidden">
               <span className="text-[24px] font-bold tracking-tight text-white">
-                farm<span className="text-emerald-500">book</span>
+                Track<span className="text-emerald-500">Farm</span>
               </span>
             </a>
           </div>
@@ -67,7 +69,7 @@ export function LoginPage({ onBack }) {
             <div className="pt-2 flex items-center gap-6 text-xs text-neutral-300 border-t border-white/15">
               <div className="flex items-center gap-1.5">
                 <span className="text-emerald-400 font-bold">✓</span>
-                <span>Passwordless Login</span>
+                <span>Works Offline</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="text-emerald-400 font-bold">✓</span>
@@ -97,7 +99,7 @@ export function LoginPage({ onBack }) {
           <div className="lg:hidden">
             <a href="/" className="flex items-center gap-1">
               <span className="text-[20px] font-bold tracking-tight text-neutral-900">
-                farm<span className="text-emerald-600">book</span>
+                Track<span className="text-emerald-600">Farm</span>
               </span>
             </a>
           </div>
@@ -105,146 +107,100 @@ export function LoginPage({ onBack }) {
 
         {/* Center Auth Container */}
         <div className="w-full max-w-md mx-auto my-auto py-10 sm:py-14">
-          {!otpSession ? (
-            <div className="space-y-6">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                  Welcome back
-                </span>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-950 mt-1">
-                  Sign in to your farm
-                </h1>
-                <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
-                  Enter your email address and we'll send you a passwordless one-time verification code.
-                </p>
+          <div className="space-y-6">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+                Welcome back
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-950 mt-1">
+                Sign in to your farm
+              </h1>
+              <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
+                Enter your email and password to continue.
+              </p>
+            </div>
+
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              {authError && (
+                <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl font-medium flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>{authError}</span>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-neutral-800 block" htmlFor="login-email">
+                  Email address
+                </label>
+                <input
+                  id="login-email"
+                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
+                  type="email"
+                  placeholder="farmer@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  autoFocus
+                  disabled={authLoading}
+                />
               </div>
 
-              <form className="space-y-4" onSubmit={handleRequestOtp}>
-                {authError && (
-                  <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl font-medium flex items-center gap-2">
-                    <span>⚠️</span>
-                    <span>{authError}</span>
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-neutral-800 block" htmlFor="login-email">
-                    Email address
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-neutral-800 block" htmlFor="login-password">
+                    Password
                   </label>
-                  <input
-                    id="login-email"
-                    className="w-full px-4 py-3 bg-neutral-50 border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
-                    type="email"
-                    placeholder="farmer@example.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    autoFocus
-                    disabled={authLoading}
-                  />
+                  <Link to="/forgot-password" className="text-xs font-medium text-neutral-500 hover:text-neutral-800 hover:underline">
+                    Forgot password?
+                  </Link>
                 </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-3.5 px-5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white font-semibold rounded-full shadow-sm text-sm transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                <input
+                  id="login-password"
+                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
                   disabled={authLoading}
-                >
-                  {authLoading ? (
-                    <>
-                      <div className="spinner !w-4 !h-4 !border-white/40 !border-t-white" />
-                      <span>Sending verification code…</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Send verification code</span>
-                      <span className="text-base leading-none">→</span>
-                    </>
-                  )}
-                </button>
-              </form>
-
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
-                  Verification
-                </span>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-950 mt-1">
-                  Check your inbox
-                </h1>
-                <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
-                  We sent a 6-digit one-time code to{' '}
-                  <span className="font-semibold text-neutral-900">{email}</span>
-                </p>
+                />
               </div>
 
-              <form className="space-y-4" onSubmit={handleVerifyOtp}>
-                {authError && (
-                  <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl font-medium flex items-center gap-2">
-                    <span>⚠️</span>
-                    <span>{authError}</span>
-                  </div>
+              <button
+                type="submit"
+                className="w-full py-3.5 px-5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white font-semibold rounded-full shadow-sm text-sm transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                disabled={authLoading}
+              >
+                {authLoading ? (
+                  <>
+                    <div className="spinner !w-4 !h-4 !border-white/40 !border-t-white" />
+                    <span>Signing in…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign in</span>
+                    <span className="text-base leading-none">→</span>
+                  </>
                 )}
+              </button>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-neutral-800 block" htmlFor="login-code">
-                    6-digit verification code
-                  </label>
-                  <input
-                    id="login-code"
-                    className="w-full px-4 py-3 bg-neutral-50 border border-neutral-300 rounded-xl text-neutral-900 text-lg font-mono tracking-[0.25em] text-center font-bold focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400 placeholder:tracking-normal placeholder:font-sans placeholder:text-sm"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    placeholder="Enter code"
-                    value={code}
-                    onChange={e => setCode(e.target.value)}
-                    autoFocus
-                    disabled={authLoading}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-3.5 px-5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white font-semibold rounded-full shadow-sm text-sm transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  disabled={authLoading}
-                >
-                  {authLoading ? (
-                    <>
-                      <div className="spinner !w-4 !h-4 !border-white/40 !border-t-white" />
-                      <span>Verifying code…</span>
-                    </>
-                  ) : (
-                    <span>Verify &amp; Sign in</span>
-                  )}
-                </button>
-
-                <div className="pt-2 flex items-center justify-between text-xs text-neutral-500">
-                  <button
-                    type="button"
-                    onClick={() => sendCode(email)}
-                    className="font-medium text-neutral-800 hover:text-neutral-950 hover:underline cursor-pointer"
-                    disabled={authLoading}
-                  >
-                    Didn't get code? Resend
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    className="text-neutral-500 hover:text-neutral-800 hover:underline cursor-pointer"
-                  >
-                    Change email
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+              <div className="pt-2 text-center text-xs text-neutral-500">
+                New here?{' '}
+                <Link to="/signup" className="font-medium text-neutral-800 hover:text-neutral-950 hover:underline">
+                  Create an account
+                </Link>
+              </div>
+            </form>
+          </div>
         </div>
 
-        {/* Footer Security Note */}
+        {/* Footer: security note + a non-email recovery path for an
+            audience where a lost password and a lost email can mean the
+            same dead end. See docs/CLAUDE.md's working preferences --
+            WhatsApp is the channel this audience is already proven
+            comfortable with. */}
         <div className="pt-6 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-neutral-400">
-         
+          <a href={SUPPORT_WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-neutral-700 hover:underline">
+            Trouble signing in? Message us on WhatsApp
+          </a>
           <div>© {new Date().getFullYear()} TrackFarm</div>
         </div>
       </div>

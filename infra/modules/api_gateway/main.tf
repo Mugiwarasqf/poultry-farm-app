@@ -1,9 +1,11 @@
 # HTTP API implementing the route list in docs/10-build-plan.md §3, plus
 # the vaccination-schedule PATCH added in backend/src/handlers/vaccinationSchedule/index.ts
-# for the mockup's "Mark as Done" action. Every route except the two auth
-# ones requires a valid Cognito ID token (via the JWT authorizer below) —
-# farmId is then read out of its custom:farmId claim, never trusted from
-# the request itself (see backend/src/lib/http.ts farmIdFromEvent).
+# for the mockup's "Mark as Done" action. Every route except the four auth
+# ones (signup/login/forgot-password/confirm-forgot-password — there's no
+# token to check yet at that point) requires a valid Cognito ID token (via
+# the JWT authorizer below) — farmId is then read out of its custom:farmId
+# claim, never trusted from the request itself (see
+# backend/src/lib/http.ts farmIdFromEvent).
 
 locals {
   # One integration + one invoke permission per API-facing Lambda — kept
@@ -14,7 +16,7 @@ locals {
   api_lambda_keys = [
     "batches", "farms", "feed_stock", "mortality", "feed", "eggs", "weight", "sick_bay", "vaccinations",
     "vaccination_schedule", "summary", "sync",
-    "auth_otp_request", "auth_otp_verify",
+    "auth_signup", "auth_login", "auth_forgot_password", "auth_confirm_forgot_password",
   ]
 }
 
@@ -66,15 +68,25 @@ resource "aws_lambda_permission" "apigw" {
 
 # ---- Routes ---------------------------------------------------------------
 
-resource "aws_apigatewayv2_route" "auth_otp_request" {
+resource "aws_apigatewayv2_route" "auth_signup" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /auth/otp/request"
-  target    = "integrations/${aws_apigatewayv2_integration.this["auth_otp_request"].id}"
+  route_key = "POST /auth/signup"
+  target    = "integrations/${aws_apigatewayv2_integration.this["auth_signup"].id}"
 }
-resource "aws_apigatewayv2_route" "auth_otp_verify" {
+resource "aws_apigatewayv2_route" "auth_login" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /auth/otp/verify"
-  target    = "integrations/${aws_apigatewayv2_integration.this["auth_otp_verify"].id}"
+  route_key = "POST /auth/login"
+  target    = "integrations/${aws_apigatewayv2_integration.this["auth_login"].id}"
+}
+resource "aws_apigatewayv2_route" "auth_forgot_password" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /auth/forgot-password"
+  target    = "integrations/${aws_apigatewayv2_integration.this["auth_forgot_password"].id}"
+}
+resource "aws_apigatewayv2_route" "auth_confirm_forgot_password" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /auth/confirm-forgot-password"
+  target    = "integrations/${aws_apigatewayv2_integration.this["auth_confirm_forgot_password"].id}"
 }
 
 resource "aws_apigatewayv2_route" "batches_list" {

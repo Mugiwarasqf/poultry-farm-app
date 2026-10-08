@@ -19,6 +19,7 @@ import { HistoryIcon } from '../ui/HistoryIcon';
 import { FarmIcon } from '../ui/FarmIcon';
 import { OfflineBanner } from '../pwa/OfflineBanner';
 import { UpdateBanner } from '../pwa/UpdateBanner';
+import { EmailBounceBanner } from '../ui/EmailBounceBanner';
 
 const VIEW_TITLES = {
   '/dashboard': 'Farm Overview',
@@ -192,6 +193,7 @@ export function AppShell() {
           </div>
         </header>
 
+        <EmailBounceBanner />
         <OfflineBanner />
 
         {/* Main Content Area */}
