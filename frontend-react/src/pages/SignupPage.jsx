@@ -9,6 +9,7 @@ export function SignupPage({ onBack }) {
   const navigate = useNavigate();
   const { authLoading, authError, signup, setAuthError } = useAuth();
   const [email, setEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [dismissedSuggestion, setDismissedSuggestion] = useState('');
@@ -33,6 +34,9 @@ export function SignupPage({ onBack }) {
     e.preventDefault();
     if (!email.trim() || !isValidEmailFormat(email)) {
       return setAuthError('Enter a valid email address');
+    }
+    if (email.trim() !== confirmEmail.trim()) {
+      return setAuthError('Emails do not match');
     }
     const pErr = passwordError(password);
     if (pErr) return setAuthError(pErr);
@@ -144,6 +148,24 @@ export function SignupPage({ onBack }) {
                     </button>
                     ?
                   </p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-neutral-800 block" htmlFor="signup-confirm-email">
+                  Confirm email address
+                </label>
+                <input
+                  id="signup-confirm-email"
+                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
+                  type="email"
+                  placeholder="Type it again"
+                  value={confirmEmail}
+                  onChange={e => setConfirmEmail(e.target.value)}
+                  disabled={authLoading}
+                />
+                {confirmEmail && confirmEmail.trim() !== email.trim() && (
+                  <p className="text-xs text-amber-700">Emails don't match yet</p>
                 )}
               </div>
 
