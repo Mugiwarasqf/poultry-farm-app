@@ -24,6 +24,25 @@ export function clearTokens() {
   localStorage.removeItem('farmbook_batchid');
 }
 
+// Separate from clearTokens(): these are the offline-fallback copies of
+// the *previous* account's farm profile (AuthContext.loadFarm falls back
+// to them if the API call fails, and isOnboarded reads farmbook_onboarded
+// directly). Not included in clearTokens() itself since that's reused
+// just for the auth session -- but leaving these behind meant a fresh
+// signup in the same browser could inherit a different account's
+// onboarding-complete flag and profile fields, skipping onboarding
+// entirely for a brand new farm. Call this on logout AND defensively
+// before a fresh signup, since an account removed server-side (e.g. an
+// admin deleting a stuck Cognito user) never goes through logout() at all.
+export function clearFarmProfile() {
+  localStorage.removeItem('farmbook_onboarded');
+  localStorage.removeItem('farmbook_farmname');
+  localStorage.removeItem('farmbook_farmername');
+  localStorage.removeItem('farmbook_farmlocation');
+  localStorage.removeItem('farmbook_farmphone');
+  localStorage.removeItem('farmbook_role');
+}
+
 function cognitoRegion() {
   // Used to be parsed out of apiBase's hostname (execute-api.<region>.amazonaws.com)
   // -- broke silently the moment apiBase became a custom domain (api.trackfarm.cc)

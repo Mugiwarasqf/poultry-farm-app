@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { getTokens, setTokens, clearTokens } from '../api/client';
+import { getTokens, setTokens, clearTokens, clearFarmProfile } from '../api/client';
 import { clearOfflineRecords } from '../lib/pwa';
 import { signup as apiSignup, login as apiLogin, requestPasswordReset, confirmPasswordReset } from '../api/auth';
 import { getFarm } from '../api/farms';
@@ -114,6 +114,10 @@ export function AuthProvider({ children }) {
     setAuthLoading(true);
     setAuthError('');
     try {
+      // A new farm should never inherit a previous account's onboarding
+      // state or profile fields -- see clearFarmProfile()'s comment for
+      // why this can't just rely on logout() having run already.
+      clearFarmProfile();
       const data = await apiSignup(email, password);
       await applySession(data);
       return true;
@@ -129,6 +133,11 @@ export function AuthProvider({ children }) {
     setAuthLoading(true);
     setAuthError('');
     try {
+      // Same reasoning as signup() -- a different account's stale
+      // onboarded flag would otherwise OR into this one's real value in
+      // isOnboarded below. loadFarm() repopulates everything fresh from
+      // the API right after.
+      clearFarmProfile();
       const data = await apiLogin(email, password);
       await applySession(data);
       return true;
@@ -170,8 +179,8 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     clearTokens();
+    clearFarmProfile();
     clearOfflineRecords();
-    localStorage.removeItem('farmbook_onboarded');
     setIdToken(null);
     setFarmId(null);
     setFarm(null);
