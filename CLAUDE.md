@@ -185,6 +185,28 @@ ID. See `infra/main.tf`'s header comment for the full diagram.
   itself is kept on Namecheap, not migrated to Route 53, so validation
   records are added by hand (see `infra/acm.tf`'s header comment for the
   two-step apply this requires).
+- **Two AWS accounts, one codebase**: beta (543613943899, current
+  `trackfarm.cc` DNS owner) for manual pre-merge testing, prod
+  (685108783257) for the CI/CD pipeline. `infra/variables.tf`'s
+  `deploy_custom_domain` keeps only one environment claiming the domain at
+  a time. Each account's Terraform vars live in a named file
+  (`infra/terraform.tfvars` for beta, `infra/prod.tfvars` for prod, both
+  gitignored) and backend config (`infra/backend-configs/{beta,prod}.hcl`,
+  pointing at that account's own `trackfarm-tfstate-<account-id>` S3
+  bucket and `trackfarm-tfstate-lock` DynamoDB table — both created in
+  both accounts, beta's local state not yet migrated over).
+- **`infra/bootstrap/`**: a separate Terraform root, applied once per
+  account, for the GitHub Actions OIDC provider and the
+  `trackfarm-github-actions` IAM role CI/CD assumes (AdministratorAccess
+  for now, same "simplicity for beta" pattern as elsewhere).
+- **CI/CD** (`.github/workflows/`): `ci.yml` runs on every PR — typecheck
+  and build both `backend/` and `frontend-react/`, then
+  `terraform validate`/`plan` against prod. `cd.yml` is manually triggered
+  (`workflow_dispatch`) after a merge to `main` and runs `terraform
+  apply` against prod — manual trigger is the approval gate, since
+  GitHub's native required-reviewers environment protection needs a paid
+  plan this repo doesn't have. Beta is never touched by either workflow;
+  it's deployed by hand for pre-merge testing.
 - If the no-smartphone/USSD segment ever becomes real: AWS doesn't
   provide USSD directly, would need a Nigerian telco or aggregator (e.g.
   Africa's Talking) alongside AWS. Still unvalidated (0/27 respondents
@@ -214,7 +236,8 @@ ID. See `infra/main.tf`'s header comment for the full diagram.
 | `docs/05` to `docs/09` | Raw interview transcripts, one file each |
 | `docs/10-build-plan.md` | Living beta build plan: data model, API shape, build sequence, open decisions |
 | `docs/11-platform-obstacles.md` | Real AWS/Apple platform walls hit during this build and their current status |
-| `infra/` | Terraform, modular (`infra/main.tf` plus `infra/modules/*`) |
+| `infra/` | Terraform, modular (`infra/main.tf` plus `infra/modules/*`); `infra/bootstrap/` is the separate one-time-per-account OIDC/IAM setup |
+| `.github/workflows/` | CI (`ci.yml`, every PR) and CD (`cd.yml`, manually triggered after merge) |
 | `backend/` | TypeScript Lambda source, one handler per API resource |
 | `frontend-react/` | The real product frontend (Vite plus React), built by the founder's friend |
 | `README.md` | Shorter orientation doc, same information at a glance |
@@ -248,3 +271,9 @@ ID. See `infra/main.tf`'s header comment for the full diagram.
    (`docs/11-platform-obstacles.md`); the account stays in sandbox for
    now. Decide between a third-party email provider, staying in sandbox
    with manual recipient verification, or switching back to phone/SMS.
+8. The prod stack and CI/CD pipeline are code-complete but not yet live:
+   `terraform apply` in `infra/bootstrap/` (per account) and `infra/`
+   (prod), plus migrating beta's state to its new S3 backend
+   (`terraform init -migrate-state`), all still need to be run by hand —
+   this agent's auto mode is blocked from running `apply` or any state
+   migration itself.

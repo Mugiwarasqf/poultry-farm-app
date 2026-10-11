@@ -12,10 +12,14 @@ terraform {
     }
   }
 
-  # Local state for now — deliberate, matches the beta stage. Move to an
-  # S3 backend with DynamoDB locking before more than one person runs
-  # `terraform apply` against this, so concurrent applies can't corrupt
-  # state.
+  # Bucket/table/region are per-account, passed via -backend-config at
+  # init time (see infra/backend-configs/*.hcl) — can't be hardcoded here
+  # since beta and prod are different AWS accounts.
+  backend "s3" {
+    key            = "infra/terraform.tfstate"
+    dynamodb_table = "trackfarm-tfstate-lock"
+    encrypt        = true
+  }
 }
 
 provider "aws" {
@@ -23,7 +27,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      project     = "poultry-farm-app"
+      project     = var.project_name
       environment = var.environment
       managed_by  = "terraform"
     }
@@ -39,7 +43,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      project     = "poultry-farm-app"
+      project     = var.project_name
       environment = var.environment
       managed_by  = "terraform"
     }

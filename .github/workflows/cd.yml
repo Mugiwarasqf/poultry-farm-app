@@ -1,0 +1,50 @@
+name: CD
+
+# Manually triggered after a merge to main, not automatic on push --
+# that's the "one manual click" gate (GitHub's own required-reviewers
+# environment protection needs a paid plan for private repos, unusable
+# here). Run from the Actions tab once main has what you want deployed.
+# Deploys to prod only; beta is never touched by this pipeline.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci && npm run build
+        working-directory: backend
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend-react/package-lock.json
+      - run: npm ci && npm run build
+        working-directory: frontend-react
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: eu-west-1
+
+      - run: terraform init -backend-config=backend-configs/prod.hcl
+        working-directory: infra
+      - run: terraform apply -var-file=prod.tfvars -auto-approve
+        working-directory: infra
