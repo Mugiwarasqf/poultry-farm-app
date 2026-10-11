@@ -1,28 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, RefreshCw } from 'lucide-react';
-import { describeWeather, loadFarmWeather } from '../../lib/weather';
+import { describeWeather, loadWeatherForFarm, readDeviceCoords, saveDeviceCoords } from '../../lib/weather';
 import { Skeleton } from './Skeleton';
-
-// Coordinates the farmer chose to share with "Use my location", remembered
-// on this device so they're only asked once.
-const DEVICE_KEY = 'farmbook_weather_device';
-
-function readDeviceCoords() {
-  try {
-    return JSON.parse(localStorage.getItem(DEVICE_KEY) || 'null');
-  } catch {
-    return null;
-  }
-}
-
-function saveDeviceCoords(coords) {
-  try {
-    localStorage.setItem(DEVICE_KEY, JSON.stringify(coords));
-  } catch {
-    // Only remembered for this visit.
-  }
-}
 
 const deg = (n) => (n == null || Number.isNaN(Number(n)) ? '–' : `${Math.round(n)}°`);
 
@@ -52,8 +32,11 @@ function DayTile({ title, day, tone }) {
  * Today's and tomorrow's weather for the farm, from its location in Farm
  * Details. Falls back to asking for the device's location only when the
  * farm has none, or it can't be found.
+ *
+ * `onUpdate(result)` is told about every new result, so the header's weather
+ * badge stays in step when the farmer refreshes or shares their location here.
  */
-export function WeatherCard({ location }) {
+export function WeatherCard({ location, onUpdate }) {
   const farmPlace = (location || '').trim();
   const [deviceCoords, setDeviceCoords] = useState(() => readDeviceCoords());
   const [state, setState] = useState({ status: 'loading' });
@@ -61,23 +44,19 @@ export function WeatherCard({ location }) {
 
   const load = useCallback(
     async (force = false) => {
-      const where = farmPlace || deviceCoords;
-      if (!where) {
-        setState({ status: 'no-location' });
-        return;
-      }
       setState((s) => (s.status === 'ok' && force ? { ...s, refreshing: true } : { status: 'loading' }));
+      let result;
       try {
-        let result = await loadFarmWeather(where, { force });
-        // The typed location wasn't found; use the device's if it was shared.
-        if (result.status === 'not-found' && farmPlace && deviceCoords) {
-          result = await loadFarmWeather(deviceCoords, { force });
-        }
-        setState(result);
+        result = await loadWeatherForFarm(farmPlace, { force });
       } catch {
-        setState({ status: 'error' });
+        result = { status: 'error' };
       }
+      setState(result);
+      onUpdate?.(result);
     },
+    // deviceCoords is read inside loadWeatherForFarm; it's listed so sharing a
+    // location reloads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [farmPlace, deviceCoords]
   );
 

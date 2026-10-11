@@ -36,7 +36,6 @@ import {
 import { Modal } from '../components/ui/Modal';
 import { Skeleton } from '../components/ui/Skeleton';
 import { LineChart } from '../components/ui/LineChart';
-import { WeatherCard } from '../components/ui/WeatherCard';
 import { FeedUsageModal } from '../components/ui/FeedUsageModal';
 import { FeedPurchaseModal } from '../components/ui/FeedPurchaseModal';
 import { VaccinationModal } from '../components/ui/VaccinationModal';
@@ -650,7 +649,81 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Summary cards */}
+      {/* 1. Your Batches, with Quick Actions beside it (stacked below xl) */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)] gap-5 items-stretch">
+        {/* Your Batches */}
+        <Card className="p-4 sm:p-5">
+          <SectionHeader icon={BatchIcon} title="Your Batches" action={<ViewAll to="/batches" />} />
+          <div className="h-32 sm:h-40 rounded-xl overflow-hidden bg-stone-100">
+            <img src={BATCH_BANNER} alt="Hens on a poultry farm" className="w-full h-full object-cover object-[center_45%]" />
+          </div>
+
+          {batchesLoading ? (
+            <div className="grid sm:grid-cols-2 gap-4 mt-4">
+              <Skeleton className="h-32 rounded-2xl" />
+              <Skeleton className="h-32 rounded-2xl" />
+            </div>
+          ) : noActive ? (
+            <div className="mt-4 rounded-2xl border border-dashed border-[#E1E8EF] p-6 text-center">
+              <p className="text-sm font-semibold">No active batches</p>
+              <p className="text-xs text-[#70829B] mt-1">Start a batch to begin tracking birds, feed and vaccinations.</p>
+              <Link
+                to="/batches/new"
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#DFFF83] text-[#17191A] text-sm font-semibold hover:bg-[#C5E95A] transition-colors"
+              >
+                <Plus size={16} /> Create New Batch
+              </Link>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-4 mt-4">
+              {visibleBatches.map((b) => (
+                <BatchCard
+                  key={b.batchId}
+                  batch={b}
+                  currentBirds={currentBirdsOf(b)}
+                  eggsPerDay={eggsPerDayOf(b)}
+                  logsLoaded={!loading}
+                  onOpen={() => navigate(`/batches/${b.batchId}`)}
+                />
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Quick Actions */}
+        <Card className="p-4 sm:p-5 w-full h-full flex flex-col">
+          <SectionHeader icon={Zap} title="Quick Actions" />
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 auto-rows-fr gap-3 flex-1">
+            <QuickAction icon={Plus} filledIcon title="Create Batch" hint="Start a new batch" tone="green" to="/batches/new" />
+            <QuickAction
+              icon={FeedIcon}
+              title="Log Feed"
+              hint={noActive ? 'Needs an active batch' : 'Record feed usage'}
+              tone="blue"
+              disabled={noActive}
+              onClick={() => setModal('feed')}
+            />
+            <QuickAction
+              icon={VaccineIcon}
+              title="Record Vaccination"
+              hint={noActive ? 'Needs an active batch' : 'Update vaccination records'}
+              tone="blue"
+              disabled={noActive}
+              onClick={() => setModal('vaccine')}
+            />
+            <QuickAction
+              icon={BirdIcon}
+              title="Log Bird Loss"
+              hint={noActive ? 'Needs an active batch' : 'Record mortality/loss'}
+              tone="red"
+              disabled={noActive}
+              onClick={logBirdLoss}
+            />
+          </div>
+        </Card>
+      </div>
+
+      {/* 2. Summary cards */}
       <div className="grid grid-cols-1 min-[420px]:grid-cols-2 xl:grid-cols-4 gap-4">
         <SummaryCard
           icon={BatchIcon}
@@ -707,52 +780,8 @@ export function DashboardPage() {
         />
       </div>
 
-      {/* Main grid: wide left column, narrower right column */}
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)] gap-5">
-        {/* Your Batches */}
-        <Card className="p-4 sm:p-5">
-          <SectionHeader icon={BatchIcon} title="Your Batches" action={<ViewAll to="/batches" />} />
-          <div className="h-32 sm:h-40 rounded-xl overflow-hidden bg-stone-100">
-            <img src={BATCH_BANNER} alt="Hens on a poultry farm" className="w-full h-full object-cover object-[center_45%]" />
-          </div>
-
-          {batchesLoading ? (
-            <div className="grid sm:grid-cols-2 gap-4 mt-4">
-              <Skeleton className="h-32 rounded-2xl" />
-              <Skeleton className="h-32 rounded-2xl" />
-            </div>
-          ) : noActive ? (
-            <div className="mt-4 rounded-2xl border border-dashed border-[#E1E8EF] p-6 text-center">
-              <p className="text-sm font-semibold">No active batches</p>
-              <p className="text-xs text-[#70829B] mt-1">Start a batch to begin tracking birds, feed and vaccinations.</p>
-              <Link
-                to="/batches/new"
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#DFFF83] text-[#17191A] text-sm font-semibold hover:bg-[#C5E95A] transition-colors"
-              >
-                <Plus size={16} /> Create New Batch
-              </Link>
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 gap-4 mt-4">
-              {visibleBatches.map((b) => (
-                <BatchCard
-                  key={b.batchId}
-                  batch={b}
-                  currentBirds={currentBirdsOf(b)}
-                  eggsPerDay={eggsPerDayOf(b)}
-                  logsLoaded={!loading}
-                  onOpen={() => navigate(`/batches/${b.batchId}`)}
-                />
-              ))}
-            </div>
-          )}
-        </Card>
-
-        {/* Weather for the farm (alerts already live in the notification bell) */}
-        <WeatherCard location={farm?.location} />
-
-        {/* Lower left: Production Performance + Recent Activity */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-[minmax(0,1.33fr)_minmax(0,1fr)] gap-5">
+      {/* 3. Production Performance (wider: what farmers act on) and Recent Activity */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-5">
           <Card className="p-4 sm:p-5 flex flex-col">
             <SectionHeader
               icon={ChartLine}
@@ -876,39 +905,6 @@ export function DashboardPage() {
               </ul>
             )}
           </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <Card className="p-4 sm:p-5 self-start w-full">
-          <SectionHeader icon={Zap} title="Quick Actions" />
-          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
-            <QuickAction icon={Plus} filledIcon title="Create Batch" hint="Start a new batch" tone="green" to="/batches/new" />
-            <QuickAction
-              icon={FeedIcon}
-              title="Log Feed"
-              hint={noActive ? 'Needs an active batch' : 'Record feed usage'}
-              tone="blue"
-              disabled={noActive}
-              onClick={() => setModal('feed')}
-            />
-            <QuickAction
-              icon={VaccineIcon}
-              title="Record Vaccination"
-              hint={noActive ? 'Needs an active batch' : 'Update vaccination records'}
-              tone="blue"
-              disabled={noActive}
-              onClick={() => setModal('vaccine')}
-            />
-            <QuickAction
-              icon={BirdIcon}
-              title="Log Bird Loss"
-              hint={noActive ? 'Needs an active batch' : 'Record mortality/loss'}
-              tone="red"
-              disabled={noActive}
-              onClick={logBirdLoss}
-            />
-          </div>
-        </Card>
       </div>
 
       {/* Existing logging flows, reused as-is */}

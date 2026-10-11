@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
-import { TimeOfDay } from './TimeOfDay';
+import { HeaderWeather } from './HeaderWeather';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 import { useOfflineQueue } from '../../lib/useOfflineQueue';
@@ -98,7 +98,7 @@ export function AppShell() {
             >
               <Menu size={20} />
             </button>
-            <TimeOfDay />
+            <HeaderWeather />
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">

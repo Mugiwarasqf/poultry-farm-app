@@ -119,6 +119,42 @@ export async function getForecast(latitude, longitude) {
   };
 }
 
+// ---- the device's location (only after the farmer taps "Use my location") ---
+
+const DEVICE_KEY = 'farmbook_weather_device';
+
+export function readDeviceCoords() {
+  try {
+    return JSON.parse(localStorage.getItem(DEVICE_KEY) || 'null');
+  } catch {
+    return null;
+  }
+}
+
+export function saveDeviceCoords(coords) {
+  try {
+    localStorage.setItem(DEVICE_KEY, JSON.stringify(coords));
+  } catch {
+    // Only remembered for this visit.
+  }
+}
+
+/**
+ * Weather for the farm: its typed location first, then the device location
+ * if the farmer shared one. `{ status: 'no-location' }` when there is neither.
+ * Shared by the header badge and the weather popover so both agree.
+ */
+export async function loadWeatherForFarm(farmLocation, { force = false } = {}) {
+  const place = (farmLocation || '').trim();
+  const device = readDeviceCoords();
+  if (!place && !device) return { status: 'no-location' };
+  let result = await loadFarmWeather(place || device, { force });
+  if (result.status === 'not-found' && place && device) {
+    result = await loadFarmWeather(device, { force });
+  }
+  return result;
+}
+
 /**
  * Everything the weather card needs for a place.
  *
