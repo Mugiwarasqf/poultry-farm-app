@@ -50,7 +50,7 @@ function Dropdown({ value, onChange, options, ariaLabel }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={ariaLabel}
-        className="appearance-none w-full bg-white border border-stone-200 rounded-xl pl-4 pr-10 py-3 text-sm font-medium text-stone-700 shadow-xs cursor-pointer focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15 transition-colors"
+        className="appearance-none w-full bg-white border border-stone-200 rounded-xl pl-4 pr-10 py-3 text-sm font-medium text-stone-700 shadow-xs cursor-pointer focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 transition-colors"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>{option.label}</option>
@@ -305,7 +305,7 @@ export function BatchesPage() {
 
         <Link
           to="/batches/new"
-          className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold bg-[#0D5C3A] text-white hover:bg-[#094229] transition-colors shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold bg-[#DFFF83] text-[#17191A] hover:bg-[#C5E95A] transition-colors shrink-0"
         >
           <Plus size={16} strokeWidth={2.5} />
           <span>Create New Batch</span>
@@ -324,7 +324,7 @@ export function BatchesPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search batches..."
-            className="w-full bg-white border border-stone-200 rounded-xl pl-11 pr-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-xs focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15 transition-colors"
+            className="w-full bg-white border border-stone-200 rounded-xl pl-11 pr-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-xs focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 transition-colors"
           />
         </div>
 
@@ -358,7 +358,7 @@ export function BatchesPage() {
           {batches.length === 0 && (
             <Link
               to="/batches/new"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#0D5C3A] text-white hover:bg-[#094229] transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-[#DFFF83] text-[#17191A] hover:bg-[#C5E95A] transition-colors"
             >
               <Plus size={16} strokeWidth={2.5} />
               <span>Create New Batch</span>

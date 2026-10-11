@@ -101,7 +101,7 @@ export function OfflineOverlay() {
               <button
                 onClick={handleRetry}
                 disabled={retrying}
-                className="w-full py-3.5 rounded-2xl bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white font-bold text-sm transition-all inline-flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-70"
+                className="w-full py-3.5 rounded-2xl bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] font-bold text-sm transition-all inline-flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-70"
               >
                 {retrying ? (
                   <>
@@ -127,7 +127,7 @@ export function OfflineOverlay() {
       {/* ── BACK ONLINE TOAST ── */}
       {justReconnected && (
         <div
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 bg-[#0D5C3A] text-white rounded-2xl shadow-lg flex items-center gap-2.5 text-sm font-bold animate-fade-in"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 bg-[#DFFF83] text-[#17191A] rounded-2xl shadow-lg flex items-center gap-2.5 text-sm font-bold animate-fade-in"
           role="status"
           aria-live="polite"
           style={{ animation: 'slideUp 0.25s ease-out' }}

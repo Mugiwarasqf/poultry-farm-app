@@ -24,7 +24,7 @@ export function UpdateBanner() {
       <button
         type="button"
         onClick={applyUpdate}
-        className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0D5C3A] hover:bg-[#094229] text-sm font-semibold cursor-pointer"
+        className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#DFFF83] hover:bg-[#C5E95A] text-sm font-semibold cursor-pointer"
       >
         <RefreshCw size={14} strokeWidth={2.5} /> Refresh
       </button>

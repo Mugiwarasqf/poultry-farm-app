@@ -45,7 +45,7 @@
 /* Brand green instead of the browser's default blue for every native control
    that has an "active" colour: checkboxes, radios, range sliders, date inputs. */
 :root {
-  accent-color: #0D5C3A;
+  accent-color: #DFFF83;
 }
 
 /* Dropdowns. The open menu of a native <select> is drawn by the browser
@@ -59,8 +59,8 @@
    This sits outside any @layer on purpose: unlayered CSS beats Tailwind's
    utilities layer, so `appearance-none` on a select can't switch it back. */
 select option:checked {
-  background-color: #0D5C3A;
-  color: #fff;
+  background-color: #DFFF83;
+  color: #17191A;
 }
 
 @supports (appearance: base-select) {
@@ -107,14 +107,14 @@ select option:checked {
 
   select option:hover,
   select option:focus-visible {
-    background-color: #EAF5EF;
-    color: #0D472B;
+    background-color: #F7FFE0;
+    color: #3A4D00;
     outline: none;
   }
 
   select option:checked {
-    background-color: #0D5C3A;
-    color: #fff;
+    background-color: #DFFF83;
+    color: #17191A;
   }
 
   select option::checkmark {

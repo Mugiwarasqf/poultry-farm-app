@@ -6,7 +6,7 @@ import { FEED_TYPES, FEED_BRANDS, formatNaira } from '../../lib/feeds';
 import { FEED_BAG_SIZES, FEED_BAG_KG } from '../../lib/batch';
 import { toIso } from '../../lib/supplements';
 
-const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400';
+const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400';
 const LABEL = 'text-xs font-bold text-stone-800 block mb-1.5';
 
 function Chip({ active, onClick, children, className = '' }) {
@@ -15,7 +15,7 @@ function Chip({ active, onClick, children, className = '' }) {
       type="button"
       onClick={onClick}
       className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-        active ? 'bg-[#0D5C3A] text-white border-[#0D5C3A]' : 'bg-white text-stone-700 border-stone-200 hover:border-[#0D5C3A]/40'
+        active ? 'bg-[#DFFF83] text-[#17191A] border-[#B7DA3E]' : 'bg-white text-stone-700 border-stone-200 hover:border-[#D2EC7A]'
       } ${className}`}
     >
       {children}
@@ -104,7 +104,7 @@ export function FeedPurchaseModal({ isOpen, onClose, onSaved }) {
       <div className="relative bg-white w-full sm:max-w-xl sm:rounded-3xl rounded-t-3xl shadow-2xl z-10 animate-fade-in flex flex-col max-h-[92vh]">
         <div className="flex items-center justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b border-stone-100 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-[#EAF5EF] text-[#0D5C3A] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#F7FFE0] text-[#4D6600] flex items-center justify-center shrink-0">
               <PackagePlus size={20} />
             </div>
             <div className="min-w-0">
@@ -127,12 +127,12 @@ export function FeedPurchaseModal({ isOpen, onClose, onSaved }) {
                   type="button"
                   onClick={() => setFeedType(t.label)}
                   className={`px-3 py-2 rounded-xl border text-left transition-all cursor-pointer ${
-                    feedType === t.label ? 'bg-[#0D5C3A] text-white border-[#0D5C3A]' : 'bg-white text-stone-700 border-stone-200 hover:border-[#0D5C3A]/40'
+                    feedType === t.label ? 'bg-[#DFFF83] text-[#17191A] border-[#B7DA3E]' : 'bg-white text-stone-700 border-stone-200 hover:border-[#D2EC7A]'
                   }`}
                 >
                   <span className="block text-xs font-bold">{t.label}</span>
                   {t.stage && (
-                    <span className={`block text-[10px] mt-0.5 ${feedType === t.label ? 'text-emerald-100' : 'text-stone-400'}`}>{t.stage}</span>
+                    <span className={`block text-[10px] mt-0.5 ${feedType === t.label ? 'text-[#17191A]/60' : 'text-stone-400'}`}>{t.stage}</span>
                   )}
                 </button>
               ))}
@@ -219,7 +219,7 @@ export function FeedPurchaseModal({ isOpen, onClose, onSaved }) {
             type="button"
             onClick={handleSave}
             disabled={!canSave}
-            className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white shadow-xs"
+            className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] shadow-xs"
           >
             {saving ? 'Saving…' : (<><Check size={16} /> Add to Feed Store</>)}
           </button>

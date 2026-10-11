@@ -95,7 +95,7 @@ export function SummaryPage() {
           <div
             className={`rounded-3xl p-6 sm:p-8 border shadow-sm transition-all ${
               isPositive
-                ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950'
+                ? 'bg-[#F7FFE0]/80 border-[#D2EC7A] text-[#3A4D00]'
                 : isNegative
                 ? 'bg-rose-50/80 border-rose-300 text-rose-950'
                 : 'bg-white border-stone-200 text-stone-900'
@@ -108,7 +108,7 @@ export function SummaryPage() {
             <div
               className={`text-3xl sm:text-5xl font-extrabold font-heading tracking-tight mb-2 ${
                 isPositive
-                  ? 'text-emerald-700'
+                  ? 'text-[#4D6600]'
                   : isNegative
                   ? 'text-rose-700'
                   : 'text-stone-900'
@@ -148,15 +148,15 @@ export function SummaryPage() {
             </div>
 
             {/* Egg Revenue */}
-            <div className="bg-white rounded-2xl p-5 border border-emerald-200 shadow-xs bg-emerald-50/20">
-              <div className="flex items-center justify-between text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">
+            <div className="bg-white rounded-2xl p-5 border border-[#E3F5A8] shadow-xs bg-[#F7FFE0]/20">
+              <div className="flex items-center justify-between text-xs font-bold text-[#3A4D00] uppercase tracking-wider mb-2">
                 <span>Egg Revenue</span>
                 <span className="text-base">🥚</span>
               </div>
-              <div className="text-2xl font-extrabold text-emerald-700 font-heading truncate">
+              <div className="text-2xl font-extrabold text-[#4D6600] font-heading truncate">
                 {formatNaira(data.eggRevenueNaira)}
               </div>
-              <div className="text-xs text-emerald-800/80 mt-1">Total crates sold</div>
+              <div className="text-xs text-[#3A4D00]/80 mt-1">Total crates sold</div>
             </div>
 
             {/* Birds Lost */}

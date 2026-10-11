@@ -37,7 +37,7 @@ export function InstallRow() {
         </div>
       </div>
       {state === 'installed' && (
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 shrink-0">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4D6600] shrink-0">
           <CheckCircle2 size={14} strokeWidth={2.5} /> Installed
         </span>
       )}
@@ -45,7 +45,7 @@ export function InstallRow() {
         <button
           type="button"
           onClick={promptInstall}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-[#0D5C3A] text-white hover:bg-[#094229] cursor-pointer shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-[#DFFF83] text-[#17191A] hover:bg-[#C5E95A] cursor-pointer shrink-0"
         >
           <Download size={15} strokeWidth={2.5} /> Install app
         </button>

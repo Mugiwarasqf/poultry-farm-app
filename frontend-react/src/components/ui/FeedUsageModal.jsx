@@ -10,7 +10,7 @@ import { FEED_BAG_SIZES, FEED_BAG_KG, birdTypeLabel, formatBags } from '../../li
 import { toIso } from '../../lib/supplements';
 import { FeedIcon } from './FeedIcon';
 
-const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400';
+const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400';
 const LABEL = 'text-xs font-bold text-stone-800 block mb-1.5';
 const OFF_STOCK = '__off_stock__';
 const QUICK_BAGS = [0.25, 0.5, 1, 2];
@@ -116,7 +116,7 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
       <div className="relative bg-white w-full sm:max-w-xl sm:rounded-3xl rounded-t-3xl shadow-2xl z-10 animate-fade-in flex flex-col max-h-[92vh]">
         <div className="flex items-center justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b border-stone-100 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-[#EAF5EF] text-[#0D5C3A] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#F7FFE0] text-[#4D6600] flex items-center justify-center shrink-0">
               <FeedIcon size={20} />
             </div>
             <div className="min-w-0">
@@ -163,7 +163,7 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
                       {error ? 'The feed store could not be loaded.' : 'No feed in the store yet. Add what you bought first, so usage takes it off the stock.'}
                     </p>
                     {onAddStock && (
-                      <button type="button" onClick={onAddStock} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0D5C3A] hover:bg-[#094229] text-white text-xs font-bold cursor-pointer">
+                      <button type="button" onClick={onAddStock} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] text-xs font-bold cursor-pointer">
                         <PackagePlus size={14} /> Add Feed Stock
                       </button>
                     )}
@@ -179,14 +179,14 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
                       type="button"
                       onClick={() => setLineKey(l.key)}
                       className={`w-full flex items-center justify-between gap-3 p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                        selected ? 'border-[#0D5C3A] bg-[#EAF5EF] ring-1 ring-[#0D5C3A]' : 'border-stone-200 hover:border-[#0D5C3A]/40'
+                        selected ? 'border-[#B7DA3E] bg-[#F7FFE0] ring-1 ring-[#B7DA3E]' : 'border-stone-200 hover:border-[#D2EC7A]'
                       } ${l.left <= 0 && !selected ? 'opacity-60' : ''}`}
                     >
                       <div className="min-w-0">
                         <div className="text-sm font-bold text-stone-900 flex flex-wrap items-center gap-x-1.5 gap-y-1">
                           <span className="break-words">{l.label}</span>
                           {suits && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-[#0D5C3A] text-white text-[9px] font-bold shrink-0">
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-[#DFFF83] text-[#17191A] text-[9px] font-bold shrink-0">
                               <Sparkles size={9} /> Suits this batch
                             </span>
                           )}
@@ -209,7 +209,7 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
                   type="button"
                   onClick={() => setLineKey(OFF_STOCK)}
                   className={`w-full p-3 rounded-xl border text-left text-xs font-semibold transition-all cursor-pointer ${
-                    offStock ? 'border-[#0D5C3A] bg-[#EAF5EF] ring-1 ring-[#0D5C3A] text-stone-900' : 'border-dashed border-stone-300 text-stone-500 hover:border-[#0D5C3A]/40'
+                    offStock ? 'border-[#B7DA3E] bg-[#F7FFE0] ring-1 ring-[#B7DA3E] text-stone-900' : 'border-dashed border-stone-300 text-stone-500 hover:border-[#D2EC7A]'
                   }`}
                 >
                   Feed not from the store (bought and used the same day, or given to you)
@@ -263,7 +263,7 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
                     type="button"
                     onClick={() => setBags(String(q))}
                     className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                      bagCount === q ? 'bg-[#0D5C3A] text-white border-[#0D5C3A]' : 'bg-white text-stone-700 border-stone-200 hover:border-[#0D5C3A]/40'
+                      bagCount === q ? 'bg-[#DFFF83] text-[#17191A] border-[#B7DA3E]' : 'bg-white text-stone-700 border-stone-200 hover:border-[#D2EC7A]'
                     }`}
                   >
                     {q === 0.25 ? '¼' : q === 0.5 ? '½' : q} bag{q > 1 ? 's' : ''}
@@ -305,7 +305,7 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
             type="button"
             onClick={handleSave}
             disabled={!canSave}
-            className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white shadow-xs"
+            className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] shadow-xs"
           >
             {saving ? 'Saving…' : (<><Check size={16} /> Save Feed Usage</>)}
           </button>

@@ -147,7 +147,7 @@ export function HistoryPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search batches..."
-              className="w-full bg-white border border-stone-200 rounded-xl pl-10 pr-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-xs focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15 transition-colors"
+              className="w-full bg-white border border-stone-200 rounded-xl pl-10 pr-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-xs focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 transition-colors"
             />
           </div>
 
@@ -157,7 +157,7 @@ export function HistoryPage() {
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               aria-label="Filter batches by type"
-              className="appearance-none w-full sm:w-auto bg-white border border-stone-200 rounded-xl pl-10 pr-10 py-3 text-sm font-medium text-stone-700 shadow-xs cursor-pointer focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15 transition-colors"
+              className="appearance-none w-full sm:w-auto bg-white border border-stone-200 rounded-xl pl-10 pr-10 py-3 text-sm font-medium text-stone-700 shadow-xs cursor-pointer focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 transition-colors"
             >
               {typeFilterOptions().map((option) => (
                 <option key={option.value} value={option.value}>

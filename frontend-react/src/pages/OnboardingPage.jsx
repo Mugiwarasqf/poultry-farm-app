@@ -1,12 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Pencil, Calendar, ArrowRight, Check, Drumstick, Egg, Bird } from 'lucide-react';
+import { User, Pencil } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useBatches } from '../context/BatchContext';
 import { updateFarm } from '../api/farms';
 import { useToast } from '../components/ui/Toast';
+import { MultiSelect } from '../components/ui/MultiSelect';
+import { allBirdTypes } from '../lib/batch';
+import { newPenId } from '../lib/pens';
 
-const STEPS = ['farm-name', 'bird-type', 'location', 'first-batch'];
+// Onboarding sets up the farm only. The first batch is created afterwards
+// from the dashboard, which prompts for it (see DashboardPage).
+const STEPS = ['farm-name', 'bird-types', 'farm-info'];
+const MAX_PENS = 50;
+
+const FIELD =
+  'w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400';
+const NEXT_BTN =
+  'px-9 py-3.5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white text-xs font-bold tracking-wider uppercase rounded-full shadow-sm transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2';
+const BACK_BTN = 'px-5 py-3.5 text-neutral-600 hover:text-neutral-950 text-xs font-bold tracking-wider uppercase cursor-pointer';
 
 const ONBOARDING_IMAGES = [
   {
@@ -19,7 +30,7 @@ const ONBOARDING_IMAGES = [
     src: '/onboarding/m-umar-farooq-m5kyRt_MHCM-unsplash.jpg',
     fallbackSrc: '/onboarding/public-domain-vectors-uiNO69dv9hA-unsplash.jpg',
     title: 'Flock & Breed Management',
-    tagline: 'Broilers, layers, or cockerels — tailored logging defaults.',
+    tagline: 'Broilers, layers, noilers or turkeys — tailored logging for each.',
   },
   {
     src: '/onboarding/sila-bayraktar-DhSvkfxGPRM-unsplash.jpg',
@@ -27,18 +38,11 @@ const ONBOARDING_IMAGES = [
     title: 'Nigerian Farm Locations',
     tagline: 'Built specifically for poultry farmers across Nigeria.',
   },
-  {
-    src: '/onboarding/m-umar-farooq-zXxClUJlBvc-unsplash.jpg',
-    fallbackSrc: '/onboarding/hanin-abouzeid-eUeri0TZRuQ-unsplash.jpg',
-    title: 'Launch Your First Batch',
-    tagline: 'Every bird counted, every naira tracked from day-old to harvest.',
-  },
 ];
 
 export function OnboardingPage({ onComplete }) {
   const navigate = useNavigate();
   const { farmId, updateFarmProfile } = useAuth();
-  const { createBatch } = useBatches();
   const toast = useToast();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -46,14 +50,23 @@ export function OnboardingPage({ onComplete }) {
   // Form state across steps
   const [farmName, setFarmName] = useState('');
   const [farmerName, setFarmerName] = useState('');
-  const [birdType, setBirdType] = useState('broiler');
-  const [birdCount, setBirdCount] = useState('');
+  const [birdTypes, setBirdTypes] = useState([]);
   const [location, setLocation] = useState('');
-  const [batchName, setBatchName] = useState('');
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
+  const [phone, setPhone] = useState('');
+  const [pens, setPens] = useState([]);
 
   const next = () => setStep(s => Math.min(s + 1, STEPS.length - 1));
   const prev = () => setStep(s => Math.max(s - 1, 0));
+
+  /** Saves profile fields to the server and local state; a failed save never blocks onboarding. */
+  const saveProfile = async (updates) => {
+    if (updateFarmProfile) updateFarmProfile(updates);
+    try {
+      await updateFarm(farmId, updates);
+    } catch (err) {
+      console.warn('Farm profile could not be saved to the server yet; kept locally.', err);
+    }
+  };
 
   const handleSaveFarmName = async (e) => {
     if (e) e.preventDefault();
@@ -64,78 +77,75 @@ export function OnboardingPage({ onComplete }) {
       if (farmerName.trim()) {
         localStorage.setItem('farmbook_farmername', farmerName.trim());
       }
-      if (updateFarmProfile) {
-        updateFarmProfile({ name: farmName.trim(), farmerName: farmerName.trim() });
-      }
-      await updateFarm(farmId, { name: farmName.trim(), farmerName: farmerName.trim() });
+      await saveProfile({ name: farmName.trim(), farmerName: farmerName.trim() });
     } catch (err) {
-      console.warn('Farm name update route not yet deployed on backend; saved locally.', err);
+      console.warn('Farm name could not be saved locally.', err);
     } finally {
       setLoading(false);
       next();
     }
   };
 
-  const handleSaveLocation = async (e) => {
-    if (e) e.preventDefault();
+  // Several bird types are stored comma-joined in `birdType` (see
+  // parseFarmBirdTypes in lib/batch.js): the farms API keeps it as text.
+  const handleSaveBirdTypes = async () => {
+    if (birdTypes.length === 0) return toast('Choose at least one bird type', 'error');
     setLoading(true);
-    try {
-      if (location.trim()) {
-        localStorage.setItem('farmbook_farmlocation', location.trim());
-        if (updateFarmProfile) {
-          updateFarmProfile({ location: location.trim() });
-        }
-        await updateFarm(farmId, { location: location.trim() });
-      }
-    } catch (err) {
-      console.warn('Farm location update route not yet deployed on backend; saved locally.', err);
-    } finally {
-      setLoading(false);
-      next();
-    }
+    await saveProfile({ birdType: birdTypes.join(',') });
+    setLoading(false);
+    next();
   };
 
-  const handleCreateBatch = async (e) => {
+  // "How many pens?" sets the rows; names default to Pen 1, Pen 2… and can
+  // be renamed. Same shape as Settings → Farm Details.
+  const setPenCount = (raw) => {
+    const target = Math.max(0, Math.min(MAX_PENS, parseInt(raw, 10) || 0));
+    setPens((current) =>
+      target <= current.length
+        ? current.slice(0, target)
+        : [
+            ...current,
+            ...Array.from({ length: target - current.length }, (_, i) => ({ id: newPenId(), name: `Pen ${current.length + i + 1}` })),
+          ]
+    );
+  };
+  const renamePen = (id, name) => setPens((list) => list.map((p) => (p.id === id ? { ...p, name } : p)));
+
+  const handleFinish = async (e) => {
     if (e) e.preventDefault();
-    const name = batchName.trim() || `${birdType === 'layer' ? 'Layer' : 'Broiler'} Batch 1`;
-    const count = parseInt(birdCount) || 100;
+    // The step dots allow jumping ahead, so check the earlier steps too.
+    if (!farmName.trim()) {
+      setStep(0);
+      return toast('Enter your farm name', 'error');
+    }
+    if (birdTypes.length === 0) {
+      setStep(1);
+      return toast('Choose at least one bird type', 'error');
+    }
+    if (!location.trim()) return toast('Enter where your farm is located', 'error');
+    const cleanPens = pens.map((p) => ({ id: p.id, name: p.name.trim() })).filter((p) => p.name);
+    if (cleanPens.length !== pens.length) return toast('Give every pen a name', 'error');
+
     setLoading(true);
     try {
-      // 1. Create first batch
-      await createBatch({
-        name,
-        type: birdType,
-        startDate,
-        birdCount: count,
-      });
-
-      // 2. Persist full onboarding profile to database & state
-      const profileUpdates = {
-        name: farmName.trim() || 'My Farm',
-        farmerName: farmerName.trim(),
-        location: location.trim(),
-        birdType,
-        onboarded: true,
-      };
-
-      try {
-        await updateFarm(farmId, profileUpdates);
-      } catch (saveErr) {
-        console.warn('Backend updateFarm pending deploy; profile preserved locally.', saveErr);
-      }
-
-      if (updateFarmProfile) {
-        updateFarmProfile(profileUpdates);
-      }
-
-      toast('Your farm is ready!', 'success');
-      if (onComplete) onComplete();
-      navigate('/dashboard');
-    } catch (err) {
-      toast(err.message || 'Failed to create batch', 'error');
-    } finally {
-      setLoading(false);
+      localStorage.setItem('farmbook_farmlocation', location.trim());
+      if (phone.trim()) localStorage.setItem('farmbook_farmphone', phone.trim());
+    } catch {
+      // Local copies are only a fallback; the server save below is what counts.
     }
+    await saveProfile({
+      name: farmName.trim() || 'My Farm',
+      farmerName: farmerName.trim(),
+      birdType: birdTypes.join(','),
+      location: location.trim(),
+      ...(phone.trim() ? { phone: phone.trim() } : {}),
+      ...(cleanPens.length ? { pens: cleanPens } : {}),
+      onboarded: true,
+    });
+    setLoading(false);
+    toast('Your farm is set up!', 'success');
+    if (onComplete) onComplete();
+    navigate('/dashboard');
   };
 
   const currentImage = ONBOARDING_IMAGES[step] || ONBOARDING_IMAGES[0];
@@ -244,199 +254,125 @@ export function OnboardingPage({ onComplete }) {
               </div>
             )}
 
-            {/* Step 1: Bird Type / Breed Selection */}
+            {/* Step 2: Bird types (several allowed) */}
             {step === 1 && (
               <div className="space-y-6 animate-fade-in">
                 <div>
+                  <div className="flex items-center gap-3 mb-4" aria-hidden="true">
+                    <span className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-[32px] leading-none">
+                      🍗
+                    </span>
+                    <span className="w-14 h-14 rounded-2xl bg-neutral-50 border border-neutral-200 flex items-center justify-center">
+                      <img src="/icon/chicken-icon.png" alt="" className="w-9 h-9 object-contain" />
+                    </span>
+                  </div>
                   <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-950 leading-tight">
                     What birds do you raise?
                   </h1>
                   <p className="text-sm text-neutral-500 mt-2">
-                    Select your flock category to set up automatic logging metrics.
+                    Pick every type you keep. You can change this later in Settings.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 pt-1">
-                  {[
-                    { value: 'broiler', label: 'Broilers', icon: Drumstick, desc: 'Meat production' },
-                    { value: 'layer', label: 'Layers', icon: Egg, desc: 'Egg production' },
-                    { value: 'other', label: 'Other', icon: Bird, desc: 'Turkey, duck, cockerel…' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setBirdType(opt.value)}
-                      className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                        birdType === opt.value
-                          ? 'bg-[#0D5C3A] text-white border-[#0D5C3A] shadow-md ring-2 ring-[#0D5C3A]/20'
-                          : 'bg-white border-neutral-200 text-neutral-800 hover:border-neutral-300 hover:bg-neutral-50'
-                      }`}
-                    >
-                      <opt.icon size={24} strokeWidth={2} className="mb-1.5" />
-                      <span className="text-xs font-bold">{opt.label}</span>
-                      <span className={`text-[10px] mt-1 text-center ${birdType === opt.value ? 'text-emerald-100' : 'text-neutral-400'}`}>
-                        {opt.desc}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="relative pt-2">
-                  <label className="absolute top -top-0.5 left-3.5 bg-white px-1.5 text-xs font-semibold text-neutral-700">
-                    Estimated Flock Count
+                <div className="relative pt-1">
+                  <label className="absolute -top-1.5 left-3.5 z-10 bg-white px-1.5 text-xs font-semibold text-neutral-700">
+                    Bird types
                   </label>
-                  <input
-                    type="number"
-                    className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
-                    placeholder="e.g. 500"
-                    value={birdCount}
-                    onChange={(e) => setBirdCount(e.target.value)}
+                  <MultiSelect
+                    options={allBirdTypes().map(({ value, label }) => ({ value, label }))}
+                    value={birdTypes}
+                    onChange={setBirdTypes}
+                    placeholder="Select one or more bird types"
                   />
                 </div>
 
                 <div className="pt-3 flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={next}
-                    className="px-9 py-3.5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white text-xs font-bold tracking-wider uppercase rounded-full shadow-sm transition-all duration-150 cursor-pointer inline-flex items-center justify-center gap-2"
-                  >
-                    NEXT
+                  <button type="button" onClick={handleSaveBirdTypes} disabled={birdTypes.length === 0 || loading} className={NEXT_BTN}>
+                    {loading ? 'SAVING…' : 'NEXT'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={prev}
-                    className="px-5 py-3.5 text-neutral-600 hover:text-neutral-950 text-xs font-bold tracking-wider uppercase cursor-pointer"
-                  >
+                  <button type="button" onClick={prev} className={BACK_BTN}>
                     BACK
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Step 2: Location */}
+            {/* Step 3: Location and farm info */}
             {step === 2 && (
               <div className="space-y-6 animate-fade-in">
                 <div>
                   <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-950 leading-tight">
-                    Where is your farm located?
+                    Where is your farm?
                   </h1>
                   <p className="text-sm text-neutral-500 mt-2">
-                    Enter your State or Local Government Area in Nigeria.
+                    Your town or LGA in Nigeria, plus a few details about the farm.
                   </p>
                 </div>
 
-                <form onSubmit={handleSaveLocation} className="space-y-5 pt-1">
+                <form onSubmit={handleFinish} className="space-y-5 pt-1">
                   <div className="relative">
                     <label className="absolute -top-2.5 left-3.5 bg-white px-1.5 text-xs font-semibold text-neutral-700">
-                      State / City / LGA
+                      Town / LGA, State <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
-                      className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
-                      placeholder="e.g. Oyo State, Nigeria"
+                      className={FIELD}
+                      placeholder="e.g. Ikorodu, Lagos"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       autoFocus
+                      required
                     />
                   </div>
 
-                  <div className="pt-3 flex items-center gap-4">
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="px-9 py-3.5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white text-xs font-bold tracking-wider uppercase rounded-full shadow-sm transition-all duration-150 cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      {loading ? 'SAVING…' : 'NEXT'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={prev}
-                      className="px-5 py-3.5 text-neutral-600 hover:text-neutral-950 text-xs font-bold tracking-wider uppercase cursor-pointer"
-                    >
-                      BACK
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => next()}
-                      className="text-xs font-semibold text-neutral-400 hover:text-neutral-600 ml-auto cursor-pointer"
-                    >
-                      Skip for now
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Step 3: First Batch Creation */}
-            {step === 3 && (
-              <div className="space-y-6 animate-fade-in">
-                <div>
-                  <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-neutral-950 leading-tight">
-                    Create your first batch
-                  </h1>
-                  <p className="text-sm text-neutral-500 mt-2">
-                    A batch tracks a flock cohort together from day-old to harvest.
-                  </p>
-                </div>
-
-                <form onSubmit={handleCreateBatch} className="space-y-5 pt-1">
-                  {/* Floating Input: Batch Name */}
                   <div className="relative">
                     <label className="absolute -top-2.5 left-3.5 bg-white px-1.5 text-xs font-semibold text-neutral-700">
-                      Batch name
+                      Phone number (optional)
                     </label>
                     <input
-                      type="text"
-                      className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
-                      placeholder={`e.g. ${birdType === 'layer' ? 'Layer' : 'Broiler'} Batch 1`}
-                      value={batchName}
-                      onChange={(e) => setBatchName(e.target.value)}
-                      autoFocus
+                      type="tel"
+                      className={FIELD}
+                      placeholder="e.g. 0803 123 4567"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Floating Input: Start Date */}
-                    <div className="relative">
-                      <label className="absolute -top-2.5 left-3.5 bg-white px-1.5 text-xs font-semibold text-neutral-700">
-                        Start date
-                      </label>
-                      <input
-                        type="date"
-                        className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                      />
-                    </div>
-
-                    {/* Floating Input: Bird Count */}
-                    <div className="relative">
-                      <label className="absolute -top-2.5 left-3.5 bg-white px-1.5 text-xs font-semibold text-neutral-700">
-                        Initial bird count
-                      </label>
-                      <input
-                        type="number"
-                        className="w-full px-4 py-3.5 bg-white border border-neutral-300 rounded-xl text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A] transition-all placeholder:text-neutral-400"
-                        placeholder="500"
-                        value={birdCount}
-                        onChange={(e) => setBirdCount(e.target.value)}
-                      />
-                    </div>
+                  <div className="relative">
+                    <label className="absolute -top-2.5 left-3.5 bg-white px-1.5 text-xs font-semibold text-neutral-700">
+                      How many pens or houses? (optional)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max={MAX_PENS}
+                      className={FIELD}
+                      placeholder="e.g. 3"
+                      value={pens.length || ''}
+                      onChange={(e) => setPenCount(e.target.value)}
+                    />
                   </div>
 
+                  {pens.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {pens.map((p, i) => (
+                        <input
+                          key={p.id}
+                          type="text"
+                          aria-label={`Pen ${i + 1} name`}
+                          className="w-full px-3 py-2.5 bg-white border border-neutral-300 rounded-lg text-neutral-900 text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/15 focus:border-[#0D5C3A]"
+                          value={p.name}
+                          onChange={(e) => renamePen(p.id, e.target.value)}
+                        />
+                      ))}
+                    </div>
+                  )}
+
                   <div className="pt-3 flex items-center gap-4">
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="px-9 py-3.5 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white text-xs font-bold tracking-wider uppercase rounded-full shadow-sm transition-all duration-150 cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      {loading ? 'CREATING…' : 'COMPLETE SETUP'}
+                    <button type="submit" disabled={!location.trim() || loading} className={NEXT_BTN}>
+                      {loading ? 'SAVING…' : 'FINISH SETUP'}
                     </button>
-                    <button
-                      type="button"
-                      onClick={prev}
-                      className="px-5 py-3.5 text-neutral-600 hover:text-neutral-950 text-xs font-bold tracking-wider uppercase cursor-pointer"
-                    >
+                    <button type="button" onClick={prev} className={BACK_BTN}>
                       BACK
                     </button>
                   </div>

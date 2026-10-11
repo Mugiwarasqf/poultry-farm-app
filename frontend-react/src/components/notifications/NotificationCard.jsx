@@ -32,7 +32,7 @@ export function NotificationCard({ notification: n, now, onSelect, onDelete }) {
           data-notification-item=""
           onClick={() => onSelect(n)}
           aria-label={`${unread ? 'Unread. ' : ''}${n.title}. ${n.message} ${fullTime(n.created_at)}`}
-          className="block w-full text-left cursor-pointer outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-[#0D5C3A]/40"
+          className="block w-full text-left cursor-pointer outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-[#B7DA3E]/50"
         >
           <span className={`block text-sm leading-5 truncate ${unread ? 'font-bold text-stone-950' : 'font-semibold text-stone-700'}`}>
             {n.title}
@@ -52,7 +52,7 @@ export function NotificationCard({ notification: n, now, onSelect, onDelete }) {
 
         <span
           aria-hidden="true"
-          className={`w-2 h-2 rounded-full shrink-0 ${unread ? 'bg-[#0D5C3A]' : 'bg-transparent'}`}
+          className={`w-2 h-2 rounded-full shrink-0 ${unread ? 'bg-[#DFFF83]' : 'bg-transparent'}`}
         />
 
         <button

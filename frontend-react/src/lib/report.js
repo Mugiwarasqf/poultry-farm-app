@@ -13,7 +13,9 @@ import { addLocalNotification } from './notifications/localEvents';
  * should say "NGN" in the header rather than putting ₦ in the cells.
  */
 
-const BRAND_GREEN = [13, 92, 58]; // #0D5C3A
+const BRAND_GREEN = [77, 102, 0]; // #4D6600, dark lime for text on white
+const BRAND_LIME = [223, 255, 131]; // #DFFF83, the app's main colour
+const CHARCOAL = [23, 25, 26]; // #17191A, text on lime
 const STRIPE = [245, 245, 244]; // stone-100
 
 /**
@@ -97,7 +99,7 @@ function tableStyle(doc) {
   return {
     margin: { left: LEFT, right: LEFT },
     styles: { font: 'helvetica', fontSize: 9, cellPadding: 6, textColor: [41, 37, 36], lineColor: [231, 229, 228], lineWidth: 0.5 },
-    headStyles: { fillColor: BRAND_GREEN, textColor: 255, fontStyle: 'bold' },
+    headStyles: { fillColor: BRAND_LIME, textColor: CHARCOAL, fontStyle: 'bold' },
     alternateRowStyles: { fillColor: STRIPE },
     didDrawPage: () => {
       const page = doc.getNumberOfPages();

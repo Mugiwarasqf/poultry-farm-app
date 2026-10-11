@@ -22,14 +22,14 @@ export function ToastProvider({ children }) {
             key={t.id}
             className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium animate-slide-in ${
               t.type === 'success'
-                ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
+                ? 'bg-[#F7FFE0] text-[#3A4D00] border-[#E3F5A8]'
                 : 'bg-rose-50 text-rose-900 border-rose-200'
             }`}
           >
             <span
               className={`flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
                 t.type === 'success'
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-[#DFFF83] text-[#17191A]'
                   : 'bg-rose-600 text-white'
               }`}
             >

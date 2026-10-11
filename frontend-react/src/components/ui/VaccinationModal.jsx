@@ -13,7 +13,7 @@ import { BellIcon } from './BellIcon';
 
 const GIVEN_BY = ['Myself', 'Farm staff', 'Vet'];
 
-const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400';
+const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400';
 const LABEL = 'text-xs font-bold text-stone-800 block mb-1.5';
 
 function formatDisplayDate(iso) {
@@ -31,8 +31,8 @@ function Pills({ options, value, onChange }) {
           onClick={() => onChange(value === opt ? '' : opt)}
           className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
             value === opt
-              ? 'bg-[#0D5C3A] text-white border-[#0D5C3A]'
-              : 'bg-white text-stone-600 border-stone-200 hover:border-[#0D5C3A]/40 hover:text-[#0D5C3A]'
+              ? 'bg-[#DFFF83] text-[#17191A] border-[#B7DA3E]'
+              : 'bg-white text-stone-600 border-stone-200 hover:border-[#D2EC7A] hover:text-[#4D6600]'
           }`}
         >
           {opt}
@@ -253,7 +253,7 @@ export function VaccinationModal({
                     type="button"
                     onClick={() => switchMode(m.id)}
                     className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                      mode === m.id ? 'bg-white text-[#0D5C3A] shadow-xs' : 'text-stone-500 hover:text-stone-800'
+                      mode === m.id ? 'bg-white text-[#4D6600] shadow-xs' : 'text-stone-500 hover:text-stone-800'
                     }`}
                   >
                     <m.icon size={15} />
@@ -287,13 +287,13 @@ export function VaccinationModal({
           {step === 2 && (
             <>
               {/* Date chip */}
-              <div className="flex items-center gap-2.5 px-4 py-2.5 bg-[#EAF5EF] border border-[#CFE8D9] rounded-2xl">
-                <CalendarIcon size={15} className="text-[#0D5C3A] shrink-0" />
-                <span className="text-sm font-bold text-[#0D472B]">
+              <div className="flex items-center gap-2.5 px-4 py-2.5 bg-[#F7FFE0] border border-[#E3F5A8] rounded-2xl">
+                <CalendarIcon size={15} className="text-[#4D6600] shrink-0" />
+                <span className="text-sm font-bold text-[#3A4D00]">
                   {isRecord ? 'Given on ' : 'Due on '}{formatDisplayDate(date)}
                 </span>
                 {!prefill?.date && (
-                  <button type="button" onClick={() => setStep(1)} className="ml-auto text-[11px] font-bold text-[#0D5C3A] hover:underline cursor-pointer">
+                  <button type="button" onClick={() => setStep(1)} className="ml-auto text-[11px] font-bold text-[#4D6600] hover:underline cursor-pointer">
                     Change
                   </button>
                 )}
@@ -324,7 +324,7 @@ export function VaccinationModal({
               {vaccine && !isOther && (
                 <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4 space-y-2">
                   <div className="flex items-start gap-2.5">
-                    <Info size={15} className="text-[#0D5C3A] shrink-0 mt-0.5" />
+                    <Info size={15} className="text-[#4D6600] shrink-0 mt-0.5" />
                     <div className="text-xs text-stone-700 space-y-1">
                       <div><span className="font-bold text-stone-900">Given by:</span> {ROUTES[vaccine.route].label}{vaccine.site ? ` — ${vaccine.site}` : ''}</div>
                       {vaccine.typicalAge && <div><span className="font-bold text-stone-900">Usual timing:</span> {vaccine.typicalAge}</div>}
@@ -397,8 +397,8 @@ export function VaccinationModal({
                 </>
               ) : (
                 <div className="flex items-start gap-3 rounded-2xl border border-stone-200 p-4">
-                  <div className="w-8 h-8 rounded-full bg-[#EAF5EF] flex items-center justify-center shrink-0">
-                    <BellIcon size={15} className="text-[#0D5C3A]" />
+                  <div className="w-8 h-8 rounded-full bg-[#F7FFE0] flex items-center justify-center shrink-0">
+                    <BellIcon size={15} className="text-[#4D6600]" />
                   </div>
                   <div className="text-xs text-stone-600">
                     <div className="font-bold text-stone-900">Reminder</div>
@@ -428,7 +428,7 @@ export function VaccinationModal({
               type="button"
               onClick={() => setStep(2)}
               disabled={!canContinue}
-              className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white shadow-xs"
+              className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] shadow-xs"
             >
               <span>{!batchId ? 'Choose a batch' : !date ? 'Pick a date' : 'Continue'}</span>
               {canContinue && <ArrowRight size={16} />}
@@ -437,7 +437,7 @@ export function VaccinationModal({
             <>
               {finalName && (
                 <div className="flex items-center gap-2.5 px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-2xl text-xs text-stone-700">
-                  <ShieldCheck size={15} className="text-[#0D5C3A] shrink-0" />
+                  <ShieldCheck size={15} className="text-[#4D6600] shrink-0" />
                   <span className="truncate">
                     <strong className="text-stone-900">{finalName}</strong>
                     {doseNumber && ` (${doseNumber})`}
@@ -450,7 +450,7 @@ export function VaccinationModal({
                 type="button"
                 onClick={handleSave}
                 disabled={!canSave}
-                className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white shadow-xs"
+                className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] shadow-xs"
               >
                 {submitting ? (
                   <>

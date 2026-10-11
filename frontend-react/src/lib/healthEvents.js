@@ -72,7 +72,7 @@ export function buildHealthEvents({ schedules = [], records = [], supplements = 
 
 /** Tailwind classes per status, shared by the calendar chips and legends. */
 export const EVENT_STYLES = {
-  upcoming: { chip: 'bg-[#EAF5EF] text-[#0D472B] border-l-[#0D5C3A]', dot: 'bg-[#0D5C3A]', label: 'Vaccine due' },
+  upcoming: { chip: 'bg-[#F7FFE0] text-[#3A4D00] border-l-[#B7DA3E]', dot: 'bg-[#DFFF83]', label: 'Vaccine due' },
   overdue: { chip: 'bg-rose-50 text-rose-800 border-l-rose-500', dot: 'bg-rose-500', label: 'Overdue' },
   done: { chip: 'bg-stone-100 text-stone-500 border-l-stone-400', dot: 'bg-stone-400', label: 'Vaccine given' },
   supplement: { chip: 'bg-amber-50 text-amber-900 border-l-amber-500', dot: 'bg-amber-500', label: 'Vitamin / supplement' },

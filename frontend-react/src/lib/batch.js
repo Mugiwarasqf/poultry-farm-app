@@ -77,6 +77,18 @@ export function laysEggs(type) {
   return purpose === 'eggs' || purpose === 'dual';
 }
 
+/**
+ * The bird types a farm raises. Saved on the farm as one comma-joined string
+ * in `birdType` ("layer,noiler"), since the farms API stores that field as
+ * text; an older single value ("layer") reads as a one-item list.
+ */
+export function parseFarmBirdTypes(farm) {
+  return String(farm?.birdType || '')
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
 /** Turns a new type's name into its id: "Pigeon (racing)" → "pigeon_racing". */
 export function birdTypeId(label) {
   return String(label || '')
@@ -157,7 +169,7 @@ export const TYPE_PILL_STYLES = {
   broiler: 'bg-[#F3E8FF] text-[#7E22CE] border-[#E9D5FF]',
   cockerel: 'bg-[#FEE2E2] text-[#B91C1C] border-[#FECACA]',
   noiler: 'bg-[#FFEDD5] text-[#C2410C] border-[#FED7AA]',
-  turkey: 'bg-[#EAF5EF] text-[#0D5C3A] border-[#CFE8D9]',
+  turkey: 'bg-[#F7FFE0] text-[#4D6600] border-[#E3F5A8]',
   duck: 'bg-[#CCFBF1] text-[#0F766E] border-[#99F6E4]',
   guinea_fowl: 'bg-[#E7E5E4] text-[#44403C] border-[#D6D3D1]',
   quail: 'bg-[#FCE7F3] text-[#BE185D] border-[#FBCFE8]',
@@ -174,7 +186,7 @@ export function typePillClass(type) {
   return `${TYPE_PILL_SIZE} ${colors}`;
 }
 
-export const COMPLETED_PILL_CLASS = `${STATUS_PILL_SIZE} bg-emerald-50 text-emerald-700 border-emerald-200`;
+export const COMPLETED_PILL_CLASS = `${STATUS_PILL_SIZE} bg-[#F7FFE0] text-[#4D6600] border-[#E3F5A8]`;
 
 export function batchImage(batch) {
   if (batch?.imageUrl) return batch.imageUrl;

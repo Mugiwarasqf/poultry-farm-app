@@ -9,6 +9,7 @@ import { useToast } from '../components/ui/Toast';
 import { BIRD_PURPOSES, allBirdTypes, birdPurpose, birdTypeLabel, laysEggs } from '../lib/batch';
 import { DOSE_NUMBERS, ROUTES, findVaccine, vaccinesFor } from '../lib/vaccines';
 import { pensInUse } from '../lib/pens';
+import { OTHER_BREED, breedsFor } from '../lib/breeds';
 import { toIso } from '../lib/supplements';
 import { VaccineIcon } from '../components/ui/VaccineIcon';
 import { BellIcon } from '../components/ui/BellIcon';
@@ -49,7 +50,9 @@ export function CreateBatchPage() {
   const [name, setName] = useState('');
   const [birdType, setBirdType] = useState('layer'); // built-in or the farm's own type id
   const [birdCount, setBirdCount] = useState('');
-  const [breed, setBreed] = useState('');
+  // Breed: picked from the list for the bird type, or typed when "Other".
+  const [breedChoice, setBreedChoice] = useState('');
+  const [customBreed, setCustomBreed] = useState('');
   const [startDate, setStartDate] = useState(today);
   const [penId, setPenId] = useState('');
   const [housing, setHousing] = useState(''); // free text, only when the farm has no pens set up
@@ -69,6 +72,9 @@ export function CreateBatchPage() {
   const penUsage = useMemo(() => pensInUse(pens, batches), [pens, batches]);
   const selectedPen = pens.find((p) => p.id === penId);
   const purpose = birdPurpose(birdType);
+  const breedList = useMemo(() => breedsFor(birdType), [birdType]);
+  const breedName = breedChoice === OTHER_BREED ? customBreed.trim() : breedChoice;
+  const penName = selectedPen?.name || housing.trim();
   const vaccineOptions = useMemo(() => vaccinesFor(birdType), [birdType]);
 
   const updateVaccination = (key, field, value) =>
@@ -93,6 +99,9 @@ export function CreateBatchPage() {
     }
     if (currentStep === 2) {
       if (!birdCount || Number(birdCount) <= 0) return toast('Please enter a valid bird count', 'error');
+      if (!breedChoice) return toast('Please choose a breed', 'error');
+      if (breedChoice === OTHER_BREED && !customBreed.trim()) return toast('Enter the breed name', 'error');
+      if (!penName) return toast(pens.length > 0 ? 'Please select a pen' : 'Please enter the pen or house name', 'error');
     }
     if (currentStep === 3) {
       const half = vaccinations.find((r) => (r.vaccineName || r.customName) && !r.dueDate);
@@ -118,9 +127,9 @@ export function CreateBatchPage() {
         type: birdType,
         startDate,
         birdCount: Number(birdCount),
-        breed: breed.trim() || undefined,
+        breed: breedName,
         // housing keeps the pen's name too, so older screens still show it.
-        housing: selectedPen?.name || housing.trim() || undefined,
+        housing: penName,
         penId: selectedPen?.id || undefined,
         hatchery: hatchery.trim() || undefined,
         targetWeightKg: Number(targetWeight) > 0 ? Number(targetWeight) : undefined,
@@ -192,9 +201,9 @@ export function CreateBatchPage() {
                 <div
                   className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
                     isCurrent
-                      ? 'bg-[#0D5C3A] text-white shadow-xs'
+                      ? 'bg-[#DFFF83] text-[#17191A] shadow-xs'
                       : isDone
-                      ? 'bg-emerald-600 text-white'
+                      ? 'bg-[#DFFF83] text-[#17191A]'
                       : 'bg-stone-100 text-stone-400 border border-stone-200'
                   }`}
                 >
@@ -202,7 +211,7 @@ export function CreateBatchPage() {
                 </div>
                 <span
                   className={`font-semibold truncate hidden sm:inline ${
-                    isCurrent ? 'text-[#0D5C3A]' : isDone ? 'text-stone-700' : 'text-stone-400'
+                    isCurrent ? 'text-[#4D6600]' : isDone ? 'text-stone-700' : 'text-stone-400'
                   }`}
                 >
                   {step.label}
@@ -234,7 +243,7 @@ export function CreateBatchPage() {
                 placeholder="e.g. Layer Batch 1"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
+                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400"
                 autoFocus
               />
             </div>
@@ -247,20 +256,25 @@ export function CreateBatchPage() {
                 </label>
                 <select
                   value={birdType}
-                  onChange={e => setBirdType(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm font-semibold text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all cursor-pointer"
+                  onChange={e => {
+                    setBirdType(e.target.value);
+                    // Breeds differ per bird type, so the old pick no longer applies.
+                    setBreedChoice('');
+                    setCustomBreed('');
+                  }}
+                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm font-semibold text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all cursor-pointer"
                 >
                   {allBirdTypes().map((t) => (
                     <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
                 </select>
-                <Link to="/settings/farm" className="inline-block text-[11px] font-semibold text-[#0D5C3A] hover:underline">
+                <Link to="/settings/farm" className="inline-block text-[11px] font-semibold text-[#4D6600] hover:underline">
                   Keep a bird that isn't listed? Add it in Farm Details
                 </Link>
 
                 <div className="flex items-center gap-2 pt-1 text-xs">
                   {laysEggs(birdType) ? (
-                    <span className="text-[#0D5C3A] font-semibold flex items-center gap-1">
+                    <span className="text-[#4D6600] font-semibold flex items-center gap-1">
                       <Check size={14} /> Egg production available
                     </span>
                   ) : (
@@ -303,7 +317,7 @@ export function CreateBatchPage() {
                   type="date"
                   value={startDate}
                   onChange={e => setStartDate(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all"
+                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all"
                 />
               </div>
             </div>
@@ -313,7 +327,7 @@ export function CreateBatchPage() {
             <button
               type="button"
               onClick={nextStep}
-              className="px-8 py-3 bg-[#0D5C3A] hover:bg-[#094229] text-white font-bold rounded-xl text-sm transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shadow-xs"
+              className="px-8 py-3 bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] font-bold rounded-xl text-sm transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shadow-xs"
             >
               <span>Next</span>
               <ArrowRight size={16} />
@@ -344,7 +358,7 @@ export function CreateBatchPage() {
                   placeholder="e.g. 500"
                   value={birdCount}
                   onChange={e => setBirdCount(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
+                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400"
                 />
               </div>
 
@@ -359,7 +373,7 @@ export function CreateBatchPage() {
                     placeholder="e.g. 24"
                     value={ageValue}
                     onChange={e => setAgeValue(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
+                    className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400"
                   />
                   <select
                     value={ageUnit}
@@ -376,29 +390,47 @@ export function CreateBatchPage() {
             {/* Breed */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-stone-800 block">
-                Breed (optional)
+                Breed <span className="text-rose-500">*</span>
               </label>
-              <input
-                type="text"
-                placeholder="e.g. Hisex Brown"
-                value={breed}
-                onChange={e => setBreed(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
-              />
+              <select
+                value={breedChoice}
+                onChange={e => setBreedChoice(e.target.value)}
+                className={`w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all cursor-pointer ${
+                  breedChoice ? 'text-stone-900' : 'text-stone-400'
+                }`}
+              >
+                <option value="" disabled>
+                  Select a {birdTypeLabel(birdType).toLowerCase()} breed
+                </option>
+                {breedList.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+                <option value={OTHER_BREED}>Other (type it)</option>
+              </select>
+              {breedChoice === OTHER_BREED && (
+                <input
+                  type="text"
+                  placeholder="Type the breed name"
+                  value={customBreed}
+                  onChange={e => setCustomBreed(e.target.value)}
+                  autoFocus
+                  className="w-full mt-2 px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400"
+                />
+              )}
             </div>
 
             {/* Pen — picked from the farm's pens; free text only until pens are set up */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-stone-800 block">
-                Pen / House (optional)
+                Pen / House <span className="text-rose-500">*</span>
               </label>
               {pens.length > 0 ? (
                 <select
                   value={penId}
                   onChange={e => setPenId(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm font-semibold text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all cursor-pointer"
+                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm font-semibold text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all cursor-pointer"
                 >
-                  <option value="">No pen</option>
+                  <option value="" disabled>Select a pen</option>
                   {pens.map((p) => {
                     const inPen = penUsage.get(p.id) || [];
                     return (
@@ -416,9 +448,9 @@ export function CreateBatchPage() {
                     placeholder="e.g. Pen A, House 2"
                     value={housing}
                     onChange={e => setHousing(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
+                    className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400"
                   />
-                  <Link to="/settings/farm" className="inline-block text-[11px] font-semibold text-[#0D5C3A] hover:underline">
+                  <Link to="/settings/farm" className="inline-block text-[11px] font-semibold text-[#4D6600] hover:underline">
                     Set up your pens in Farm Details to pick from a list
                   </Link>
                 </>
@@ -434,7 +466,7 @@ export function CreateBatchPage() {
                 placeholder="e.g. CHI Farms, Zartech, Amo Hatchery"
                 value={hatchery}
                 onChange={e => setHatchery(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
+                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400"
               />
             </div>
 
@@ -449,7 +481,7 @@ export function CreateBatchPage() {
                 placeholder="e.g. 450000 for all the birds"
                 value={purchaseCost}
                 onChange={e => setPurchaseCost(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
+                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400"
               />
               <p className="text-[11px] text-stone-500">
                 What you paid for the whole batch. Needed to work out profit when the batch is complete.
@@ -467,7 +499,7 @@ export function CreateBatchPage() {
                   placeholder="e.g. 2.5"
                   value={targetWeight}
                   onChange={e => setTargetWeight(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
+                  className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400"
                 />
               </div>
             )}
@@ -481,7 +513,7 @@ export function CreateBatchPage() {
                 placeholder="Batch specific notes or additional instructions..."
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] transition-all placeholder:text-stone-400"
+                className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400"
               />
             </div>
           </div>
@@ -498,7 +530,7 @@ export function CreateBatchPage() {
             <button
               type="button"
               onClick={nextStep}
-              className="px-8 py-3 bg-[#0D5C3A] hover:bg-[#094229] text-white font-bold rounded-xl text-sm transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shadow-xs"
+              className="px-8 py-3 bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] font-bold rounded-xl text-sm transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shadow-xs"
             >
               <span>Next</span>
               <ArrowRight size={16} />
@@ -517,12 +549,12 @@ export function CreateBatchPage() {
             </p>
           </div>
 
-          <div className="bg-[#EAF5EF] border border-[#CFE8D9] rounded-2xl p-4 flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-full bg-white text-[#0D5C3A] flex items-center justify-center shrink-0 shadow-2xs">
+          <div className="bg-[#F7FFE0] border border-[#E3F5A8] rounded-2xl p-4 flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-full bg-white text-[#4D6600] flex items-center justify-center shrink-0 shadow-2xs">
               <ShieldCheck size={22} />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-[#0D472B]">Keep your birds healthy</h4>
+              <h4 className="text-xs sm:text-sm font-bold text-[#3A4D00]">Keep your birds healthy</h4>
               <p className="text-xs text-stone-600 mt-0.5">
                 Each one goes on the schedule, with an email reminder 3 days before and on the day.
               </p>
@@ -562,7 +594,7 @@ export function CreateBatchPage() {
                       <select
                         value={row.vaccineName}
                         onChange={e => updateVaccination(row.key, 'vaccineName', e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm font-semibold text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] cursor-pointer"
+                        className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm font-semibold text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] cursor-pointer"
                       >
                         <option value="">Choose a vaccine</option>
                         {vaccineOptions.map((v) => (
@@ -575,7 +607,7 @@ export function CreateBatchPage() {
                           placeholder="Vaccine name"
                           value={row.customName}
                           onChange={e => updateVaccination(row.key, 'customName', e.target.value)}
-                          className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] placeholder:text-stone-400"
+                          className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] placeholder:text-stone-400"
                         />
                       )}
                     </div>
@@ -586,7 +618,7 @@ export function CreateBatchPage() {
                         min={today}
                         value={row.dueDate}
                         onChange={e => updateVaccination(row.key, 'dueDate', e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A]"
+                        className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E]"
                       />
                     </div>
                     <div className="sm:col-span-3 space-y-1.5">
@@ -594,7 +626,7 @@ export function CreateBatchPage() {
                       <select
                         value={row.doseNumber}
                         onChange={e => updateVaccination(row.key, 'doseNumber', e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#0D5C3A]/20 focus:border-[#0D5C3A] cursor-pointer"
+                        className="w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm text-stone-900 focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] cursor-pointer"
                       >
                         <option value="">Select dose</option>
                         {DOSE_NUMBERS.map((d) => <option key={d} value={d}>{d}</option>)}
@@ -604,7 +636,7 @@ export function CreateBatchPage() {
 
                   {vaccine && !isOther && (
                     <p className="text-[11px] text-stone-500 flex items-start gap-1.5">
-                      <Info size={12} className="shrink-0 mt-0.5 text-[#0D5C3A]" />
+                      <Info size={12} className="shrink-0 mt-0.5 text-[#4D6600]" />
                       <span>
                         {ROUTES[vaccine.route]?.label}
                         {vaccine.typicalAge ? ` · usually ${vaccine.typicalAge.charAt(0).toLowerCase()}${vaccine.typicalAge.slice(1)}` : ''}
@@ -618,7 +650,7 @@ export function CreateBatchPage() {
             <button
               type="button"
               onClick={addVaccination}
-              className="w-full py-3 rounded-2xl border border-dashed border-[#0D5C3A]/40 text-sm font-semibold text-[#0D5C3A] hover:bg-[#EAF5EF] transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-2xl border border-dashed border-[#D2EC7A] text-sm font-semibold text-[#4D6600] hover:bg-[#F7FFE0] transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
             >
               <Plus size={16} /> Add another vaccination
             </button>
@@ -636,7 +668,7 @@ export function CreateBatchPage() {
             <button
               type="button"
               onClick={nextStep}
-              className="px-8 py-3 bg-[#0D5C3A] hover:bg-[#094229] text-white font-bold rounded-xl text-sm transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shadow-xs"
+              className="px-8 py-3 bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] font-bold rounded-xl text-sm transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shadow-xs"
             >
               <span>Next</span>
               <ArrowRight size={16} />
@@ -671,7 +703,7 @@ export function CreateBatchPage() {
               </div>
               <div>
                 <span className="text-stone-400 block font-medium">Breed</span>
-                <span className="text-stone-900 font-semibold">{breed || 'Standard'}</span>
+                <span className="text-stone-900 font-semibold">{breedName}</span>
               </div>
               <div>
                 <span className="text-stone-400 block font-medium">Placement Date</span>
@@ -683,7 +715,7 @@ export function CreateBatchPage() {
               </div>
               <div>
                 <span className="text-stone-400 block font-medium">Pen</span>
-                <span className="text-stone-900 font-semibold">{selectedPen?.name || housing.trim() || 'Not set'}</span>
+                <span className="text-stone-900 font-semibold">{penName}</span>
               </div>
               <div>
                 <span className="text-stone-400 block font-medium">Cost of Birds</span>
@@ -731,7 +763,7 @@ export function CreateBatchPage() {
               type="button"
               onClick={handleFinish}
               disabled={loading}
-              className="px-9 py-3 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white font-bold rounded-xl text-sm transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+              className="px-9 py-3 bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] font-bold rounded-xl text-sm transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
             >
               {loading ? 'Creating Batch…' : 'Create Batch'}
             </button>

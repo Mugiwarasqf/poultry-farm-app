@@ -45,7 +45,7 @@ export function Field({ label, hint, children, className = '' }) {
 
 const CONTROL_BASE =
   'w-full bg-white border border-stone-200 rounded-lg px-3.5 py-2.5 text-sm text-stone-900 ' +
-  'placeholder:text-stone-400 transition-colors focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15 ' +
+  'placeholder:text-stone-400 transition-colors focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 ' +
   'disabled:bg-stone-50 disabled:text-stone-500 disabled:cursor-not-allowed';
 
 export function TextInput({ className = '', ...props }) {
@@ -76,7 +76,7 @@ export function PrimaryButton({ icon: Icon, children, className = '', ...props }
     <button
       type="button"
       className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold
-        bg-[#0D5C3A] text-white hover:bg-[#094229] transition-colors cursor-pointer
+        bg-[#DFFF83] text-[#17191A] hover:bg-[#C5E95A] transition-colors cursor-pointer
         disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
       {...props}
     >
@@ -134,7 +134,7 @@ export function InsetPanel({ title, description, action, children }) {
 
 export function StatusPill({ tone = 'neutral', children }) {
   const tones = {
-    active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    active: 'bg-[#F7FFE0] text-[#4D6600] border-[#E3F5A8]',
     neutral: 'bg-stone-100 text-stone-600 border-stone-200',
   };
   return (
@@ -168,7 +168,7 @@ export function ToggleRow({ icon: Icon, title, description, checked, onChange, d
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={`relative w-11 h-6 rounded-full transition-colors shrink-0 cursor-pointer
-          disabled:opacity-50 disabled:cursor-not-allowed ${checked ? 'bg-[#0D5C3A]' : 'bg-stone-300'}`}
+          disabled:opacity-50 disabled:cursor-not-allowed ${checked ? 'bg-[#DFFF83]' : 'bg-stone-300'}`}
       >
         <span
           className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform

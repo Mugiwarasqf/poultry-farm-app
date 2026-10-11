@@ -10,7 +10,7 @@
  * @param {{ bars: Array<{label:string, value:number, display:string, max:number, zones:number[], target:number, lowerIsBetter?:boolean, unit?:string}> }} props
  */
 
-const BAR_COLOR = '#0D5C3A';
+const BAR_COLOR = '#B7DA3E';
 // Zone shades, best → worst. Recessive greys so only the value bar is loud.
 const ZONE_SHADES = ['#F5F5F4', '#EEECEA', '#E5E2DF', '#D9D5D1'];
 const ZONE_NAMES = ['Excellent', 'Good', 'Fair', 'Needs attention'];
@@ -52,7 +52,7 @@ function BarRow({ bar }) {
 
   return (
     <div
-      className="group relative grid grid-cols-[96px_minmax(0,1fr)_64px] sm:grid-cols-[120px_minmax(0,1fr)_72px] items-center gap-3 py-1.5 outline-none rounded-md focus-visible:ring-2 focus-visible:ring-[#0D5C3A]/30"
+      className="group relative grid grid-cols-[96px_minmax(0,1fr)_64px] sm:grid-cols-[120px_minmax(0,1fr)_72px] items-center gap-3 py-1.5 outline-none rounded-md focus-visible:ring-2 focus-visible:ring-[#B7DA3E]/50"
       tabIndex={0}
       aria-label={description}
     >

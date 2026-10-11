@@ -68,7 +68,7 @@ export function SyncPage() {
           <div className="text-xs font-bold text-stone-400 uppercase tracking-wider">
             Sync Response Output
           </div>
-          <pre className="w-full p-4 bg-stone-900 text-emerald-400 rounded-2xl text-xs font-mono overflow-x-auto shadow-inner border border-stone-800">
+          <pre className="w-full p-4 bg-stone-900 text-[#DFFF83] rounded-2xl text-xs font-mono overflow-x-auto shadow-inner border border-stone-800">
             {output}
           </pre>
         </div>

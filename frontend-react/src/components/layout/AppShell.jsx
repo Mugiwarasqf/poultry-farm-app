@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { TimeOfDay } from './TimeOfDay';
 import { NotificationBell } from '../notifications/NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 import { useOfflineQueue } from '../../lib/useOfflineQueue';
@@ -64,20 +65,20 @@ export function AppShell() {
     VIEW_TITLES[location.pathname] ||
     (location.pathname.startsWith('/batches/') ? 'Batch Details' : 'TrackFarm');
 
-  const farmerDisplayName = farm?.farmerName || farm?.name || 'Samuel';
+  const farmerDisplayName = farm?.farmerName || farm?.name || 'Farmer';
 
   // Pages using the plain white background, where cards are defined by a soft
   // shadow instead of a border. Add routes here to roll it out further.
   // The batch detail route is matched on its own so the /batches list and the
   // /batches/new wizard keep the tinted background.
-  const WHITE_BG_ROUTES = ['/history'];
+  const WHITE_BG_ROUTES = ['/history', '/dashboard'];
   const isBatchDetail = /^\/batches\/(?!new$)[^/]+$/.test(location.pathname);
   const useWhiteBackground =
     isBatchDetail || WHITE_BG_ROUTES.some((route) => location.pathname.startsWith(route));
 
   return (
     <div
-      className={`min-h-screen flex selection:bg-[#0D5C3A] selection:text-white text-stone-900 font-sans ${
+      className={`min-h-screen flex selection:bg-[#DFFF83] selection:text-[#17191A] text-stone-900 font-sans ${
         useWhiteBackground ? 'bg-white' : 'bg-[#FAFAF9]'
       }`}
     >
@@ -86,10 +87,10 @@ export function AppShell() {
         onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="flex-1 min-w-0 flex flex-col min-h-screen md:pl-60">
+      <div className="flex-1 min-w-0 flex flex-col min-h-screen md:pl-62">
         {/* Top Header Bar with frosted glass blur */}
-        <header className="sticky top-0 z-30 min-h-16 pt-[env(safe-area-inset-top)] bg-white/75 backdrop-blur-md border-b border-stone-200/50 px-4 sm:px-8 flex items-center justify-between gap-4 transition-all">
-          <div className="flex items-center gap-3 min-w-0">
+        <header className="sticky top-0 z-30 min-h-18 pt-[env(safe-area-inset-top)] bg-white/90 backdrop-blur-md border-b border-[#E1E8EF] px-4 sm:px-6 lg:px-7 flex items-center justify-between gap-3 sm:gap-4 transition-all">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <button
               className="md:hidden p-2 -ml-2 text-stone-600 hover:text-stone-900 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer"
               onClick={() => setSidebarOpen(true)}
@@ -97,10 +98,10 @@ export function AppShell() {
             >
               <Menu size={20} />
             </button>
-           
+            <TimeOfDay />
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             {/* Entries saved on this device that haven't reached the server
                 yet. Worded without sync/cloud jargon on purpose — the survey
                 found farmers who don't recognise those terms, so this states
@@ -134,12 +135,12 @@ export function AppShell() {
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((prev) => !prev)}
-                className="flex items-center gap-2 sm:gap-2.5 pl-2 sm:pl-3 border-l border-stone-200 cursor-pointer group py-1 rounded-xl hover:bg-stone-50 transition-colors focus:outline-none"
+                className="flex items-center gap-2 sm:gap-2.5 pl-1 pr-1.5 cursor-pointer group py-1 rounded-xl hover:bg-stone-50 transition-colors focus:outline-none"
                 aria-expanded={userMenuOpen}
                 aria-haspopup="true"
               >
                 {/* Avatar circle */}
-                <div className="w-9 h-9 rounded-full bg-emerald-100 text-[#0D5C3A] border border-emerald-200 flex items-center justify-center text-xs font-bold shadow-2xs overflow-hidden shrink-0">
+                <div className="w-9 h-9 rounded-full bg-[#EFFFC4] text-[#4D6600] border border-[#E3F5A8] flex items-center justify-center text-xs font-bold shadow-2xs overflow-hidden shrink-0">
                   <img
                     src="/images/irvan-maulana-ENQIxReDFKE-unsplash.jpg"
                     alt={farmerDisplayName}
@@ -152,7 +153,7 @@ export function AppShell() {
                 </div>
 
                 {/* User Name in bold */}
-                <span className="text-xs sm:text-sm font-bold text-stone-900  transition-colors max-w-[130px] sm:max-w-[180px] truncate">
+                <span className="hidden sm:inline text-sm font-semibold text-[#142033] transition-colors max-w-[180px] truncate">
                   {farmerDisplayName}
                 </span>
 
@@ -217,7 +218,7 @@ export function AppShell() {
                 to={item.to}
                 className={({ isActive }) =>
                   `flex flex-col items-center justify-center py-1 text-xs font-semibold transition-colors ${
-                    isActive ? 'text-[#0D5C3A] font-bold' : 'text-stone-500 hover:text-stone-900'
+                    isActive ? 'text-[#4D6600] font-bold' : 'text-stone-500 hover:text-stone-900'
                   }`
                 }
               >

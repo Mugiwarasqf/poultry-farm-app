@@ -83,7 +83,7 @@ export function SchedulePage() {
 
   const renderStatusBadge = (status) => {
     const badgeConfig = {
-      done: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      done: 'bg-[#EFFFC4] text-[#3A4D00] border-[#E3F5A8]',
       missed: 'bg-rose-100 text-rose-800 border-rose-200',
       upcoming: 'bg-amber-100 text-amber-900 border-amber-200',
     };
@@ -200,7 +200,7 @@ export function SchedulePage() {
                     <div className="flex items-center gap-3 self-end sm:self-auto">
                       {renderStatusBadge(item.status)}
                       <button
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                        className="px-3 py-1.5 bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
                         onClick={() => setMarkDoneId(item.scheduleId)}
                       >
                         ✓ Mark Done
@@ -215,7 +215,7 @@ export function SchedulePage() {
           {/* Completed */}
           {done.length > 0 && (
             <div className="space-y-3">
-              <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
+              <div className="text-xs font-bold text-[#3A4D00] uppercase tracking-wider flex items-center gap-2">
                 <span>✓</span>
                 <span>Administered ({done.length})</span>
               </div>
@@ -276,7 +276,7 @@ export function SchedulePage() {
               Cancel
             </button>
             <button
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer"
+              className="px-4 py-2 bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer"
               onClick={handleMarkDone}
             >
               Confirm Administered

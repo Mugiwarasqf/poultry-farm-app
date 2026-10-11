@@ -8,18 +8,21 @@ import {
   FieldGrid,
   Field,
   TextInput,
-  SelectInput,
+
   PrimaryButton,
   SecondaryButton,
   DetailRow,
 } from './ui';
-import { allBirdTypes } from '../../lib/batch';
+import { allBirdTypes, parseFarmBirdTypes } from '../../lib/batch';
+import { MultiSelect } from '../ui/MultiSelect';
 import { FarmPensCard } from './FarmPensCard';
 import { FarmBirdTypesCard } from './FarmBirdTypesCard';
 
-const farmBirdTypes = () => [
+// "Mixed flock" was a single choice before several types could be picked; it
+// is only listed for farms that still have it saved.
+const farmBirdTypes = (selected = []) => [
   ...allBirdTypes().map(({ value, label }) => ({ value, label })),
-  { value: 'mixed', label: 'Mixed flock' },
+  ...(selected.includes('mixed') ? [{ value: 'mixed', label: 'Mixed flock' }] : []),
 ];
 
 export function FarmDetailsPanel() {
@@ -31,31 +34,33 @@ export function FarmDetailsPanel() {
 
   const [name, setName] = useState(farm?.name || '');
   const [location, setLocation] = useState(farm?.location || '');
-  const [birdType, setBirdType] = useState(farm?.birdType || 'layer');
+  // The bird types the farm raises, stored comma-joined in farm.birdType.
+  const [birdTypes, setBirdTypes] = useState(() => parseFarmBirdTypes(farm));
 
   useEffect(() => {
     if (editing) return;
     setName(farm?.name || '');
     setLocation(farm?.location || '');
-    setBirdType(farm?.birdType || 'layer');
+    setBirdTypes(parseFarmBirdTypes(farm));
   }, [farm?.name, farm?.location, farm?.birdType, editing]);
 
   const handleCancel = () => {
     setName(farm?.name || '');
     setLocation(farm?.location || '');
-    setBirdType(farm?.birdType || 'layer');
+    setBirdTypes(parseFarmBirdTypes(farm));
     setEditing(false);
   };
 
   const handleSave = async () => {
     if (!name.trim()) return toast('Farm name is required', 'error');
+    if (birdTypes.length === 0) return toast('Choose at least one bird type', 'error');
 
     setSaving(true);
     try {
       const updates = {
         name: name.trim(),
         location: location.trim() || undefined,
-        birdType,
+        birdType: birdTypes.join(','),
       };
 
       updateFarmProfile(updates);
@@ -118,16 +123,14 @@ export function FarmDetailsPanel() {
             />
           </Field>
 
-          <Field label="Main Bird Type">
-            <SelectInput
-              value={birdType}
-              onChange={(e) => setBirdType(e.target.value)}
+          <Field label="Bird Types You Raise">
+            <MultiSelect
+              options={farmBirdTypes(birdTypes)}
+              value={birdTypes}
+              onChange={setBirdTypes}
               disabled={!editing}
-            >
-              {farmBirdTypes().map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </SelectInput>
+              placeholder="Select one or more bird types"
+            />
           </Field>
         </FieldGrid>
       </SettingsCard>

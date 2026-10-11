@@ -111,7 +111,7 @@ export function CalendarPicker({
           <button
             type="button"
             onClick={goToday}
-            className="px-3 h-8 rounded-lg border border-stone-200 text-xs font-semibold text-stone-700 hover:border-[#0D5C3A]/40 hover:text-[#0D5C3A] transition-colors cursor-pointer"
+            className="px-3 h-8 rounded-lg border border-stone-200 text-xs font-semibold text-stone-700 hover:border-[#D2EC7A] hover:text-[#4D6600] transition-colors cursor-pointer"
           >
             Today
           </button>
@@ -165,18 +165,18 @@ export function CalendarPicker({
                   full ? 'min-h-14 sm:min-h-28' : 'min-h-12 sm:min-h-20'
                 } ${
                   selected
-                    ? 'bg-[#EAF5EF] ring-2 ring-inset ring-[#0D5C3A] z-10'
+                    ? 'bg-[#F7FFE0] ring-2 ring-inset ring-[#B7DA3E] z-10'
                     : !selectable
                     ? 'bg-stone-50 cursor-not-allowed'
                     : cell.inMonth
-                    ? 'bg-white hover:bg-[#F4FAF6] cursor-pointer'
-                    : 'bg-stone-50/80 hover:bg-[#F4FAF6] cursor-pointer'
+                    ? 'bg-white hover:bg-[#F7FFE0] cursor-pointer'
+                    : 'bg-stone-50/80 hover:bg-[#F7FFE0] cursor-pointer'
                 }`}
               >
                 <span
                   className={`w-6 h-6 sm:w-7 sm:h-7 inline-flex items-center justify-center rounded-full text-xs sm:text-[13px] font-semibold shrink-0 ${
                     isToday
-                      ? 'bg-[#0D5C3A] text-white'
+                      ? 'bg-[#DFFF83] text-[#17191A]'
                       : !selectable
                       ? 'text-stone-300'
                       : cell.inMonth
@@ -236,7 +236,7 @@ export function CalendarPicker({
         <div className="rounded-2xl border border-stone-200 bg-white">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 px-4 py-3 border-b border-stone-100">
             <div className="flex items-center gap-2 min-w-0">
-              <CalendarDays size={15} className="text-[#0D5C3A] shrink-0" />
+              <CalendarDays size={15} className="text-[#4D6600] shrink-0" />
               <span className="text-xs font-bold text-stone-900 truncate">
                 {agendaDate === todayIso ? 'Today' : formatLongDate(agendaDate)}
               </span>

@@ -15,7 +15,7 @@ import { PenIcon } from '../ui/PenIcon';
 
 const MAX_PENS = 200;
 const INPUT =
-  'w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15';
+  'w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70';
 
 function Stat({ label, value }) {
   return (
@@ -177,7 +177,7 @@ export function FarmPensCard() {
                   />
                   <span
                     className={`shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap ${
-                      inUse.length ? 'bg-[#EAF5EF] text-[#0D472B] border-[#CFE8D9]' : 'bg-stone-50 text-stone-500 border-stone-200'
+                      inUse.length ? 'bg-[#F7FFE0] text-[#3A4D00] border-[#E3F5A8]' : 'bg-stone-50 text-stone-500 border-stone-200'
                     }`}
                     title={inUse.map((b) => b.name).join(', ') || 'No active batch'}
                   >

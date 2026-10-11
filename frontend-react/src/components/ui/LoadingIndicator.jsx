@@ -23,7 +23,7 @@ export function LoadingIndicator({ size = 48, stroke = 4, label = 'Loading' }) {
           r="20"
           pathLength="100"
           fill="none"
-          stroke="#0D5C3A"
+          stroke="#B7DA3E"
           strokeWidth={stroke}
           strokeLinecap="round"
         />

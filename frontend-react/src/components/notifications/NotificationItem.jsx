@@ -59,7 +59,7 @@ export function NotificationItem({ notification: n, now, onSelect, compact = fal
 
         {/* Unread: a small green dot. */}
         <span className="w-2 shrink-0 flex justify-center pt-2" aria-hidden="true">
-          {unread && <span className="w-2 h-2 rounded-full bg-[#0D5C3A]" />}
+          {unread && <span className="w-2 h-2 rounded-full bg-[#DFFF83]" />}
         </span>
       </button>
 

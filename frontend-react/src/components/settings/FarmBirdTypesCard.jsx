@@ -8,7 +8,7 @@ import { SettingsCard, PrimaryButton } from './ui';
 import { BIRD_PURPOSES, BIRD_TYPES, birdTypeId } from '../../lib/batch';
 
 const INPUT =
-  'w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-hidden focus:border-[#0D5C3A] focus:ring-2 focus:ring-[#0D5C3A]/15';
+  'w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70';
 
 const purposeLabel = (p) => BIRD_PURPOSES.find((x) => x.value === p)?.label || 'Other';
 
@@ -152,7 +152,7 @@ export function FarmBirdTypesCard() {
           <button
             type="button"
             onClick={add}
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-[#0D5C3A]/30 text-sm font-semibold text-[#0D5C3A] hover:bg-[#EAF5EF] transition-colors cursor-pointer shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-[#D2EC7A] text-sm font-semibold text-[#4D6600] hover:bg-[#F7FFE0] transition-colors cursor-pointer shrink-0"
           >
             <Plus size={15} /> Add
           </button>

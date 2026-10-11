@@ -44,7 +44,7 @@ export function BatchHistoryDetailPage() {
         <button
           type="button"
           onClick={() => navigate('/history')}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#0D5C3A] hover:bg-[#094229] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-[#17191A] bg-[#DFFF83] hover:bg-[#C5E95A] transition-colors cursor-pointer"
         >
           <ChevronLeft size={16} />
           <span>Back to History</span>

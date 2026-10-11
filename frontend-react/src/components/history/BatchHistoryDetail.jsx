@@ -413,8 +413,8 @@ function OverviewTab({ batch, stats }) {
         <h3 className="text-base font-bold text-stone-950 font-heading">Production Performance</h3>
         {stats.totalEggs > 0 ? (
           <div className="rounded-xl border border-stone-200 p-5 flex items-center gap-4">
-            <div className="w-11 h-11 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
-              <TrendingUp size={18} strokeWidth={2.5} className="text-emerald-700" />
+            <div className="w-11 h-11 rounded-full bg-[#F7FFE0] border border-[#E3F5A8] flex items-center justify-center shrink-0">
+              <TrendingUp size={18} strokeWidth={2.5} className="text-[#4D6600]" />
             </div>
             <div className="min-w-0">
               <div className="text-sm font-semibold text-stone-800">

@@ -16,7 +16,7 @@ import {
   RotateCcw,
   Stethoscope,
 } from 'lucide-react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useBatches } from '../context/BatchContext';
 import { useAuth } from '../context/AuthContext';
 import { CompleteBatchModal } from '../components/ui/CompleteBatchModal';
@@ -194,6 +194,24 @@ export function BatchDetailPage() {
   const [avgWeightKg, setAvgWeightKg] = useState('');
   const [weightSampleSize, setWeightSampleSize] = useState('');
 
+  // The dashboard's "Log Bird Loss" quick action lands here with ?log=mortality
+  // so it opens this page's own mortality form rather than a copy of it. The
+  // param is cleared straight away so a refresh or back-navigation doesn't
+  // reopen the form. Completed batches never open it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedLog = searchParams.get('log');
+  useEffect(() => {
+    if (!requestedLog || !batch) return;
+    if (requestedLog === 'mortality' && batch.status !== 'closed') {
+      setLogModal('mortality');
+    }
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('log');
+      return next;
+    }, { replace: true });
+  }, [requestedLog, batch, setSearchParams]);
+
   useEffect(() => {
     if (!batchId) return;
     selectBatch(batchId);
@@ -241,7 +259,7 @@ export function BatchDetailPage() {
         <p className="text-sm text-stone-500">The requested batch could not be found or has been removed.</p>
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0D5C3A] text-white rounded-xl text-xs font-semibold"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#DFFF83] text-[#17191A] rounded-xl text-xs font-semibold"
         >
           <ChevronLeft size={16} /> Return to Home
         </Link>
@@ -712,7 +730,7 @@ export function BatchDetailPage() {
               <span
                 className={`px-3 py-1 rounded-full text-[11px] font-semibold border inline-flex items-center gap-1.5 ${
                   closed
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    ? 'bg-[#F7FFE0] text-[#4D6600] border-[#E3F5A8]'
                     : 'bg-sky-50 text-sky-700 border-sky-200'
                 }`}
               >
@@ -731,7 +749,7 @@ export function BatchDetailPage() {
                 <button
                   type="button"
                   onClick={() => setShowCompleteModal(true)}
-                  className="h-8 px-3 rounded-lg bg-[#0D5C3A] hover:bg-[#094229] text-xs font-semibold text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                  className="h-8 px-3 rounded-lg bg-[#DFFF83] hover:bg-[#C5E95A] text-xs font-semibold text-[#17191A] inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                 >
                   <Flag size={13} strokeWidth={2.5} /> Complete Batch
                 </button>
@@ -776,7 +794,7 @@ export function BatchDetailPage() {
                 }}
                 className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2.5 rounded-t-lg text-sm transition-colors cursor-pointer border-b-2 ${
                   isActive
-                    ? 'bg-[#EAF5EF] text-[#0D5C3A] font-semibold border-[#0D5C3A]'
+                    ? 'bg-[#F7FFE0] text-[#4D6600] font-semibold border-[#B7DA3E]'
                     : 'text-stone-500 border-transparent hover:text-stone-900 hover:bg-stone-50'
                 }`}
               >
@@ -864,7 +882,7 @@ export function BatchDetailPage() {
                     <button
                       type="button"
                       onClick={() => setShowCompleteModal(true)}
-                      className="text-[11px] font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
+                      className="text-[11px] font-semibold text-[#4D6600] hover:underline cursor-pointer"
                     >
                       Record sales to see profit
                     </button>
@@ -920,7 +938,7 @@ export function BatchDetailPage() {
                 <button
                   type="button"
                   onClick={() => setLogModal('feed')}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4D6600] hover:underline cursor-pointer"
                 >
                   <Plus size={14} strokeWidth={2.5} /> Log Feed
                 </button>
@@ -952,14 +970,14 @@ export function BatchDetailPage() {
                     <button
                       type="button"
                       onClick={() => openVaccination({ mode: 'record' })}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4D6600] hover:underline cursor-pointer"
                     >
                       <CheckCircle2 size={14} strokeWidth={2.5} /> Record Given
                     </button>
                     <button
                       type="button"
                       onClick={() => openVaccination({ mode: 'schedule' })}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4D6600] hover:underline cursor-pointer"
                     >
                       <Plus size={14} strokeWidth={2.5} /> Schedule
                     </button>
@@ -978,14 +996,14 @@ export function BatchDetailPage() {
                       <button
                         type="button"
                         onClick={() => openVaccination({ mode: date > todayIso ? 'schedule' : 'record', date })}
-                        className="px-2.5 h-7 rounded-lg bg-[#0D5C3A] hover:bg-[#094229] text-white text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 h-7 rounded-lg bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
                       >
                         <VaccineIcon size={12} /> Vaccine
                       </button>
                       <button
                         type="button"
                         onClick={() => setLogModal('multivitamin')}
-                        className="px-2.5 h-7 rounded-lg border border-stone-200 hover:border-[#0D5C3A]/40 text-stone-700 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 h-7 rounded-lg border border-stone-200 hover:border-[#D2EC7A] text-stone-700 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
                       >
                         <Plus size={12} /> Vitamin
                       </button>
@@ -1005,8 +1023,8 @@ export function BatchDetailPage() {
                       return (
                         <div key={item.scheduleId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4 py-3.5 border-b border-stone-100 last:border-0">
                           <div className="flex items-start sm:items-center gap-3 min-w-0">
-                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${overdue ? 'bg-rose-50' : 'bg-[#EAF5EF]'}`}>
-                              <VaccineIcon size={16} strokeWidth={2.5} className={overdue ? 'text-rose-600' : 'text-[#0D5C3A]'} />
+                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${overdue ? 'bg-rose-50' : 'bg-[#F7FFE0]'}`}>
+                              <VaccineIcon size={16} strokeWidth={2.5} className={overdue ? 'text-rose-600' : 'text-[#4D6600]'} />
                             </div>
                             <div className="min-w-0">
                               <div className="text-sm font-semibold text-stone-900 break-words">
@@ -1021,7 +1039,7 @@ export function BatchDetailPage() {
                           <button
                             type="button"
                             onClick={() => recordScheduled(item)}
-                            className="w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-lg text-xs font-semibold border border-[#0D5C3A]/30 text-[#0D5C3A] hover:bg-[#EAF5EF] transition-colors cursor-pointer shrink-0"
+                            className="w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-lg text-xs font-semibold border border-[#D2EC7A] text-[#4D6600] hover:bg-[#F7FFE0] transition-colors cursor-pointer shrink-0"
                           >
                             Record as given
                           </button>
@@ -1065,7 +1083,7 @@ export function BatchDetailPage() {
                 <button
                   type="button"
                   onClick={() => setLogModal('multivitamin')}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4D6600] hover:underline cursor-pointer"
                 >
                   <Plus size={14} strokeWidth={2.5} /> Record Vitamin
                 </button>
@@ -1113,7 +1131,7 @@ export function BatchDetailPage() {
                 <button
                   type="button"
                   onClick={() => setLogModal('mortality')}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4D6600] hover:underline cursor-pointer"
                 >
                   <Plus size={14} strokeWidth={2.5} /> Log Mortality
                 </button>
@@ -1144,7 +1162,7 @@ export function BatchDetailPage() {
                   <button
                     type="button"
                     onClick={() => setLogModal('weight')}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0D5C3A] hover:underline cursor-pointer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4D6600] hover:underline cursor-pointer"
                   >
                     <Plus size={14} strokeWidth={2.5} /> Log Weight
                   </button>
@@ -1305,7 +1323,7 @@ export function BatchDetailPage() {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setLogModal(null)} className="px-4 py-2 text-xs font-bold text-neutral-600">Cancel</button>
-            <button type="submit" className="px-5 py-2 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white rounded-xl text-xs font-bold cursor-pointer transition-colors">Save</button>
+            <button type="submit" className="px-5 py-2 bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] rounded-xl text-xs font-bold cursor-pointer transition-colors">Save</button>
           </div>
         </form>
       </Modal>
@@ -1347,7 +1365,7 @@ export function BatchDetailPage() {
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={() => setLogModal(null)} className="px-4 py-2 text-xs font-bold text-neutral-600">Cancel</button>
-              <button type="submit" className="px-5 py-2 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white rounded-xl text-xs font-bold cursor-pointer transition-colors">Save Eggs</button>
+              <button type="submit" className="px-5 py-2 bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] rounded-xl text-xs font-bold cursor-pointer transition-colors">Save Eggs</button>
             </div>
           </form>
         </Modal>
@@ -1396,7 +1414,7 @@ export function BatchDetailPage() {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setLogModal(null)} className="px-4 py-2 text-xs font-bold text-neutral-600">Cancel</button>
-            <button type="submit" className="px-5 py-2 bg-[#0D5C3A] hover:bg-[#094229] active:bg-[#063823] text-white rounded-xl text-xs font-bold cursor-pointer transition-colors">Save Weight</button>
+            <button type="submit" className="px-5 py-2 bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] rounded-xl text-xs font-bold cursor-pointer transition-colors">Save Weight</button>
           </div>
         </form>
       </Modal>

@@ -39,7 +39,7 @@ function StatCard({ icon: Icon, label, value, hint, loading = false }) {
   return (
     <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80" aria-busy={loading || undefined}>
       <span className="text-xs font-semibold text-stone-500 flex items-center gap-1.5">
-        <Icon size={14} className="text-[#0D5C3A]" /> {label}
+        <Icon size={14} className="text-[#4D6600]" /> {label}
       </span>
       {loading ? (
         // Same height as the real number and hint, so nothing shifts when data lands.
@@ -364,7 +364,7 @@ export function InventoryPage() {
             onClick={() => setActiveTab(tab.id)}
             className={`flex-shrink-0 px-5 py-3 text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === tab.id
-                ? 'border-[#0D5C3A] text-[#0D5C3A]'
+                ? 'border-[#B7DA3E] text-[#4D6600]'
                 : 'border-transparent text-stone-500 hover:text-stone-900'
             }`}
           >
@@ -379,7 +379,7 @@ export function InventoryPage() {
           <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl text-[#0D5C3A] flex items-center justify-center shadow-2xs shrink-0">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl text-[#4D6600] flex items-center justify-center shadow-2xs shrink-0">
                   <FeedIcon size={22} />
                 </div>
                 <div>
@@ -390,13 +390,13 @@ export function InventoryPage() {
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={() => openUsage()}
-                  className="w-full sm:w-auto px-4 py-2.5 border border-[#0D5C3A]/30 text-[#0D5C3A] hover:bg-[#EAF5EF] rounded-xl text-sm font-bold transition-all cursor-pointer inline-flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-[#D2EC7A] text-[#4D6600] hover:bg-[#F7FFE0] rounded-xl text-sm font-bold transition-all cursor-pointer inline-flex items-center justify-center gap-2"
                 >
                   <CircleMinus size={16} /> Record Usage
                 </button>
                 <button
                   onClick={() => setShowPurchaseModal(true)}
-                  className="w-full sm:w-auto px-5 py-2.5 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-sm font-bold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-5 py-2.5 bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] rounded-xl text-sm font-bold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2"
                 >
                   <PackagePlus size={16} /> Add Feed Stock
                 </button>
@@ -428,7 +428,7 @@ export function InventoryPage() {
               </p>
               <button
                 onClick={() => setShowPurchaseModal(true)}
-                className="px-5 py-2.5 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-sm font-bold cursor-pointer inline-flex items-center gap-2"
+                className="px-5 py-2.5 bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] rounded-xl text-sm font-bold cursor-pointer inline-flex items-center gap-2"
               >
                 <PackagePlus size={16} /> Add Feed Stock
               </button>
@@ -463,7 +463,7 @@ export function InventoryPage() {
                       </div>
                       <div className="w-full bg-stone-100 h-2 rounded-full overflow-hidden mt-2">
                         <div
-                          className={`h-full rounded-full transition-all ${line.status === 'out' ? 'bg-rose-500' : line.status === 'low' ? 'bg-amber-500' : 'bg-[#0D5C3A]'}`}
+                          className={`h-full rounded-full transition-all ${line.status === 'out' ? 'bg-rose-500' : line.status === 'low' ? 'bg-amber-500' : 'bg-[#DFFF83]'}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -491,7 +491,7 @@ export function InventoryPage() {
                     <button
                       onClick={() => openUsage(line.key)}
                       disabled={line.left <= 0}
-                      className="mt-auto w-full py-2 rounded-xl border border-stone-200 text-xs font-bold text-stone-700 hover:border-[#0D5C3A]/40 hover:text-[#0D5C3A] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="mt-auto w-full py-2 rounded-xl border border-stone-200 text-xs font-bold text-stone-700 hover:border-[#D2EC7A] hover:text-[#4D6600] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Record usage from this feed
                     </button>
@@ -529,7 +529,7 @@ export function InventoryPage() {
                           <div className="text-[11px] text-stone-400 sm:hidden">{row.who}</div>
                         </td>
                         <td className="py-3 text-stone-600 hidden sm:table-cell">{row.who}</td>
-                        <td className={`py-3 text-right font-bold whitespace-nowrap ${row.kind === 'in' ? 'text-[#0D5C3A]' : 'text-stone-900'}`}>
+                        <td className={`py-3 text-right font-bold whitespace-nowrap ${row.kind === 'in' ? 'text-[#4D6600]' : 'text-stone-900'}`}>
                           {row.kind === 'in' ? '+' : '−'}{Math.round(row.bags * 100) / 100}
                         </td>
                         <td className="py-3 text-right text-stone-600 hidden sm:table-cell">{row.amount ? formatNaira(row.amount) : '—'}</td>
@@ -553,7 +553,7 @@ export function InventoryPage() {
         <div className="space-y-6 animate-fade-in">
           <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl  text-[#0D5C3A] flex items-center justify-center shadow-2xs shrink-0">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl  text-[#4D6600] flex items-center justify-center shadow-2xs shrink-0">
                 <EggIcon size={22} />
               </div>
               <div>
@@ -582,7 +582,7 @@ export function InventoryPage() {
                     <Link
                       key={b.batchId}
                       to={`/batches/${b.batchId}`}
-                      className="flex items-center justify-between p-3 rounded-xl border border-stone-200/80 hover:border-[#0D5C3A]/40 hover:bg-[#EAF5EF]/40 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-xl border border-stone-200/80 hover:border-[#D2EC7A] hover:bg-[#F7FFE0]/40 transition-colors"
                     >
                       <span className="text-xs font-bold text-stone-900 truncate">{b.name}</span>
                       <span className="text-xs text-stone-600 shrink-0">
@@ -648,13 +648,13 @@ export function InventoryPage() {
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={() => openVaccination({ mode: 'record' })}
-                  className="w-full sm:w-auto px-4 py-2.5 border border-[#0D5C3A]/30 text-[#0D5C3A] hover:bg-[#EAF5EF] rounded-xl text-sm font-bold transition-all cursor-pointer inline-flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-[#D2EC7A] text-[#4D6600] hover:bg-[#F7FFE0] rounded-xl text-sm font-bold transition-all cursor-pointer inline-flex items-center justify-center gap-2"
                 >
                   <ClipboardCheck size={16} /> Record Given
                 </button>
                 <button
                   onClick={() => openVaccination({ mode: 'schedule' })}
-                  className="w-full sm:w-auto px-5 py-2.5 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-sm font-bold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-5 py-2.5 bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] rounded-xl text-sm font-bold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2"
                 >
                   <Plus size={16} /> Schedule Vaccination
                 </button>
@@ -662,11 +662,11 @@ export function InventoryPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 rounded-2xl bg-[#EAF5EF]/70 border border-[#CFE8D9]">
-                <span className="text-xs font-bold text-[#0D472B] flex items-center gap-1.5">
-                  <CalendarIcon size={15} className="text-[#0D5C3A]" /> Upcoming
+              <div className="p-4 rounded-2xl bg-[#F7FFE0]/70 border border-[#E3F5A8]">
+                <span className="text-xs font-bold text-[#3A4D00] flex items-center gap-1.5">
+                  <CalendarIcon size={15} className="text-[#4D6600]" /> Upcoming
                 </span>
-                {loading ? <Skeleton className="h-8 sm:h-9 w-12 mt-1" /> : <span className="text-2xl sm:text-3xl font-extrabold text-[#0D472B] mt-1 block">{upcomingVaccines.length}</span>}
+                {loading ? <Skeleton className="h-8 sm:h-9 w-12 mt-1" /> : <span className="text-2xl sm:text-3xl font-extrabold text-[#3A4D00] mt-1 block">{upcomingVaccines.length}</span>}
               </div>
               <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/70">
                 <span className="text-xs font-bold text-rose-800 flex items-center gap-1.5">
@@ -696,14 +696,14 @@ export function InventoryPage() {
                   <button
                     type="button"
                     onClick={() => openVaccination({ mode: date > today ? 'schedule' : 'record', date })}
-                    className="px-2.5 h-7 rounded-lg bg-[#0D5C3A] hover:bg-[#094229] text-white text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 h-7 rounded-lg bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
                   >
                     <VaccineIcon size={12} /> Vaccine
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowMultiModal(true)}
-                    className="px-2.5 h-7 rounded-lg border border-stone-200 hover:border-[#0D5C3A]/40 text-stone-700 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 h-7 rounded-lg border border-stone-200 hover:border-[#D2EC7A] text-stone-700 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
                   >
                     <Plus size={12} /> Vitamin
                   </button>
@@ -748,7 +748,7 @@ export function InventoryPage() {
                           scheduleId: item.scheduleId,
                           date: today,
                         })}
-                        className="w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold border border-[#0D5C3A]/30 text-[#0D5C3A] hover:bg-[#EAF5EF] transition-colors cursor-pointer shrink-0"
+                        className="w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold border border-[#D2EC7A] text-[#4D6600] hover:bg-[#F7FFE0] transition-colors cursor-pointer shrink-0"
                       >
                         Record as given
                       </button>
@@ -809,7 +809,7 @@ export function InventoryPage() {
           <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl  text-[#0D5C3A] flex items-center justify-center shadow-2xs shrink-0">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl  text-[#4D6600] flex items-center justify-center shadow-2xs shrink-0">
                   <PillIcon size={22} />
                 </div>
                 <div>
@@ -819,7 +819,7 @@ export function InventoryPage() {
               </div>
               <button
                 onClick={() => setShowMultiModal(true)}
-                className="w-full sm:w-auto px-5 py-2.5 bg-[#0D5C3A] hover:bg-[#094229] text-white rounded-xl text-sm font-bold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-5 py-2.5 bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] rounded-xl text-sm font-bold transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2"
               >
                 <Plus size={16} /> Record Vitamin
               </button>

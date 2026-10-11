@@ -19,8 +19,8 @@ import { EGGS_PER_CRATE } from './batch';
 /** @typedef {'excellent' | 'good' | 'fair' | 'poor' | 'none'} Rating */
 
 export const RATING_STYLES = {
-  excellent: { label: 'Excellent', pill: 'bg-emerald-50 text-emerald-800 border-emerald-200', bar: 'bg-emerald-600' },
-  good: { label: 'Good', pill: 'bg-[#EAF5EF] text-[#0D472B] border-[#CFE8D9]', bar: 'bg-[#0D5C3A]' },
+  excellent: { label: 'Excellent', pill: 'bg-[#F7FFE0] text-[#3A4D00] border-[#E3F5A8]', bar: 'bg-[#DFFF83]' },
+  good: { label: 'Good', pill: 'bg-[#F7FFE0] text-[#3A4D00] border-[#E3F5A8]', bar: 'bg-[#DFFF83]' },
   fair: { label: 'Fair', pill: 'bg-amber-50 text-amber-800 border-amber-200', bar: 'bg-amber-500' },
   poor: { label: 'Needs attention', pill: 'bg-rose-50 text-rose-700 border-rose-200', bar: 'bg-rose-500' },
   none: { label: 'Not enough data', pill: 'bg-stone-50 text-stone-500 border-stone-200', bar: 'bg-stone-300' },
