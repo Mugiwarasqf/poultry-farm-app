@@ -1,5 +1,7 @@
-# Two ACM certificates, in two different regions, for two different
-# reasons:
+# Only created when var.deploy_custom_domain is true -- exactly one
+# environment should claim var.domain_name at a time, see that variable's
+# comment in variables.tf. Two ACM certificates, in two different regions,
+# for two different reasons:
 #   - aws_acm_certificate.frontend (us-east-1, via the aliased provider in
 #     providers.tf): CloudFront only ever accepts certs from us-east-1,
 #     regardless of where the distribution's origin or the rest of this
@@ -31,6 +33,8 @@
 # doing step 1 first just makes the wait predictable instead of a guess.
 
 resource "aws_acm_certificate" "frontend" {
+  count = var.deploy_custom_domain ? 1 : 0
+
   provider          = aws.us_east_1
   domain_name       = var.domain_name
   validation_method = "DNS"
@@ -41,14 +45,18 @@ resource "aws_acm_certificate" "frontend" {
 }
 
 resource "aws_acm_certificate_validation" "frontend" {
+  count = var.deploy_custom_domain ? 1 : 0
+
   provider        = aws.us_east_1
-  certificate_arn = aws_acm_certificate.frontend.arn
+  certificate_arn = aws_acm_certificate.frontend[0].arn
   validation_record_fqdns = [
-    for o in aws_acm_certificate.frontend.domain_validation_options : o.resource_record_name
+    for o in aws_acm_certificate.frontend[0].domain_validation_options : o.resource_record_name
   ]
 }
 
 resource "aws_acm_certificate" "api" {
+  count = var.deploy_custom_domain ? 1 : 0
+
   domain_name       = "api.${var.domain_name}"
   validation_method = "DNS"
 
@@ -58,8 +66,10 @@ resource "aws_acm_certificate" "api" {
 }
 
 resource "aws_acm_certificate_validation" "api" {
-  certificate_arn = aws_acm_certificate.api.arn
+  count = var.deploy_custom_domain ? 1 : 0
+
+  certificate_arn = aws_acm_certificate.api[0].arn
   validation_record_fqdns = [
-    for o in aws_acm_certificate.api.domain_validation_options : o.resource_record_name
+    for o in aws_acm_certificate.api[0].domain_validation_options : o.resource_record_name
   ]
 }

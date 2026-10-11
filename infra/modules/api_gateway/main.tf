@@ -286,7 +286,15 @@ resource "aws_apigatewayv2_route" "sync_batch" {
 # Nigeria-concentrated, not global, so there's no latency benefit to
 # routing through CloudFront's edge network for API calls the way there
 # is for the static frontend.
+#
+# Only created when var.domain_name is set, which only happens when this
+# environment owns the domain right now (infra/variables.tf's
+# deploy_custom_domain) — every environment shares this same module code,
+# but only one of them should actually claim api.<domain_name> at a time.
+# The others fall back to api_endpoint below.
 resource "aws_apigatewayv2_domain_name" "api" {
+  count = var.domain_name != null ? 1 : 0
+
   domain_name = "api.${var.domain_name}"
 
   domain_name_configuration {
@@ -297,7 +305,9 @@ resource "aws_apigatewayv2_domain_name" "api" {
 }
 
 resource "aws_apigatewayv2_api_mapping" "api" {
+  count = var.domain_name != null ? 1 : 0
+
   api_id      = aws_apigatewayv2_api.main.id
-  domain_name = aws_apigatewayv2_domain_name.api.id
+  domain_name = aws_apigatewayv2_domain_name.api[0].id
   stage       = aws_apigatewayv2_stage.default.id
 }

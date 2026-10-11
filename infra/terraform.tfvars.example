@@ -27,3 +27,10 @@ ses_test_recipient_emails = [
 # migrated to Route 53, so the ACM validation CNAME records have to be
 # added by hand).
 domain_name = "trackfarm.cc"
+
+# Defaults false. Set true in exactly ONE environment's tfvars at a time
+# (whichever one domain_name's DNS currently points at) — see
+# infra/variables.tf's deploy_custom_domain for why every other
+# environment sharing this same code needs to leave it false rather than
+# also trying to claim the same hostname for itself.
+deploy_custom_domain = false

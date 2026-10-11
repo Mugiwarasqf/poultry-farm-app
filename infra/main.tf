@@ -80,8 +80,8 @@ module "api_gateway" {
   cognito_user_pool_id = module.cognito.user_pool_id
   cognito_client_id    = module.cognito.client_id
 
-  domain_name         = var.domain_name
-  acm_certificate_arn = aws_acm_certificate_validation.api.certificate_arn
+  domain_name         = var.deploy_custom_domain ? var.domain_name : null
+  acm_certificate_arn = var.deploy_custom_domain ? aws_acm_certificate_validation.api[0].certificate_arn : null
 }
 
 module "notifications" {
@@ -104,14 +104,18 @@ module "frontend" {
   site_dir        = local.frontend_dir
   config_template = local.frontend_config
 
-  # The custom domain, not the raw execute-api endpoint — so a future
-  # infra rebuild (this account has had several) regenerates the backend
-  # behind api.<domain_name> without the frontend needing a rebuild/
-  # redeploy just to point at a new URL.
-  api_base          = module.api_gateway.custom_domain_url
+  # The custom domain when this environment owns it (so a future infra
+  # rebuild of *that* environment regenerates the backend behind
+  # api.<domain_name> without needing a frontend rebuild/redeploy just to
+  # point at a new URL) — otherwise the raw execute-api endpoint, so an
+  # environment that doesn't own the domain (e.g. a beta account once a
+  # separate prod account takes over DNS) doesn't bake in a hostname its
+  # own traffic can't actually reach. See deploy_custom_domain in
+  # infra/variables.tf.
+  api_base          = var.deploy_custom_domain ? module.api_gateway.custom_domain_url : module.api_gateway.api_endpoint
   cognito_client_id = module.cognito.client_id
   cognito_region    = var.aws_region
 
-  domain_name         = var.domain_name
-  acm_certificate_arn = aws_acm_certificate_validation.frontend.certificate_arn
+  domain_name         = var.deploy_custom_domain ? var.domain_name : null
+  acm_certificate_arn = var.deploy_custom_domain ? aws_acm_certificate_validation.frontend[0].certificate_arn : null
 }

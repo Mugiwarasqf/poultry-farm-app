@@ -29,19 +29,19 @@ output "frontend_url" {
 # Namecheap instead of Route 53. ---
 
 output "acm_validation_records" {
-  description = "Phase 1: add each of these as a CNAME record in Namecheap, wait for DNS to propagate, then re-run terraform apply (no -target) to finish validation and create the custom domains below."
-  value = {
-    frontend = [for o in aws_acm_certificate.frontend.domain_validation_options : {
+  description = "Only meaningful when deploy_custom_domain = true (null otherwise). Phase 1: add each of these as a CNAME record in Namecheap, wait for DNS to propagate, then re-run terraform apply (no -target) to finish validation and create the custom domains below."
+  value = var.deploy_custom_domain ? {
+    frontend = [for o in aws_acm_certificate.frontend[0].domain_validation_options : {
       name  = o.resource_record_name
       type  = o.resource_record_type
       value = o.resource_record_value
     }]
-    api = [for o in aws_acm_certificate.api.domain_validation_options : {
+    api = [for o in aws_acm_certificate.api[0].domain_validation_options : {
       name  = o.resource_record_name
       type  = o.resource_record_type
       value = o.resource_record_value
     }]
-  }
+  } : null
 }
 
 output "frontend_apex_alias_target" {

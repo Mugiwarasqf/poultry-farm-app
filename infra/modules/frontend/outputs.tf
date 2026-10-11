@@ -4,8 +4,8 @@ output "url" {
 }
 
 output "custom_domain_url" {
-  description = "The real, user-facing URL — only resolves once the apex ALIAS record is added in Namecheap pointing at the CloudFront domain above (url output)."
-  value       = "https://${var.domain_name}"
+  description = "The real, user-facing URL — null if this environment doesn't own domain_name right now (deploy_custom_domain = false), otherwise only resolves once the apex ALIAS record is added in Namecheap pointing at the CloudFront domain above (url output)."
+  value       = var.domain_name != null ? "https://${var.domain_name}" : null
 }
 
 output "cloudfront_domain_name" {

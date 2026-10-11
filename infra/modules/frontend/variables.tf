@@ -32,11 +32,13 @@ variable "cognito_region" {
 }
 
 variable "domain_name" {
-  description = "Bare apex domain (e.g. trackfarm.cc) added as this distribution's CloudFront alias."
+  description = "Bare apex domain (e.g. trackfarm.cc) added as this distribution's CloudFront alias. Null (the default) means this environment doesn't own the domain right now — see infra/variables.tf's deploy_custom_domain — and the distribution just keeps CloudFront's own free *.cloudfront.net certificate instead."
   type        = string
+  default     = null
 }
 
 variable "acm_certificate_arn" {
-  description = "ARN of the validated (ISSUED) us-east-1 ACM certificate for domain_name — see infra/acm.tf's aws_acm_certificate_validation.frontend."
+  description = "ARN of the validated (ISSUED) us-east-1 ACM certificate for domain_name — see infra/acm.tf's aws_acm_certificate_validation.frontend. Required if domain_name is set, ignored otherwise."
   type        = string
+  default     = null
 }

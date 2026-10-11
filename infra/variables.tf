@@ -60,3 +60,24 @@ variable "domain_name" {
   description = "Registered domain (e.g. trackfarm.cc) — the bare apex serves the frontend, api.<domain_name> serves the backend. No default: only set this once the domain's ACM certificates are ready to be requested, see acm.tf."
   type        = string
 }
+
+# This codebase deploys to more than one AWS account (a beta/testing
+# account and a separate prod account, see docs/CLAUDE.md on why they're
+# split) from the same Terraform config — but DNS can only ever point
+# var.domain_name at ONE of them at a time. Without this flag, every
+# environment would try to request its own ACM certs and claim the same
+# custom domain for itself, and whichever one *isn't* currently pointed
+# at by DNS would still bake that unreachable (from its own traffic's
+# perspective) hostname into its own frontend build, config.js's api_base
+# included — exactly the bug this flag exists to prevent. Defaults false
+# so a *new* environment never silently fights the live one for the same
+# hostname; set true explicitly, in exactly one environment's tfvars at a
+# time, for whichever one DNS actually targets right now. The other
+# environment(s) fall back to their own raw AWS-generated URLs (CloudFront's
+# *.cloudfront.net domain, API Gateway's *.execute-api.amazonaws.com) --
+# see modules/frontend and modules/api_gateway.
+variable "deploy_custom_domain" {
+  description = "Whether THIS environment currently owns var.domain_name's DNS and should request/use the custom-domain ACM certs, CloudFront alias, and API Gateway custom domain. Exactly one environment should have this true at a time."
+  type        = bool
+  default     = false
+}

@@ -158,7 +158,7 @@ resource "aws_cloudfront_distribution" "site" {
   is_ipv6_enabled     = true
   default_root_object = "index.html"
   comment             = "${var.project_name}-${var.environment} frontend"
-  aliases             = [var.domain_name]
+  aliases             = var.domain_name != null ? [var.domain_name] : []
 
   origin {
     origin_id   = "s3-website"
@@ -213,9 +213,19 @@ resource "aws_cloudfront_distribution" "site" {
     }
   }
 
+  # Two mutually exclusive shapes in one block, switched on whether this
+  # environment owns var.domain_name (see infra/variables.tf's
+  # deploy_custom_domain): the validated ACM cert for a real alias, or
+  # CloudFront's own free *.cloudfront.net certificate when it doesn't.
+  # AWS requires exactly one of these two to be set, never both —
+  # leaving the unused side's fields as null (not just omitted) is what
+  # makes that conditional swap actually work in a single resource
+  # instead of needing two near-duplicate aws_cloudfront_distribution
+  # resources gated by count.
   viewer_certificate {
-    acm_certificate_arn      = var.acm_certificate_arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2021"
+    cloudfront_default_certificate = var.domain_name == null ? true : null
+    acm_certificate_arn            = var.domain_name != null ? var.acm_certificate_arn : null
+    ssl_support_method             = var.domain_name != null ? "sni-only" : null
+    minimum_protocol_version       = var.domain_name != null ? "TLSv1.2_2021" : null
   }
 }
