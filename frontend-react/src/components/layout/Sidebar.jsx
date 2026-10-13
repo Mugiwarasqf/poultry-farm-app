@@ -6,7 +6,7 @@ import { InventoryIcon } from '../ui/InventoryIcon';
 import { BatchIcon } from '../ui/BatchIcon';
 import { SettingsIcon } from '../ui/SettingsIcon';
 import { HistoryIcon } from '../ui/HistoryIcon';
-import { HomeIcon } from '../ui/HomeIcon';
+import { FarmIcon } from '../ui/FarmIcon';
 import { BellIcon } from '../ui/BellIcon';
 
 /*
@@ -20,7 +20,7 @@ export function Sidebar({ isOpen, onClose }) {
   const { unreadCount } = useNotifications();
 
   const navItems = [
-    { to: '/dashboard', label: 'Home', icon: HomeIcon },
+    { to: '/dashboard', label: 'Home', icon: FarmIcon },
     { to: '/batches', label: 'Batches', icon: BatchIcon },
     { to: '/inventory', label: 'Inventory', icon: InventoryIcon },
     { to: '/history', label: 'History', icon: HistoryIcon },

@@ -60,7 +60,7 @@ export function NotificationsPage() {
       {/* Header */}
       <div className="flex items-start gap-4">
         <span className="w-12 h-12 rounded-full bg-[#DFFF83] text-[#17191A] flex items-center justify-center shrink-0 shadow-xs" aria-hidden="true">
-          <BellIcon size={22} className="brightness-0 invert" />
+          <BellIcon size={22} />
         </span>
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold text-stone-950 font-heading">Notifications</h1>

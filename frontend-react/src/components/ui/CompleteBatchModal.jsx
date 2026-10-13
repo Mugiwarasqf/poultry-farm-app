@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { X, Check, Flag } from 'lucide-react';
+import { Spinner } from './Spinner';
 import { birdTypeLabel } from '../../lib/batch';
 
 const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400';
@@ -138,7 +139,7 @@ export function CompleteBatchModal({ open, onClose, batch, purpose, birdsAlive, 
             disabled={saving || tooMany}
             className="w-full py-3.5 rounded-2xl font-bold text-sm inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] shadow-xs"
           >
-            <Check size={16} /> {saving ? 'Completing…' : 'Complete Batch'}
+            {saving ? <Spinner /> : <Check size={16} />} {saving ? 'Completing…' : 'Complete Batch'}
           </button>
         </div>
       </div>

@@ -9,6 +9,7 @@ import { FEED_TYPES, findFeedType, recommendedFeedId, expectedBagsPerDay, format
 import { FEED_BAG_SIZES, FEED_BAG_KG, birdTypeLabel, formatBags } from '../../lib/batch';
 import { toIso } from '../../lib/supplements';
 import { FeedIcon } from './FeedIcon';
+import { Spinner } from './Spinner';
 
 const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400';
 const LABEL = 'text-xs font-bold text-stone-800 block mb-1.5';
@@ -307,7 +308,7 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
             disabled={!canSave}
             className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] shadow-xs"
           >
-            {saving ? 'Saving…' : (<><Check size={16} /> Save Feed Usage</>)}
+            {saving ? (<><Spinner /> Saving…</>) : (<><Check size={16} /> Save Feed Usage</>)}
           </button>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { createFeedPurchase } from '../../api/feedStock';
 import { FEED_TYPES, FEED_BRANDS, formatNaira } from '../../lib/feeds';
 import { FEED_BAG_SIZES, FEED_BAG_KG } from '../../lib/batch';
 import { toIso } from '../../lib/supplements';
+import { Spinner } from './Spinner';
 
 const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400';
 const LABEL = 'text-xs font-bold text-stone-800 block mb-1.5';
@@ -221,7 +222,7 @@ export function FeedPurchaseModal({ isOpen, onClose, onSaved }) {
             disabled={!canSave}
             className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] shadow-xs"
           >
-            {saving ? 'Saving…' : (<><Check size={16} /> Add to Feed Store</>)}
+            {saving ? (<><Spinner /> Saving…</>) : (<><Check size={16} /> Add to Feed Store</>)}
           </button>
         </div>
       </div>

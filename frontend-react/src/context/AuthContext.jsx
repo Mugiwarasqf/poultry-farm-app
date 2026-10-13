@@ -105,6 +105,14 @@ export function AuthProvider({ children }) {
   );
 
   const applySession = useCallback(async (data) => {
+    // Records saved for offline use belong to whoever was signed in before;
+    // a new sign-in starts clean even if that person never logged out. Done
+    // only after the server accepted the sign-in, so a failed attempt
+    // (e.g. while offline) never wipes them.
+    await clearOfflineRecords();
+    // Ask the browser not to clear saved records when storage runs low.
+    // Best-effort: browsers may decline, and nothing depends on the answer.
+    navigator.storage?.persist?.().catch(() => {});
     setTokens({
       idToken: data.idToken,
       refreshToken: data.refreshToken,

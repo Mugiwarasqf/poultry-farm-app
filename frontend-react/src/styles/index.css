@@ -122,46 +122,77 @@ select option:checked {
   }
 }
 
-/* Ouroboros loading indicator (components/ui/LoadingIndicator.jsx).
-   The circle uses pathLength="100", so dash lengths below are percentages of
-   the ring. The dash grows until the head nearly meets the tail (88%), then
-   the offset runs on so the tail catches up — while the whole ring turns. */
-@keyframes ouroboros-turn {
-  to { transform: rotate(360deg); }
+/* App loading screen (components/ui/LoadingIndicator.jsx): the logo
+   breathes gently while a slim bar sweeps under it, lime into charcoal.
+   Reduced motion: everything holds still. */
+@keyframes loader-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes ouroboros-chase {
-  0% {
-    stroke-dasharray: 2 150;
-    stroke-dashoffset: 0;
-  }
-  50% {
-    stroke-dasharray: 88 150;
-    stroke-dashoffset: -6;
-  }
-  100% {
-    stroke-dasharray: 88 150;
-    stroke-dashoffset: -98;
-  }
+@keyframes loader-breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.035); opacity: 0.88; }
 }
 
-.ouroboros {
-  transform-origin: center;
-  animation: ouroboros-turn 1.8s linear infinite;
+@keyframes loader-sweep {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(260%); }
 }
 
-.ouroboros__snake {
-  stroke-dasharray: 2 150;
-  animation: ouroboros-chase 1.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+.loader {
+  animation: loader-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.loader__logo {
+  animation: loader-breathe 2.4s ease-in-out infinite;
+}
+
+.loader__bar {
+  animation: loader-sweep 1.35s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+/* "Batch created" modal (components/ui/BatchCreatedModal.jsx): the backdrop
+   fades, the card rises, and the check badge pops in with a little overshoot. */
+@keyframes celebrate-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes celebrate-rise {
+  from { opacity: 0; transform: translateY(24px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes celebrate-pop {
+  0% { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 1; transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+.celebrate-fade {
+  animation: celebrate-fade 0.3s ease-out both;
+}
+
+.celebrate-rise {
+  animation: celebrate-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.celebrate-pop {
+  animation: celebrate-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ouroboros,
-  .ouroboros__snake {
+  .loader,
+  .loader__logo,
+  .loader__bar,
+  .celebrate-fade,
+  .celebrate-rise,
+  .celebrate-pop {
     animation: none;
   }
-  .ouroboros__snake {
-    stroke-dasharray: 75 150;
+  .loader__bar {
+    transform: translateX(60%);
   }
 }
 

@@ -36,6 +36,7 @@ import {
 import { Modal } from '../components/ui/Modal';
 import { Skeleton } from '../components/ui/Skeleton';
 import { LineChart } from '../components/ui/LineChart';
+import { buildPerformance, daysUntil, dueWhen, isoDaysAgo, round1, stamp } from '../lib/production';
 import { FeedUsageModal } from '../components/ui/FeedUsageModal';
 import { FeedPurchaseModal } from '../components/ui/FeedPurchaseModal';
 import { VaccinationModal } from '../components/ui/VaccinationModal';
@@ -51,165 +52,18 @@ import { CalendarIcon } from '../components/ui/CalendarIcon';
 const MAX_VISIBLE_BATCHES = 2;
 const ACTIVITY_COLLAPSED = 3;
 const ACTIVITY_EXPANDED = 10;
-const CHART_DAYS = 14;
 const BATCH_BANNER = '/birds/jaclou-dl-hens-3420126_1920.jpg';
 // "Record Vaccination" opens the existing form already in record mode.
 const RECORD_PREFILL = { mode: 'record' };
 const FIRST_BATCH_DISMISSED_KEY = 'farmbook_first_batch_prompt_dismissed';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 const isActive = (b) => (b.status || 'active') !== 'closed';
-
-// ---- small formatters -------------------------------------------------------
-
-function isoDaysAgo(n) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return toIso(d);
-}
-
-function daysUntil(isoDate, today) {
-  return Math.round((new Date(`${isoDate}T00:00:00`) - new Date(`${today}T00:00:00`)) / DAY_MS);
-}
-
-function shortDay(isoDate) {
-  return new Date(`${isoDate}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-/** "Apr 24, 2025 • 8:45 AM" when the entry has a real time, else just the date. */
-function stamp(at) {
-  if (!at) return '';
-  const hasTime = at.length > 10;
-  const d = hasTime ? new Date(at) : new Date(`${at}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return '';
-  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  return hasTime ? `${date} • ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : date;
-}
-
-function dueWhen(days) {
-  if (days === 0) return 'Due today';
-  if (days === 1) return 'Next due tomorrow';
-  return `Next in ${days} days`;
-}
-
-const round1 = (n) => Math.round(n * 10) / 10;
-
-// ---- production performance -------------------------------------------------
-
-/**
- * What the Production Performance card shows for one batch, judged by what
- * its bird type is raised for (the same purpose lib/performance.js uses):
- * egg layers get daily eggs, meat birds get weigh-ins, everything else gets
- * birds alive. Only recorded entries are plotted; too few gives an empty
- * state, never a filled-in line.
- */
-function buildPerformance(batch, logs, weightLogs, currentBirds) {
-  const purpose = birdPurpose(batch.type);
-  const eggs = logs?.eggs || [];
-  const showEggs = purpose === 'eggs' || (purpose === 'dual' && eggs.length > 0);
-
-  if (showEggs) {
-    const since = isoDaysAgo(CHART_DAYS - 1);
-    const byDate = new Map();
-    eggs.filter((e) => e.date && e.date >= since).forEach((e) => {
-      byDate.set(e.date, (byDate.get(e.date) || 0) + eggCount(e));
-    });
-    const days = [...byDate.keys()].sort();
-    const points = days.map((d) => ({ label: shortDay(d), value: byDate.get(d) }));
-    if (points.length === 0) {
-      return { kind: 'eggs', title: 'Egg Production', empty: `No eggs recorded in the last ${CHART_DAYS} days.` };
-    }
-
-    const avgPerLoggedDay = (from, to) => {
-      const inRange = days.filter((d) => d >= from && d <= to);
-      if (inRange.length === 0) return null;
-      return inRange.reduce((s, d) => s + byDate.get(d), 0) / inRange.length;
-    };
-    const thisWeek = avgPerLoggedDay(isoDaysAgo(6), toIso(new Date()));
-    const lastWeek = avgPerLoggedDay(isoDaysAgo(13), isoDaysAgo(7));
-    const change = thisWeek != null && lastWeek ? round1(((thisWeek - lastWeek) / lastWeek) * 100) : null;
-    const latest = points[points.length - 1];
-
-    return {
-      kind: 'eggs',
-      title: 'Egg Production',
-      unit: 'eggs/day',
-      value: latest.value.toLocaleString(),
-      suffix: '/day',
-      caption: `Collected on ${latest.label}`,
-      change: change == null ? null : { up: change >= 0, text: `${change >= 0 ? '+' : ''}${change}% vs previous week` },
-      extras: currentBirds > 0 ? [{ label: 'Laying rate', value: `${round1((latest.value / currentBirds) * 100)}%` }] : [],
-      points: points.length >= 2 ? points : null,
-      thin: 'Log eggs on another day to see the trend.',
-      formatTick: (v) => Math.round(v).toLocaleString(),
-    };
-  }
-
-  if (purpose === 'meat' || purpose === 'dual') {
-    const samples = (weightLogs || [])
-      .filter((w) => w.date && Number(w.averageWeightKg) > 0)
-      .sort((a, b) => a.date.localeCompare(b.date));
-    if (weightLogs == null) return { kind: 'weight', title: 'Average Weight', loading: true };
-    if (samples.length === 0) {
-      return { kind: 'weight', title: 'Average Weight', empty: 'No weigh-ins recorded yet. Log bird weight from the batch page.' };
-    }
-    const latest = samples[samples.length - 1];
-    const prev = samples[samples.length - 2];
-    const gain = prev ? round1(Number(latest.averageWeightKg) - Number(prev.averageWeightKg)) : null;
-    const fcr = computeFCR(logs?.feed || [], samples, currentBirds);
-    const placed = Number(batch.birdCount) || 0;
-    const extras = [];
-    if (fcr != null) extras.push({ label: 'Feed conversion', value: `${fcr} : 1` });
-    if (placed) extras.push({ label: 'Survival', value: `${round1((currentBirds / placed) * 100)}%` });
-
-    return {
-      kind: 'weight',
-      title: 'Average Weight',
-      value: round1(Number(latest.averageWeightKg)).toLocaleString(),
-      suffix: 'kg',
-      caption: `Weighed on ${shortDay(latest.date)}`,
-      change: gain == null ? null : { up: gain >= 0, text: `${gain >= 0 ? '+' : ''}${gain} kg since ${shortDay(prev.date)}` },
-      extras,
-      points: samples.length >= 2 ? samples.slice(-10).map((w) => ({ label: shortDay(w.date), value: Number(w.averageWeightKg) })) : null,
-      thin: 'Weigh a sample again to see growth over time.',
-      formatTick: (v) => `${round1(v)}kg`,
-    };
-  }
-
-  // Everything else: birds alive at the end of each of the last 14 days.
-  const placed = Number(batch.birdCount) || 0;
-  const mortality = logs?.mortality || [];
-  const start = batch.startDate ? batch.startDate.slice(0, 10) : null;
-  const firstDay = start && start > isoDaysAgo(CHART_DAYS - 1) ? start : isoDaysAgo(CHART_DAYS - 1);
-  const points = [];
-  for (let d = new Date(`${firstDay}T00:00:00`); toIso(d) <= toIso(new Date()); d.setDate(d.getDate() + 1)) {
-    const iso = toIso(d);
-    const lost = mortality.filter((m) => m.date && m.date <= iso).reduce((s, m) => s + (Number(m.count) || 0), 0);
-    points.push({ label: shortDay(iso), value: Math.max(0, placed - lost) });
-  }
-  const lostThisWeek = mortality
-    .filter((m) => m.date && m.date >= isoDaysAgo(6))
-    .reduce((s, m) => s + (Number(m.count) || 0), 0);
-
-  return {
-    kind: 'alive',
-    title: 'Birds Alive',
-    value: currentBirds.toLocaleString(),
-    suffix: 'birds',
-    caption: `Age ${batchAge(batch)}`,
-    change: { up: lostThisWeek === 0, text: lostThisWeek === 0 ? 'No losses this week' : `${lostThisWeek} lost this week` },
-    extras: placed ? [{ label: 'Survival', value: `${round1((currentBirds / placed) * 100)}%` }] : [],
-    points: points.length >= 2 ? points : null,
-    thin: 'The trend appears after the batch\'s second day.',
-    formatTick: (v) => Math.round(v).toLocaleString(),
-  };
-}
 
 // ---- presentational pieces ----------------------------------------------------
 
 function Card({ className = '', children }) {
   return (
-    <section className={`bg-white rounded-2xl border border-[#E1E8EF] shadow-[0_1px_2px_rgba(20,32,51,0.04)] ${className}`}>
+    <section className={`bg-white rounded-lg border border-[#E1E8EF] shadow-[0_1px_2px_rgba(20,32,51,0.04)] ${className}`}>
       {children}
     </section>
   );
@@ -254,7 +108,7 @@ function SummaryCard({ icon: Icon, label, value, detail, detailIcon: DetailIcon,
     bad: 'text-rose-600',
   }[detailTone];
   return (
-    <div className={`rounded-2xl border ${bg} p-4 sm:p-5 min-h-[128px] flex flex-col`}>
+    <div className={`rounded-lg border ${bg} p-4 sm:p-5 min-h-[128px] flex flex-col`}>
       <div className="flex items-center gap-3">
         <span className="w-10 h-10 rounded-full bg-white/90 border border-white flex items-center justify-center shrink-0">
           <Icon size={20} strokeWidth={2} className="text-[#142033]" />
@@ -306,7 +160,7 @@ function BatchCard({ batch, currentBirds, eggsPerDay, logsLoaded, onOpen }) {
     <button
       type="button"
       onClick={onOpen}
-      className={`group text-left rounded-2xl border p-4 transition-all cursor-pointer hover:shadow-md ${
+      className={`group text-left rounded-lg border p-4 transition-all cursor-pointer hover:shadow-md ${
         eggsBatch ? 'bg-[#F7FFE0] border-[#E3F5A8] hover:border-[#D2EC7A]' : 'bg-[#F2F7FF] border-[#DCE7F7] hover:border-[#C2D6F2]'
       }`}
     >
@@ -378,7 +232,7 @@ function QuickAction({ icon: Icon, title, hint, tone, onClick, to, disabled, fil
     blue: 'bg-[#F2F7FF] border-[#DCE7F7] hover:border-[#C2D6F2]',
     red: 'bg-[#FFF4F4] border-[#F8DCDC] hover:border-[#F0C2C2]',
   };
-  const cls = `flex items-start gap-3 rounded-2xl border p-3.5 sm:p-4 text-left transition-colors min-h-[84px] ${tones[tone]} ${
+  const cls = `flex items-start gap-3 rounded-lg border p-3.5 sm:p-4 text-left transition-colors min-h-[84px] ${tones[tone]} ${
     disabled ? 'opacity-55 cursor-not-allowed' : 'cursor-pointer'
   }`;
   const body = (
@@ -413,7 +267,7 @@ function EmptyNote({ children }) {
 export function DashboardPage() {
   const navigate = useNavigate();
   const { farm } = useAuth();
-  const { batches, loading: batchesLoading } = useBatches();
+  const { batches, loading: batchesLoading, error: batchesError } = useBatches();
 
   // Per-batch logs plus the farm's feed purchases, loaded in groups of two
   // batches (farmData.js: firing every request at once trips Lambda
@@ -541,16 +395,16 @@ export function DashboardPage() {
       if (!b) return;
       const base = { batchId, closed: !isActive(b), batchName: b.name };
       (l.feed || []).forEach((e) =>
-        items.push({ ...base, type: 'feed', at: e.createdAt || e.date, title: 'Feed logged', sub: `${b.name} • ${formatBags(feedBags(e))}` })
+        items.push({ ...base, pending: e.pending, type: 'feed', at: e.createdAt || e.date, title: 'Feed logged', sub: `${b.name} • ${formatBags(feedBags(e))}` })
       );
       (l.eggs || []).forEach((e) =>
-        items.push({ ...base, type: 'eggs', at: e.createdAt || e.date, title: 'Eggs recorded', sub: `${b.name} • ${eggCount(e).toLocaleString()} eggs` })
+        items.push({ ...base, pending: e.pending, type: 'eggs', at: e.createdAt || e.date, title: 'Eggs recorded', sub: `${b.name} • ${eggCount(e).toLocaleString()} eggs` })
       );
       (l.vaccinations || []).forEach((e) =>
-        items.push({ ...base, type: 'vaccination', at: e.createdAt || e.dateAdministered || e.date, title: 'Vaccination recorded', sub: `${b.name} • ${e.vaccineName || 'Vaccine'}` })
+        items.push({ ...base, pending: e.pending, type: 'vaccination', at: e.createdAt || e.dateAdministered || e.date, title: 'Vaccination recorded', sub: `${b.name} • ${e.vaccineName || 'Vaccine'}` })
       );
       (l.mortality || []).forEach((e) =>
-        items.push({ ...base, type: 'mortality', at: e.createdAt || e.date, title: 'Birds lost recorded', sub: `${b.name} • ${Number(e.count) || 0} bird${Number(e.count) === 1 ? '' : 's'}` })
+        items.push({ ...base, pending: e.pending, type: 'mortality', at: e.createdAt || e.date, title: 'Birds lost recorded', sub: `${b.name} • ${Number(e.count) || 0} bird${Number(e.count) === 1 ? '' : 's'}` })
       );
     });
     batches.forEach((b) =>
@@ -617,7 +471,7 @@ export function DashboardPage() {
       return false;
     }
   });
-  const showFirstBatchPrompt = !batchesLoading && batches.length === 0 && !firstBatchDismissed;
+  const showFirstBatchPrompt = !batchesLoading && !batchesError && batches.length === 0 && !firstBatchDismissed;
   const dismissFirstBatchPrompt = () => {
     setFirstBatchDismissed(true);
     try {
@@ -641,7 +495,7 @@ export function DashboardPage() {
       </div>
 
       {loadState === 'error' && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="flex items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <span>Some farm records could not be loaded, so a few numbers may be missing.</span>
           <button type="button" onClick={reload} className="inline-flex items-center gap-1.5 font-semibold cursor-pointer shrink-0">
             <RefreshCw size={14} /> Try again
@@ -654,22 +508,28 @@ export function DashboardPage() {
         {/* Your Batches */}
         <Card className="p-4 sm:p-5">
           <SectionHeader icon={BatchIcon} title="Your Batches" action={<ViewAll to="/batches" />} />
-          <div className="h-32 sm:h-40 rounded-xl overflow-hidden bg-stone-100">
+          <div className="h-32 sm:h-40 rounded-md overflow-hidden bg-stone-100">
             <img src={BATCH_BANNER} alt="Hens on a poultry farm" className="w-full h-full object-cover object-[center_45%]" />
           </div>
 
           {batchesLoading ? (
             <div className="grid sm:grid-cols-2 gap-4 mt-4">
-              <Skeleton className="h-32 rounded-2xl" />
-              <Skeleton className="h-32 rounded-2xl" />
+              <Skeleton className="h-32 rounded-lg" />
+              <Skeleton className="h-32 rounded-lg" />
+            </div>
+          ) : noActive && batchesError ? (
+            // The list couldn't load (offline, nothing saved yet): not the same as having none.
+            <div className="mt-4 rounded-lg border border-dashed border-[#E1E8EF] p-6 text-center">
+              <p className="text-sm font-semibold">Your batches will show once you're back online</p>
+              <p className="text-xs text-[#70829B] mt-1">They haven't been saved on this device yet.</p>
             </div>
           ) : noActive ? (
-            <div className="mt-4 rounded-2xl border border-dashed border-[#E1E8EF] p-6 text-center">
+            <div className="mt-4 rounded-lg border border-dashed border-[#E1E8EF] p-6 text-center">
               <p className="text-sm font-semibold">No active batches</p>
               <p className="text-xs text-[#70829B] mt-1">Start a batch to begin tracking birds, feed and vaccinations.</p>
               <Link
                 to="/batches/new"
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#DFFF83] text-[#17191A] text-sm font-semibold hover:bg-[#C5E95A] transition-colors"
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#DFFF83] text-[#17191A] text-sm font-semibold hover:bg-[#C5E95A] transition-colors"
               >
                 <Plus size={16} /> Create New Batch
               </Link>
@@ -808,8 +668,8 @@ export function DashboardPage() {
               <EmptyNote>Performance appears once you have an active batch.</EmptyNote>
             ) : !perf || perf.loading ? (
               <div className="space-y-3">
-                <Skeleton className="h-16 rounded-xl" />
-                <Skeleton className="h-36 rounded-xl" />
+                <Skeleton className="h-16 rounded-md" />
+                <Skeleton className="h-36 rounded-md" />
               </div>
             ) : perf.empty ? (
               <>
@@ -818,7 +678,7 @@ export function DashboardPage() {
               </>
             ) : (
               <>
-                <div className="rounded-xl bg-[#F7F9FA] px-4 py-3">
+                <div className="rounded-md bg-[#F7F9FA] px-4 py-3">
                   <div className="text-xs font-medium text-[#142033]">
                     {perf.title} <span className="text-[#70829B] font-normal">• {perf.caption}</span>
                   </div>
@@ -893,7 +753,14 @@ export function DashboardPage() {
                       >
                         <TintedIcon tint={style.tint} icon={style.icon} size={18} />
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-semibold truncate">{item.title}</div>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-semibold truncate">{item.title}</span>
+                            {item.pending && (
+                              <span className="shrink-0 px-1.5 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-[10px] font-semibold text-amber-800">
+                                Waiting to send
+                              </span>
+                            )}
+                          </div>
                           <div className="text-xs text-[#70829B] truncate">{item.sub}</div>
                           <div className="text-[11px] text-[#70829B]/90 truncate">{stamp(item.at)}</div>
                         </div>
@@ -939,14 +806,14 @@ export function DashboardPage() {
             <button
               type="button"
               onClick={dismissFirstBatchPrompt}
-              className="px-4 py-2 rounded-xl text-sm font-semibold text-[#70829B] hover:text-[#142033] cursor-pointer"
+              className="px-4 py-2 rounded-md text-sm font-semibold text-[#70829B] hover:text-[#142033] cursor-pointer"
             >
               Later
             </button>
             <Link
               to="/batches/new"
               onClick={dismissFirstBatchPrompt}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] text-sm font-semibold transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] text-sm font-semibold transition-colors"
             >
               <Plus size={16} /> Create batch
             </Link>
@@ -973,7 +840,7 @@ export function DashboardPage() {
                 setModal(null);
                 navigate(`/batches/${b.batchId}?log=mortality`);
               }}
-              className="w-full flex items-center justify-between gap-3 rounded-xl border border-[#E1E8EF] px-4 py-3 text-left hover:border-[#B7DA3E] hover:bg-[#F7FFE0] transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between gap-3 rounded-md border border-[#E1E8EF] px-4 py-3 text-left hover:border-[#B7DA3E] hover:bg-[#F7FFE0] transition-colors cursor-pointer"
             >
               <span className="min-w-0">
                 <span className="block text-sm font-semibold text-[#142033] truncate">{b.name}</span>

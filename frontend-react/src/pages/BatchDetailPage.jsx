@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ChevronLeft,
   Clock,
@@ -20,11 +20,8 @@ import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useBatches } from '../context/BatchContext';
 import { useAuth } from '../context/AuthContext';
 import { CompleteBatchModal } from '../components/ui/CompleteBatchModal';
-import { PerformanceBars } from '../components/ui/PerformanceBars';
 import { SickBayTab } from '../components/sickbay/SickBayTab';
-import { assessPerformance, RATING_STYLES } from '../lib/performance';
 import { penForBatch } from '../lib/pens';
-import { batchAgeWeeks } from '../lib/feeds';
 import { getLogs, createLog } from '../api/logs';
 import { QUEUED_SAVE_MESSAGE } from '../lib/offlineQueue';
 import { getSchedule } from '../api/schedule';
@@ -35,6 +32,9 @@ import { buildHealthEvents } from '../lib/healthEvents';
 import { ROUTES } from '../lib/vaccines';
 import { loadSupplements, describeDose, findSupplementType, toIso } from '../lib/supplements';
 import { Modal } from '../components/ui/Modal';
+import { Spinner } from '../components/ui/Spinner';
+import { LineChart } from '../components/ui/LineChart';
+import { buildPerformance } from '../lib/production';
 import { VaccinationModal } from '../components/ui/VaccinationModal';
 import { DeleteBatchModal } from '../components/ui/DeleteBatchModal';
 import { useToast } from '../components/ui/Toast';
@@ -119,7 +119,7 @@ function EmptyState({ icon: Icon, title, description }) {
   );
 }
 
-function LogRow({ icon: Icon, primary, secondary, value }) {
+function LogRow({ icon: Icon, primary, secondary, value, pending }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3.5 border-b border-stone-100 last:border-0">
       <div className="flex items-center gap-3 min-w-0">
@@ -129,7 +129,14 @@ function LogRow({ icon: Icon, primary, secondary, value }) {
           </div>
         )}
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-stone-900 truncate">{primary}</div>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm font-semibold text-stone-900 truncate">{primary}</span>
+            {pending && (
+              <span className="shrink-0 px-1.5 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-[10px] font-semibold text-amber-800">
+                Waiting to send
+              </span>
+            )}
+          </div>
           {secondary && <div className="text-xs text-stone-500 truncate mt-0.5">{secondary}</div>}
         </div>
       </div>
@@ -181,6 +188,9 @@ export function BatchDetailPage() {
 
   // Modal states for logging
   const [logModal, setLogModal] = useState(null); // 'mortality' | 'feed' | 'eggs' | 'vaccine' | 'multivitamin'
+  // True while a bird loss / eggs / weight entry is being saved.
+  const [savingLog, setSavingLog] = useState(false);
+  const savingLogRef = useRef(false);
   const [logDate, setLogDate] = useState(new Date().toISOString().slice(0, 10));
 
   // Form fields
@@ -305,8 +315,14 @@ export function BatchDetailPage() {
   // Handlers for logging
   const handleLogMortality = async (e) => {
     e.preventDefault();
+    if (!logDate) return toast('Please pick a date', 'error');
     if (logDate > todayIso) return toast("You can't record something for a future date", 'error');
     if (!mortCount || Number(mortCount) <= 0) return toast('Please enter count', 'error');
+    // One save at a time: a second press while this one is in flight would
+    // create a duplicate entry.
+    if (savingLogRef.current) return;
+    savingLogRef.current = true;
+    setSavingLog(true);
     try {
       const createdItem = await createLog(batchId, 'mortality', {
         date: logDate,
@@ -330,15 +346,24 @@ export function BatchDetailPage() {
       setLogModal(null);
     } catch (err) {
       toast(err.message || 'Failed to record mortality', 'error');
+    } finally {
+      savingLogRef.current = false;
+      setSavingLog(false);
     }
   };
 
   const handleLogEggs = async (e) => {
     e.preventDefault();
+    if (!logDate) return toast('Please pick a date', 'error');
     if (logDate > todayIso) return toast("You can't record something for a future date", 'error');
     const batchType = (batch?.type || '').toLowerCase();
     if (!laysEggs(batchType)) return toast(`Egg logging isn't set up for ${birdTypeLabel(batchType)} batches`, 'error');
     if (!eggCrates && !looseEggs) return toast('Enter crates or loose eggs', 'error');
+    // One save at a time: a second press while this one is in flight would
+    // create a duplicate entry.
+    if (savingLogRef.current) return;
+    savingLogRef.current = true;
+    setSavingLog(true);
     try {
       const payload = {
         date: logDate,
@@ -360,13 +385,22 @@ export function BatchDetailPage() {
       setLogModal(null);
     } catch (err) {
       toast(err.message || 'Failed to log eggs', 'error');
+    } finally {
+      savingLogRef.current = false;
+      setSavingLog(false);
     }
   };
 
   const handleLogWeight = async (e) => {
     e.preventDefault();
+    if (!logDate) return toast('Please pick a date', 'error');
     if (logDate > todayIso) return toast("You can't record something for a future date", 'error');
     if (!avgWeightKg || Number(avgWeightKg) <= 0) return toast('Enter the average bird weight', 'error');
+    // One save at a time: a second press while this one is in flight would
+    // create a duplicate entry.
+    if (savingLogRef.current) return;
+    savingLogRef.current = true;
+    setSavingLog(true);
     try {
       const createdItem = await createLog(batchId, 'weight', {
         date: logDate,
@@ -387,6 +421,9 @@ export function BatchDetailPage() {
       setLogModal(null);
     } catch (err) {
       toast(err.message || 'Failed to record weight', 'error');
+    } finally {
+      savingLogRef.current = false;
+      setSavingLog(false);
     }
   };
 
@@ -479,6 +516,7 @@ export function BatchDetailPage() {
       birds: r.birdsVaccinated,
       administeredBy: r.administeredBy,
       lotNumber: r.lotNumber,
+      pending: r.pending,
     })),
     ...scheduleList
       .filter((s) => s.status === 'done' && !linkedScheduleIds.has(s.scheduleId))
@@ -502,12 +540,12 @@ export function BatchDetailPage() {
 
   // Every log type merged for the Daily Logs tab, newest first.
   const dailyLogs = [
-    ...feedLogs.map((e) => ({ date: e.date, kind: 'Feed logged', detail: `${e.feedType || 'Feed'} - ${formatBags(feedBags(e))}`, icon: FeedIcon })),
-    ...mortalityLogs.map((e) => ({ date: e.date, kind: 'Mortality recorded', detail: `${Number(e.count) || 0} birds${e.note ? ` (${e.note})` : ''}`, icon: TrendingDown })),
-    ...weightHistory.map((w) => ({ date: w.date, kind: 'Weight recorded', detail: `${formatKg(w.averageWeightKg)} average${w.sampleSize ? ` (${w.sampleSize} birds weighed)` : ''}`, icon: WeightIcon })),
-    ...eggLogs.map((e) => ({ date: e.date, kind: 'Eggs recorded', detail: `${Number(e.crates) || 0} crates, ${Number(e.looseEggs) || 0} loose`, icon: EggIcon })),
+    ...feedLogs.map((e) => ({ pending: e.pending, date: e.date, kind: 'Feed logged', detail: `${e.feedType || 'Feed'} - ${formatBags(feedBags(e))}`, icon: FeedIcon })),
+    ...mortalityLogs.map((e) => ({ pending: e.pending, date: e.date, kind: 'Mortality recorded', detail: `${Number(e.count) || 0} birds${e.note ? ` (${e.note})` : ''}`, icon: TrendingDown })),
+    ...weightHistory.map((w) => ({ pending: w.pending, date: w.date, kind: 'Weight recorded', detail: `${formatKg(w.averageWeightKg)} average${w.sampleSize ? ` (${w.sampleSize} birds weighed)` : ''}`, icon: WeightIcon })),
+    ...eggLogs.map((e) => ({ pending: e.pending, date: e.date, kind: 'Eggs recorded', detail: `${Number(e.crates) || 0} crates, ${Number(e.looseEggs) || 0} loose`, icon: EggIcon })),
     ...multivitaminLogs.map((m) => ({ date: m.date, kind: `${findSupplementType(m.type)?.label || 'Vitamin'} given`, detail: [m.product, describeDose(m)].filter(Boolean).join(' - '), icon: PillIcon })),
-    ...vaccinationHistory.map((v) => ({ date: v.date, kind: 'Vaccination given', detail: [v.vaccineName, v.doseNumber, ROUTES[v.route]?.label].filter(Boolean).join(' - '), icon: VaccineIcon })),
+    ...vaccinationHistory.map((v) => ({ pending: v.pending, date: v.date, kind: 'Vaccination given', detail: [v.vaccineName, v.doseNumber, ROUTES[v.route]?.label].filter(Boolean).join(' - '), icon: VaccineIcon })),
     ...dueVaccines.map((s) => ({ date: s.dueDate, kind: 'Vaccination due', detail: [s.vaccineName, s.doseNumber].filter(Boolean).join(' - '), icon: VaccineIcon })),
   ]
     .filter((item) => item.date)
@@ -515,7 +553,7 @@ export function BatchDetailPage() {
 
   const closed = batch.status === 'closed';
 
-  // Performance, judged by what this bird type is raised for (lib/performance.js).
+  // Running costs, passed to the Complete Batch form to work out profit.
   const vaccineCost = vaccRecords.reduce((sum, r) => sum + (Number(r.costNaira) || 0), 0);
   const supplementCost = multivitaminLogs.reduce((sum, m) => sum + (Number(m.costNaira) || 0), 0);
   const costs = {
@@ -524,16 +562,16 @@ export function BatchDetailPage() {
     vaccines: vaccineCost,
     supplements: supplementCost,
   };
-  const performance = assessPerformance({
-    purpose,
+
+  // Production trend: the same plain chart as the dashboard (lib/production.js),
+  // eggs for layers, weigh-ins for meat birds, birds alive otherwise. No rating.
+  const production = buildPerformance(
     batch,
-    eggLogs,
-    currentBirds,
-    fcr,
-    ageWeeks: batchAgeWeeks(batch),
-    costs,
-  });
-  const ratingStyle = RATING_STYLES[performance.rating];
+    { eggs: isLayer ? eggLogs : [], feed: feedLogs, mortality: mortalityLogs },
+    weightLogs,
+    currentBirds
+  );
+  const productionTitle = { eggs: 'Egg collection', weight: 'Growth', alive: 'Flock size' }[production.kind];
   const safeName = (batch.name || 'batch').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
 
   // Each tab exports the rows it is showing, so the file always matches what
@@ -825,79 +863,118 @@ export function BatchDetailPage() {
                     value={totalMortality.toLocaleString()}
                     suffix={lossPercent == null ? null : '(' + lossPercent + '%)'}
                   />
-                  <SummaryTile
-                    icon={EggIcon}
-                    label="Average Egg Production"
-                    value={avgEggsPerDay == null ? '-' : avgEggsPerDay.toLocaleString()}
-                    hint={isLayer ? '(Per day)' : '(Egg-laying birds only)'}
-                  />
-                  <SummaryTile
-                    icon={EggIcon}
-                    label="Total Eggs Collected"
-                    value={totalEggs.toLocaleString()}
-                    hint={totalEggs > 0 && avgEggsPerDay ? '(avg. ' + avgEggsPerDay + '/day)' : null}
-                  />
+                  {/* Eggs only matter for birds that lay; meat birds get weight and feed instead. */}
+                  {isLayer ? (
+                    <>
+                      <SummaryTile
+                        icon={EggIcon}
+                        label="Average Egg Production"
+                        value={avgEggsPerDay == null ? '-' : avgEggsPerDay.toLocaleString()}
+                        hint="(Per day)"
+                      />
+                      <SummaryTile
+                        icon={EggIcon}
+                        label="Total Eggs Collected"
+                        value={totalEggs.toLocaleString()}
+                        hint={totalEggs > 0 && avgEggsPerDay ? '(avg. ' + avgEggsPerDay + '/day)' : null}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <SummaryTile
+                        icon={WeightIcon}
+                        label="Latest Average Weight"
+                        value={latestWeight ? formatKg(latestWeight.averageWeightKg) : '-'}
+                        hint={latestWeight ? `(Weighed ${formatDate(latestWeight.date)})` : '(No weigh-ins yet)'}
+                      />
+                      <SummaryTile
+                        icon={FeedIcon}
+                        label="Total Feed Used"
+                        value={totalFeedBags > 0 ? formatBags(totalFeedBags) : '-'}
+                        hint={totalFeedCost > 0 ? `(₦${totalFeedCost.toLocaleString()})` : null}
+                      />
+                    </>
+                  )}
                 </div>
               </div>
+              {/* Production: the one trend that matters for this bird type, as recorded. No rating. */}
               <div className="bg-white rounded-xl shadow-sm p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="text-base font-bold text-stone-950 font-heading">Production Performance</h2>
-                    <p className="text-xs text-stone-500 mt-0.5 truncate">
-                      <span className="font-semibold text-stone-800">{performance.headline}</span>
-                      <span className="text-stone-300"> · </span>
-                      {performance.basis}
-                    </p>
-                  </div>
-                  <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold border shrink-0 ${ratingStyle.pill}`}>
-                    {ratingStyle.label}
-                  </span>
-                </div>
-
-                {performance.bars?.length > 0 && (
-                  <div className="mt-4">
-                    <PerformanceBars bars={performance.bars} />
-                  </div>
-                )}
-
-                {performance.metrics.length > 0 && (
-                  <dl className="mt-3 pt-3 border-t border-stone-100 flex flex-wrap gap-x-6 gap-y-2">
-                    {performance.metrics.map((m) => (
-                      <div key={m.label} className="min-w-0">
-                        <dt className="text-[11px] text-stone-500">{m.label}</dt>
-                        <dd className="text-sm font-semibold text-stone-950 tabular-nums">{m.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                )}
-
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-                  <details className="group text-[11px] text-stone-500">
-                    <summary className="cursor-pointer select-none list-none hover:text-stone-800 inline-flex items-center gap-1">
-                      <span className="group-open:rotate-90 transition-transform">›</span> How this is judged
-                    </summary>
-                    <p className="mt-1.5 max-w-xl leading-relaxed">{performance.detail}</p>
-                  </details>
+                  <h2 className="text-base font-bold text-stone-950 font-heading">{productionTitle}</h2>
                   {(purpose === 'meat' || purpose === 'dual') && !closed && (
                     <button
                       type="button"
                       onClick={() => setShowCompleteModal(true)}
-                      className="text-[11px] font-semibold text-[#4D6600] hover:underline cursor-pointer"
+                      className="text-[11px] font-semibold text-[#4D6600] hover:underline cursor-pointer shrink-0"
                     >
                       Record sales to see profit
                     </button>
                   )}
                 </div>
+
+                {loading ? (
+                  <div className="mt-4 h-40 rounded-lg bg-stone-100 animate-pulse" />
+                ) : production.empty ? (
+                  <p className="mt-3 text-sm text-stone-500">{production.empty}</p>
+                ) : (
+                  <>
+                    <div className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+                      <div>
+                        <div className="text-xs text-stone-500">
+                          {production.title} · {production.caption}
+                        </div>
+                        <div className="mt-1 flex items-baseline gap-1.5">
+                          <span className="text-3xl font-semibold font-heading text-stone-950 tabular-nums leading-none">{production.value}</span>
+                          <span className="text-sm text-stone-500">{production.suffix}</span>
+                        </div>
+                      </div>
+                      {production.change && (
+                        <span className={`inline-flex items-center gap-1 text-xs ${production.change.up ? 'text-[#4D6600]' : 'text-rose-600'}`}>
+                          {production.change.up ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+                          {production.change.text}
+                        </span>
+                      )}
+                    </div>
+
+                    {production.extras?.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-stone-500">
+                        {production.extras.map((x) => (
+                          <span key={x.label}>
+                            {x.label}: <strong className="font-semibold text-stone-900">{x.value}</strong>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-4">
+                      {production.points ? (
+                        <LineChart points={production.points} formatTick={production.formatTick} />
+                      ) : (
+                        <p className="text-sm text-stone-500">{production.thin}</p>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="bg-white rounded-xl shadow-sm p-5">
                 <h2 className="text-base font-bold text-stone-950 font-heading mb-2">Key Insights</h2>
                 <div>
-                  <InsightRow
-                    icon={EggIcon}
-                    label="Peak egg production (if applicable)"
-                    value={peakEggDay == null ? '-' : peakEggDay.toLocaleString() + ' eggs'}
-                  />
+                  {isLayer ? (
+                    <InsightRow
+                      icon={EggIcon}
+                      label="Peak egg production"
+                      sub="Best single day"
+                      value={peakEggDay == null ? '-' : peakEggDay.toLocaleString() + ' eggs'}
+                    />
+                  ) : (
+                    <InsightRow
+                      icon={WeightIcon}
+                      label="Weight gained per bird"
+                      sub={weightGain == null ? 'Needs two weigh-ins' : `Since ${formatDate(firstWeight.date)}`}
+                      value={weightGain == null ? '-' : `${weightGain >= 0 ? '+' : ''}${formatKg(weightGain)}`}
+                    />
+                  )}
                   <InsightRow icon={Percent} label="Feed conversion ratio" sub={fcrNote} value={fcrValue} />
                   <InsightRow
                     icon={FeedIcon}
@@ -921,6 +998,7 @@ export function BatchDetailPage() {
                     <LogRow
                       key={index}
                       icon={item.icon}
+                      pending={item.pending}
                       primary={item.kind}
                       secondary={item.detail}
                       value={formatDate(item.date)}
@@ -951,6 +1029,7 @@ export function BatchDetailPage() {
                     <LogRow
                       key={entry.entryId || index}
                       icon={FeedIcon}
+                      pending={entry.pending}
                       primary={[entry.feedType || 'Feed', entry.brand].filter(Boolean).join(' · ')}
                       secondary={formatDate(entry.date)}
                       value={formatBags(feedBags(entry))}
@@ -1060,6 +1139,7 @@ export function BatchDetailPage() {
                       <LogRow
                         key={v.key}
                         icon={VaccineIcon}
+                        pending={v.pending}
                         primary={`${v.vaccineName}${v.doseNumber ? ` · ${v.doseNumber}` : ''}`}
                         secondary={[
                           ROUTES[v.route]?.label,
@@ -1144,6 +1224,7 @@ export function BatchDetailPage() {
                     <LogRow
                       key={entry.entryId || index}
                       icon={TrendingDown}
+                      pending={entry.pending}
                       primary={(Number(entry.count) || 0) + ' birds'}
                       secondary={entry.note || 'No cause recorded'}
                       value={formatDate(entry.date)}
@@ -1209,6 +1290,7 @@ export function BatchDetailPage() {
                       <LogRow
                         key={w.entryId || index}
                         icon={WeightIcon}
+                        pending={w.pending}
                         primary={`${formatKg(w.averageWeightKg)} average`}
                         secondary={[
                           w.change == null ? 'First weigh-in' : `${formatChange(w.change)} since previous`,
@@ -1323,7 +1405,9 @@ export function BatchDetailPage() {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setLogModal(null)} className="px-4 py-2 text-xs font-bold text-neutral-600">Cancel</button>
-            <button type="submit" className="px-5 py-2 bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] rounded-xl text-xs font-bold cursor-pointer transition-colors">Save</button>
+            <button type="submit" disabled={savingLog} className="px-5 py-2 bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] rounded-xl text-xs font-bold cursor-pointer transition-colors inline-flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+              {savingLog ? (<><Spinner size={14} /> Saving…</>) : 'Save'}
+            </button>
           </div>
         </form>
       </Modal>
@@ -1365,7 +1449,9 @@ export function BatchDetailPage() {
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={() => setLogModal(null)} className="px-4 py-2 text-xs font-bold text-neutral-600">Cancel</button>
-              <button type="submit" className="px-5 py-2 bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] rounded-xl text-xs font-bold cursor-pointer transition-colors">Save Eggs</button>
+              <button type="submit" disabled={savingLog} className="px-5 py-2 bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] rounded-xl text-xs font-bold cursor-pointer transition-colors inline-flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+              {savingLog ? (<><Spinner size={14} /> Saving…</>) : 'Save Eggs'}
+            </button>
             </div>
           </form>
         </Modal>
@@ -1414,7 +1500,9 @@ export function BatchDetailPage() {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setLogModal(null)} className="px-4 py-2 text-xs font-bold text-neutral-600">Cancel</button>
-            <button type="submit" className="px-5 py-2 bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] rounded-xl text-xs font-bold cursor-pointer transition-colors">Save Weight</button>
+            <button type="submit" disabled={savingLog} className="px-5 py-2 bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] rounded-xl text-xs font-bold cursor-pointer transition-colors inline-flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed">
+              {savingLog ? (<><Spinner size={14} /> Saving…</>) : 'Save Weight'}
+            </button>
           </div>
         </form>
       </Modal>

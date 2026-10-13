@@ -1,34 +1,37 @@
+import { useEffect, useState } from 'react';
+
+// After this long the message changes, so a slow network doesn't feel stuck.
+const SLOW_AFTER_MS = 4000;
+
 /**
- * Ouroboros loading indicator: a green ring, outline only, whose head keeps
- * chasing its own tail. The stroke stretches almost all the way round until
- * the head nearly reaches the tail, then the tail slides after it, while the
- * whole ring keeps turning.
- *
- * Pure SVG + CSS (keyframes in styles/index.css) — no library. People who ask
- * for reduced motion see a still three-quarter ring instead.
+ * The app's loading screen: the FarmBook logo breathing gently above a slim
+ * bar that sweeps across, lime into charcoal, with a quiet status line.
+ * Keyframes live in styles/index.css (`.loader*`). People who ask for reduced
+ * motion get a still version.
  *
  * @param {Object} props
- * @param {number} [props.size]      Diameter in px.
- * @param {number} [props.stroke]    Line thickness in viewBox units (of 50).
- * @param {string} [props.label]     Screen-reader text.
+ * @param {string} [props.label]  What's loading, shown and read out.
  */
-export function LoadingIndicator({ size = 48, stroke = 4, label = 'Loading' }) {
+export function LoadingIndicator({ label = 'Loading' }) {
+  const [slow, setSlow] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSlow(true), SLOW_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <span role="progressbar" aria-label={label} className="inline-flex" style={{ width: size, height: size }}>
-      <svg viewBox="0 0 50 50" width={size} height={size} aria-hidden="true" className="ouroboros">
-        <circle
-          className="ouroboros__snake"
-          cx="25"
-          cy="25"
-          r="20"
-          pathLength="100"
-          fill="none"
-          stroke="#B7DA3E"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-        />
-      </svg>
-    </span>
+    <div role="progressbar" aria-label={label} aria-busy="true" className="loader flex flex-col items-center">
+      <img src="/icon/logo.png" alt="FarmBook" className="loader__logo h-11 w-auto select-none mix-blend-multiply" draggable="false" />
+
+      <div className="mt-7 h-[3px] w-40 rounded-full bg-[#17191A]/8 overflow-hidden" aria-hidden="true">
+        <div className="loader__bar h-full w-2/5 rounded-full bg-gradient-to-r from-[#DFFF83] via-[#B7DA3E] to-[#17191A]" />
+      </div>
+
+      <p className="mt-4 text-[13px] font-medium tracking-wide text-[#70829B]" aria-live="polite">
+        {slow ? 'Still loading, hang tight…' : label}
+      </p>
+    </div>
   );
 }
 

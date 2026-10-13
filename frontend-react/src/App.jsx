@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { WifiOff } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { useBatches } from './context/BatchContext';
 import { AppShell } from './components/layout/AppShell';
@@ -19,19 +20,52 @@ import { SettingsPage } from './pages/SettingsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 
 export default function App() {
-  const { isLoggedIn, isOnboarded, farmLoading } = useAuth();
-  const { hasBatches, loading: batchesLoading } = useBatches();
+  const { isLoggedIn, isOnboarded, farm, farmLoading, loadFarm } = useAuth();
+  const { hasBatches, ready: batchesReady, error: batchesError, loadBatches } = useBatches();
 
-  // Logged in but still loading farm profile or batches
-  if (isLoggedIn && (farmLoading || batchesLoading)) {
+  // Logged in, and the farm profile or batches haven't loaded for the first
+  // time yet. Only that first load holds the app here: later reloads (after
+  // creating a batch, a retry, coming back online) must not swap the page out
+  // for this screen, or whatever it was showing is lost. That's what hid the
+  // "batch created" confirmation.
+  if (isLoggedIn && ((farmLoading && !farm) || !batchesReady)) {
     return (
-      <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
-        <LoadingIndicator size={56} label="Loading your farm" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <LoadingIndicator label="Loading your farm" />
       </div>
     );
   }
 
   const isSetupComplete = isOnboarded || hasBatches;
+
+  // Signed in, but the batches couldn't load (offline with nothing saved on
+  // this device, or the API is down), so whether this farm is set up is
+  // unknown. Don't guess "not set up" and send them to onboarding.
+  if (isLoggedIn && !isSetupComplete && batchesError) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
+        <div className="max-w-sm text-center">
+          <span className="mx-auto w-14 h-14 rounded-full bg-stone-100 flex items-center justify-center" aria-hidden="true">
+            <WifiOff size={26} strokeWidth={1.75} className="text-[#17191A]" />
+          </span>
+          <h1 className="mt-4 text-xl font-semibold text-[#142033] font-heading">Can't reach TrackFarm right now</h1>
+          <p className="mt-2 text-sm text-[#70829B]">
+            Your records will show once you're connected. Check your internet and try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              loadFarm();
+              loadBatches();
+            }}
+            className="mt-6 px-5 py-2.5 rounded-lg bg-[#DFFF83] hover:bg-[#C5E95A] text-[#17191A] text-sm font-semibold transition-colors cursor-pointer"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

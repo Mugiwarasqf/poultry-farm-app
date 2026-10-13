@@ -6,6 +6,7 @@ import { getSickBayCases, createSickBayCase, closeSickBayCase } from '../../api/
 import { formatDate } from '../../lib/batch';
 import { toIso } from '../../lib/supplements';
 import { SkeletonRows } from '../ui/Skeleton';
+import { Spinner } from '../ui/Spinner';
 
 // Signs a farmer can spot without a vet. Tapping one is quicker than typing,
 // and the same words make cases easy to compare later.
@@ -309,7 +310,7 @@ export function SickBayTab({ batch, birdsAlive, readOnly = false, onMortalityLog
           onClose={() => setAdding(false)}
           footer={
             <button type="button" onClick={handleAdd} disabled={!canAdd} className={primaryBtn}>
-              <Check size={16} /> {saving ? 'Saving…' : 'Move to Sick Bay'}
+              {saving ? <Spinner /> : <Check size={16} />} {saving ? 'Saving…' : 'Move to Sick Bay'}
             </button>
           }
         >
@@ -366,7 +367,7 @@ export function SickBayTab({ batch, birdsAlive, readOnly = false, onMortalityLog
           onClose={() => setClosing(null)}
           footer={
             <button type="button" onClick={handleClose} disabled={!closeValid || saving} className={primaryBtn}>
-              <Check size={16} /> {saving ? 'Saving…' : 'Close Case'}
+              {saving ? <Spinner /> : <Check size={16} />} {saving ? 'Saving…' : 'Close Case'}
             </button>
           }
         >

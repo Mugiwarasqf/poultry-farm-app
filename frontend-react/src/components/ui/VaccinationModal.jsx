@@ -10,6 +10,7 @@ import { birdTypeLabel } from '../../lib/batch';
 import { toIso } from '../../lib/supplements';
 import { CalendarIcon } from './CalendarIcon';
 import { BellIcon } from './BellIcon';
+import { Spinner } from './Spinner';
 
 const GIVEN_BY = ['Myself', 'Farm staff', 'Vet'];
 
@@ -158,6 +159,16 @@ export function VaccinationModal({
     if (date && ((next === 'schedule' && date < todayIso) || (next === 'record' && date > todayIso))) setDate('');
   };
 
+  // Any day can be picked; the date decides what it means. A future day can
+  // only be a planned vaccination and a past day only one already given, so
+  // the mode follows instead of the calendar greying days out. Today keeps
+  // whichever mode the farmer chose.
+  const pickDate = (iso) => {
+    setDate(iso);
+    if (iso > todayIso && mode === 'record') setMode('schedule');
+    else if (iso < todayIso && mode === 'schedule') setMode('record');
+  };
+
   const canContinue = date && batchId;
   const canSave = canContinue && finalName && !submitting;
 
@@ -274,13 +285,13 @@ export function VaccinationModal({
                 </div>
               )}
 
-              <CalendarPicker
-                value={date}
-                onChange={setDate}
-                events={calendarEvents}
-                minDate={isRecord ? undefined : todayIso}
-                maxDate={isRecord ? todayIso : undefined}
-              />
+              <div>
+                <label className={LABEL}>Date <span className="text-rose-500">*</span></label>
+                <CalendarPicker value={date} onChange={pickDate} events={calendarEvents} />
+                {!date && (
+                  <p className="mt-2 text-xs text-stone-500">Pick a date on the calendar to continue.</p>
+                )}
+              </div>
             </>
           )}
 
@@ -454,7 +465,7 @@ export function VaccinationModal({
               >
                 {submitting ? (
                   <>
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <Spinner />
                     Saving…
                   </>
                 ) : (

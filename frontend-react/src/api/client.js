@@ -43,6 +43,63 @@ export function clearFarmProfile() {
   localStorage.removeItem('farmbook_role');
 }
 
+// ---- offline reads ----------------------------------------------------------
+//
+// Every successful GET is saved on the device so the app can still show the
+// farm's records with no network. This lives here, not only in the service
+// worker, because the worker is registered in production builds only and
+// only helps once it controls the page; this works everywhere, from the first
+// load. Same cache name as the worker, so logout (clearOfflineRecords in
+// lib/pwa.js) wipes both.
+
+export const READ_CACHE = 'farmbook-api';
+const CACHED_AT_HEADER = 'X-FarmBook-Cached-At';
+export const OFFLINE_DATA_EVENT = 'farmbook:offline-data';
+
+/**
+ * True only when the request never reached the server. A 4xx/5xx means the
+ * server answered, so it isn't an offline problem.
+ */
+export function isNetworkError(err) {
+  if (err?.status !== undefined) return false;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+  return err instanceof TypeError;
+}
+
+function canCache() {
+  return typeof window !== 'undefined' && 'caches' in window;
+}
+
+async function saveRead(url, text) {
+  // A controlling service worker already saves API reads itself.
+  if (!canCache() || navigator.serviceWorker?.controller) return;
+  try {
+    const cache = await caches.open(READ_CACHE);
+    await cache.put(
+      url,
+      new Response(text, {
+        status: 200,
+        headers: { 'content-type': 'application/json', [CACHED_AT_HEADER]: new Date().toISOString() },
+      })
+    );
+  } catch {
+    // Storage full or blocked: this read just isn't available offline.
+  }
+}
+
+async function readSaved(url) {
+  if (!canCache()) return null;
+  try {
+    return (await (await caches.open(READ_CACHE)).match(url)) || null;
+  } catch {
+    return null;
+  }
+}
+
+function announceCachedAt(cachedAt) {
+  if (cachedAt) window.dispatchEvent(new CustomEvent(OFFLINE_DATA_EVENT, { detail: { cachedAt } }));
+}
+
 function cognitoRegion() {
   // Used to be parsed out of apiBase's hostname (execute-api.<region>.amazonaws.com)
   // -- broke silently the moment apiBase became a custom domain (api.trackfarm.cc)
@@ -99,18 +156,34 @@ export async function api(method, path, body, _isRetry = false) {
   const headers = { 'content-type': 'application/json' };
   if (idToken) headers.authorization = `Bearer ${idToken}`;
 
-  const res = await fetch(config.apiBase + path, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const url = config.apiBase + path;
+  let res;
+  try {
+    res = await fetch(url, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch (err) {
+    // Offline: answer a read with the last copy saved on this device.
+    if (method === 'GET' && isNetworkError(err)) {
+      const saved = await readSaved(url);
+      if (saved) {
+        announceCachedAt(saved.headers.get(CACHED_AT_HEADER));
+        const text = await saved.text();
+        try {
+          return text ? JSON.parse(text) : {};
+        } catch {
+          // A damaged copy is no better than none.
+        }
+      }
+    }
+    throw err;
+  }
 
   // Offline, the service worker answers reads with the last copy it saved
   // and stamps when that was; the offline banner shows that time.
-  const cachedAt = res.headers.get('X-FarmBook-Cached-At');
-  if (cachedAt) {
-    window.dispatchEvent(new CustomEvent('farmbook:offline-data', { detail: { cachedAt } }));
-  }
+  announceCachedAt(res.headers.get(CACHED_AT_HEADER));
 
   if (res.status === 401 && !_isRetry) {
     const refreshed = await refreshIdToken();
@@ -130,6 +203,7 @@ export async function api(method, path, body, _isRetry = false) {
     err.data = data;
     throw err;
   }
+  if (method === 'GET') saveRead(url, text);
   return data;
 }
 

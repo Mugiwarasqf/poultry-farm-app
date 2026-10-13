@@ -258,5 +258,12 @@ async function runFlush() {
     notify();
   }
 
+  // Entries just landed: tell pages showing logs to reload, so the server's
+  // copies replace the "waiting to send" ones. Same event name as
+  // LOGS_CHANGED_EVENT in api/logs.js (not imported: logs.js imports this file).
+  if (applied > 0 && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('farmbook:logs-changed', { detail: { resource: 'sync' } }));
+  }
+
   return { applied, stopped, remaining: await getPendingCount() };
 }

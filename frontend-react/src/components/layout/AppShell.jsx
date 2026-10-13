@@ -67,21 +67,10 @@ export function AppShell() {
 
   const farmerDisplayName = farm?.farmerName || farm?.name || 'Farmer';
 
-  // Pages using the plain white background, where cards are defined by a soft
-  // shadow instead of a border. Add routes here to roll it out further.
-  // The batch detail route is matched on its own so the /batches list and the
-  // /batches/new wizard keep the tinted background.
-  const WHITE_BG_ROUTES = ['/history', '/dashboard'];
-  const isBatchDetail = /^\/batches\/(?!new$)[^/]+$/.test(location.pathname);
-  const useWhiteBackground =
-    isBatchDetail || WHITE_BG_ROUTES.some((route) => location.pathname.startsWith(route));
-
+  // Every page inside the app uses the plain white background (it started
+  // with History and the dashboard).
   return (
-    <div
-      className={`min-h-screen flex selection:bg-[#DFFF83] selection:text-[#17191A] text-stone-900 font-sans ${
-        useWhiteBackground ? 'bg-white' : 'bg-[#FAFAF9]'
-      }`}
-    >
+    <div className="min-h-screen flex selection:bg-[#DFFF83] selection:text-[#17191A] text-stone-900 font-sans bg-white">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

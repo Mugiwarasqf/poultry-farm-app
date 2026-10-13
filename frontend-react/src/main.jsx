@@ -6,6 +6,7 @@ import { BatchProvider } from './context/BatchContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ToastProvider } from './components/ui/Toast';
 import App from './App';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { registerServiceWorker } from './lib/pwa';
 
 import './styles/index.css';
@@ -15,6 +16,7 @@ registerServiceWorker();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+    <ErrorBoundary>
     <BrowserRouter>
       <ToastProvider>
         <AuthProvider>
@@ -26,5 +28,6 @@ createRoot(document.getElementById('root')).render(
         </AuthProvider>
       </ToastProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   </StrictMode>
 );

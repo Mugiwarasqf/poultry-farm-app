@@ -1,5 +1,5 @@
-import { api } from './client';
-import { QUEUEABLE_RESOURCES, enqueueLogEntry } from '../lib/offlineQueue';
+import { api, isNetworkError } from './client';
+import { QUEUEABLE_RESOURCES, enqueueLogEntry, getPending } from '../lib/offlineQueue';
 
 // Fired after any log entry is saved, so pages that aggregate logs across
 // batches (Inventory) can refresh without a reload.
@@ -10,25 +10,42 @@ function notifyLogsChanged(resource, batchId) {
   window.dispatchEvent(new CustomEvent(LOGS_CHANGED_EVENT, { detail: { resource, batchId } }));
 }
 
-// Generic log resource calls — same shape for mortality, feed, eggs, vaccinations
-export async function getLogEntries(batchId, resource) {
-  const data = await api('GET', `/batches/${batchId}/${resource}`);
-  const list = data?.entries || data?.logs || (Array.isArray(data) ? data : []);
+/**
+ * Entries saved on this phone while offline that haven't been sent yet, shaped
+ * like the server's own entries and marked `pending: true`, so every screen
+ * shows them straight away. Parked ("failed") entries are left out: they are
+ * not going to be saved, and the header's waiting-to-send button shows them.
+ */
+async function pendingEntries(batchId, resource) {
+  if (!QUEUEABLE_RESOURCES.includes(resource)) return [];
+  const queued = await getPending();
+  return queued
+    .filter((r) => r.batchId === batchId && r.resource === resource)
+    .map((r) => ({ ...r.payload, entryId: r.entryId, batchId, createdAt: r.queuedAt, pending: true }));
+}
+
+/** The server's list plus anything still waiting to send; the server wins on the same entryId. */
+async function listWithPending(batchId, resource) {
+  let data;
+  try {
+    data = await api('GET', `/batches/${batchId}/${resource}`);
+  } catch (err) {
+    // Offline with no saved copy of this list: still show what was logged on
+    // this phone, rather than nothing.
+    const waiting = isNetworkError(err) ? await pendingEntries(batchId, resource) : [];
+    if (waiting.length === 0) throw err;
+    return { entries: waiting, logs: waiting };
+  }
+  const fromServer = data?.entries || data?.logs || (Array.isArray(data) ? data : []);
+  const sent = new Set(fromServer.map((e) => e.entryId).filter(Boolean));
+  const waiting = (await pendingEntries(batchId, resource)).filter((e) => !sent.has(e.entryId));
+  const list = [...waiting, ...fromServer];
   return { ...data, entries: list, logs: list };
 }
 
-/**
- * True only when the request never reached the server.
- *
- * This distinction is the whole safety of the queue. A 4xx means the server
- * looked at the entry and rejected it, so queueing it would just retry a
- * guaranteed failure forever. A fetch rejection means the write never left the
- * device and is worth keeping.
- */
-function isNetworkError(err) {
-  if (err?.status !== undefined) return false;
-  if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
-  return err instanceof TypeError;
+// Generic log resource calls — same shape for mortality, feed, eggs, vaccinations
+export function getLogEntries(batchId, resource) {
+  return listWithPending(batchId, resource);
 }
 
 /**
@@ -50,7 +67,9 @@ async function createWithQueueFallback(batchId, resource, data) {
     const record = await enqueueLogEntry({ resource, batchId, payload: data });
     if (!record) throw err;
 
-    return { ...data, batchId, entryId: record.entryId, queued: true };
+    // Saved on the phone: pages showing logs reload and include it as pending.
+    notifyLogsChanged(resource, batchId);
+    return { ...data, batchId, entryId: record.entryId, createdAt: record.queuedAt, queued: true, pending: true };
   }
   notifyLogsChanged(resource, batchId);
   return result;
@@ -61,10 +80,8 @@ export function createLogEntry(batchId, resource, data) {
 }
 
 // Convenience aliases used by BatchDetailPage and InventoryPage
-export async function getLogs(batchId, logType) {
-  const data = await api('GET', `/batches/${batchId}/${logType}`);
-  const list = data?.entries || data?.logs || (Array.isArray(data) ? data : []);
-  return { ...data, entries: list, logs: list };
+export function getLogs(batchId, logType) {
+  return listWithPending(batchId, logType);
 }
 
 export function createLog(batchId, logType, data) {

@@ -6,7 +6,8 @@ import { useBatches } from '../context/BatchContext';
 import { useAuth } from '../context/AuthContext';
 import { createSchedule } from '../api/schedule';
 import { useToast } from '../components/ui/Toast';
-import { BIRD_PURPOSES, allBirdTypes, birdPurpose, birdTypeLabel, laysEggs } from '../lib/batch';
+import { BIRD_PURPOSES, allBirdTypes, batchAge, batchImage, birdPurpose, birdTypeLabel, formatDate, laysEggs } from '../lib/batch';
+import { BatchCreatedModal } from '../components/ui/BatchCreatedModal';
 import { DOSE_NUMBERS, ROUTES, findVaccine, vaccinesFor } from '../lib/vaccines';
 import { pensInUse } from '../lib/pens';
 import { OTHER_BREED, breedsFor } from '../lib/breeds';
@@ -36,6 +37,41 @@ const plusDays = (n) => {
   return toIso(d);
 };
 
+// ---- review step pieces -------------------------------------------------------
+
+/** One block of the review, mirroring a step of the form, with a way back to it. */
+function ReviewSection({ title, onEdit, children }) {
+  return (
+    <section className="rounded-lg border border-[#E1E8EF] bg-white">
+      <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-[#E1E8EF]">
+        <h3 className="text-sm font-semibold text-[#142033]">{title}</h3>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-xs font-semibold text-[#4D6600] hover:text-[#3A4D00] hover:underline cursor-pointer"
+        >
+          Edit
+        </button>
+      </div>
+      <div className="px-4 sm:px-5 py-4">{children}</div>
+    </section>
+  );
+}
+
+/** Label/value pairs; empty values read "Not set" so nothing silently disappears. */
+function ReviewFacts({ items }) {
+  return (
+    <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
+      {items.map((f) => (
+        <div key={f.label} className={f.wide ? 'col-span-2 sm:col-span-3' : ''}>
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-[#70829B]">{f.label}</dt>
+          <dd className={`mt-1 text-sm ${f.value ? 'font-semibold text-[#142033]' : 'text-[#70829B]'}`}>{f.value || 'Not set'}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export function CreateBatchPage() {
   const navigate = useNavigate();
   const { batches, createBatch } = useBatches();
@@ -45,6 +81,8 @@ export function CreateBatchPage() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  // Set once the batch is saved; opens the "batch created" celebration.
+  const [created, setCreated] = useState(null);
 
   // Step 1: Basic Info
   const [name, setName] = useState('');
@@ -155,13 +193,12 @@ export function CreateBatchPage() {
         failed = results.filter((x) => x.status === 'rejected').length;
       }
 
-      toast(
-        failed
-          ? `Batch created, but ${failed} vaccination${failed === 1 ? '' : 's'} could not be scheduled. Add ${failed === 1 ? 'it' : 'them'} from the Vaccination tab.`
-          : 'Batch created successfully!',
-        failed ? 'error' : 'success'
-      );
-      navigate(`/batches/${newBatch.batchId}`);
+      // Celebrate, then let the farmer choose where to go (see BatchCreatedModal).
+      setCreated({
+        batch: { batchId: newBatch.batchId, name: name.trim(), type: birdType, birdCount: Number(birdCount), breed: breedName, penName },
+        vaccinations: plannedVaccinations.length,
+        failedVaccinations: failed,
+      });
     } catch (e) {
       toast(e.message || 'Failed to create batch', 'error');
     } finally {
@@ -678,97 +715,164 @@ export function CreateBatchPage() {
       )}
 
       {/* Step 4: Review & Confirm */}
-      {currentStep === 4 && (
-        <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 animate-fade-in">
-          <div>
-            <h2 className="text-xl font-bold text-stone-950 font-heading">4. Review</h2>
-            <p className="text-xs sm:text-sm text-stone-500 mt-0.5">
-              Review your batch details before creating it.
-            </p>
-          </div>
+      {currentStep === 4 && (() => {
+        const initialWeeks = ageUnit === 'days' ? Math.round(Number(ageValue) / 7) : Number(ageValue) || 0;
+        const ageToday = batchAge({ startDate, initialAgeWeeks: initialWeeks });
+        const birds = Number(birdCount) || 0;
+        const cost = Number(purchaseCost) || 0;
+        const costPerBird = cost > 0 && birds > 0 ? Math.round(cost / birds) : null;
+        const purposeLabel = BIRD_PURPOSES.find((p) => p.value === purpose)?.label;
+        const dayOfBatch = (iso) => Math.round((new Date(`${iso}T00:00:00`) - new Date(`${startDate}T00:00:00`)) / 86400000);
+        const timeline = [...plannedVaccinations].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+        const stats = [
+          { label: 'Flock size', value: birds.toLocaleString(), unit: 'birds' },
+          { label: 'Age today', value: ageToday },
+          { label: 'Cost per bird', value: costPerBird ? `₦${costPerBird.toLocaleString()}` : '—' },
+          { label: 'Vaccinations planned', value: String(timeline.length) },
+        ];
 
-          <div className="border border-stone-200 rounded-2xl p-5 space-y-4 bg-stone-50/50">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
-              <div>
-                <span className="text-stone-400 block font-medium">Batch Name</span>
-                <span className="text-stone-900 font-bold text-sm">{name}</span>
-              </div>
-              <div>
-                <span className="text-stone-400 block font-medium">Bird Type</span>
-                <span className="text-stone-900 font-bold text-sm uppercase">{birdTypeLabel(birdType)}</span>
-              </div>
-              <div>
-                <span className="text-stone-400 block font-medium">Flock Size</span>
-                <span className="text-stone-900 font-bold text-sm">{Number(birdCount).toLocaleString()} birds</span>
-              </div>
-              <div>
-                <span className="text-stone-400 block font-medium">Breed</span>
-                <span className="text-stone-900 font-semibold">{breedName}</span>
-              </div>
-              <div>
-                <span className="text-stone-400 block font-medium">Placement Date</span>
-                <span className="text-stone-900 font-semibold">{startDate}</span>
-              </div>
-              <div>
-                <span className="text-stone-400 block font-medium">Initial Age</span>
-                <span className="text-stone-900 font-semibold">{ageValue} {ageUnit}</span>
-              </div>
-              <div>
-                <span className="text-stone-400 block font-medium">Pen</span>
-                <span className="text-stone-900 font-semibold">{penName}</span>
-              </div>
-              <div>
-                <span className="text-stone-400 block font-medium">Cost of Birds</span>
-                <span className="text-stone-900 font-semibold">
-                  {Number(purchaseCost) > 0 ? `₦${Number(purchaseCost).toLocaleString()}` : 'Not set'}
-                </span>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-stone-200 text-xs space-y-2">
-              <span className="text-stone-400 block font-medium">
-                Vaccination Schedule ({plannedVaccinations.length})
-              </span>
-              {plannedVaccinations.length === 0 ? (
-                <p className="text-stone-500">None planned.</p>
-              ) : (
-                plannedVaccinations.map((r) => (
-                  <div key={r.key} className="flex items-center justify-between gap-3 font-semibold text-stone-900 bg-white p-2.5 rounded-xl border border-stone-200">
-                    <span className="inline-flex items-center gap-1.5 min-w-0">
-                      <VaccineIcon size={13} strokeWidth={2.5} className="text-stone-500 shrink-0" />
-                      <span className="truncate">{vaccineNameOf(r)}{r.doseNumber ? ` · ${r.doseNumber}` : ''}</span>
+        return (
+          <div className="space-y-5 animate-fade-in">
+            {/* Summary hero */}
+            <div className="rounded-xl overflow-hidden border border-[#E1E8EF] bg-white">
+              <div className="relative h-44 sm:h-52">
+                <img src={batchImage({ type: birdType })} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#17191A]/85 via-[#17191A]/35 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 text-white">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-2.5 py-1 rounded-md bg-[#DFFF83] text-[11px] font-semibold text-[#17191A]">
+                      {birdTypeLabel(birdType)}
                     </span>
-                    <span className="shrink-0 text-stone-600">{r.dueDate}</span>
+                    {purposeLabel && (
+                      <span className="px-2.5 py-1 rounded-md bg-white/15 backdrop-blur-sm text-[11px] font-medium">{purposeLabel}</span>
+                    )}
                   </div>
-                ))
+                  <h2 className="mt-2.5 text-2xl sm:text-3xl font-semibold font-heading leading-tight">{name.trim()}</h2>
+                  <p className="mt-1 text-sm text-white/80">
+                    {breedName} · {penName} · Placed {formatDate(startDate)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Key numbers */}
+              <dl className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-[#E1E8EF]">
+                {stats.map((s) => (
+                  <div key={s.label} className="px-4 sm:px-5 py-4">
+                    <dt className="text-[11px] font-medium uppercase tracking-wide text-[#70829B]">{s.label}</dt>
+                    <dd className="mt-1 text-xl font-semibold text-[#142033] font-heading tabular-nums">
+                      {s.value}
+                      {s.unit && <span className="ml-1 text-xs font-medium text-[#70829B]">{s.unit}</span>}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+
+            {/* Step-by-step details, each with a way back */}
+            <ReviewSection title="Basic info" onEdit={() => setCurrentStep(1)}>
+              <ReviewFacts
+                items={[
+                  { label: 'Batch name', value: name.trim() },
+                  { label: 'Bird type', value: birdTypeLabel(birdType) },
+                  { label: 'Date placed', value: formatDate(startDate) },
+                ]}
+              />
+            </ReviewSection>
+
+            <ReviewSection title="Birds & housing" onEdit={() => setCurrentStep(2)}>
+              <ReviewFacts
+                items={[
+                  { label: 'Number of birds', value: `${birds.toLocaleString()} birds` },
+                  { label: 'Breed', value: breedName },
+                  { label: 'Pen / house', value: penName },
+                  { label: 'Age when placed', value: `${ageValue} ${ageUnit}` },
+                  { label: 'Hatchery / supplier', value: hatchery.trim() },
+                  { label: 'Cost of birds', value: cost > 0 ? `₦${cost.toLocaleString()}` : '' },
+                  ...(purpose === 'meat' || purpose === 'dual'
+                    ? [{ label: 'Target weight', value: Number(targetWeight) > 0 ? `${targetWeight} kg` : '' }]
+                    : []),
+                  ...(notes.trim() ? [{ label: 'Notes', value: notes.trim(), wide: true }] : []),
+                ]}
+              />
+            </ReviewSection>
+
+            <ReviewSection title="Vaccination plan" onEdit={() => setCurrentStep(3)}>
+              {timeline.length === 0 ? (
+                <div className="flex items-center gap-3 text-sm text-[#70829B]">
+                  <span className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center shrink-0">
+                    <VaccineIcon size={16} />
+                  </span>
+                  None planned yet. You can add vaccinations later from the batch&apos;s Vaccination tab.
+                </div>
+              ) : (
+                <>
+                  <ol className="relative ml-1.5 border-l border-[#E1E8EF] space-y-4">
+                    {timeline.map((r) => {
+                      const day = dayOfBatch(r.dueDate);
+                      return (
+                        <li key={r.key} className="relative pl-5">
+                          <span className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-[#B7DA3E] ring-4 ring-white" />
+                          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                            <span className="text-sm font-semibold text-[#142033]">
+                              {vaccineNameOf(r)}
+                              {r.doseNumber && <span className="font-normal text-[#70829B]"> · {r.doseNumber}</span>}
+                            </span>
+                            <span className="text-xs text-[#70829B] tabular-nums">
+                              {formatDate(r.dueDate)}
+                              {day >= 0 && ` · Day ${day} of batch`}
+                            </span>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                  <p className="mt-4 text-xs text-[#70829B] inline-flex items-center gap-1.5">
+                    <BellIcon size={12} /> You&apos;ll get a reminder 3 days before each one and on the day.
+                  </p>
+                </>
               )}
-              {plannedVaccinations.length > 0 && (
-                <p className="text-[11px] text-stone-500 inline-flex items-center gap-1.5">
-                  <BellIcon size={12} /> Reminder email 3 days before each one and on the day.
-                </p>
-              )}
+            </ReviewSection>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between gap-3 pt-2">
+              <button
+                type="button"
+                onClick={prevStep}
+                className="px-5 py-3 border border-[#E1E8EF] hover:bg-stone-50 text-[#142033] font-semibold rounded-lg text-sm transition-colors cursor-pointer inline-flex items-center gap-2"
+              >
+                <ChevronLeft size={16} />
+                <span>Back</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleFinish}
+                disabled={loading || Boolean(created)}
+                className="px-8 py-3 bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] font-semibold rounded-lg text-sm transition-colors inline-flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <span className="w-4 h-4 rounded-full border-2 border-[#17191A]/25 border-t-[#17191A] animate-spin" aria-hidden="true" />
+                    Creating batch…
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} strokeWidth={2.5} /> Create batch
+                  </>
+                )}
+              </button>
             </div>
           </div>
+        );
+      })()}
 
-          <div className="flex justify-between pt-4 border-t border-stone-100">
-            <button
-              type="button"
-              onClick={prevStep}
-              className="px-6 py-2.5 border border-stone-300 hover:bg-stone-50 text-stone-800 font-semibold rounded-xl text-sm transition-all cursor-pointer inline-flex items-center gap-2"
-            >
-              <ChevronLeft size={16} />
-              <span>Back</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleFinish}
-              disabled={loading}
-              className="px-9 py-3 bg-[#DFFF83] hover:bg-[#C5E95A] active:bg-[#B3D944] text-[#17191A] font-bold rounded-xl text-sm transition-all duration-150 inline-flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
-            >
-              {loading ? 'Creating Batch…' : 'Create Batch'}
-            </button>
-          </div>
-        </div>
+      {created && (
+        <BatchCreatedModal
+          batch={created.batch}
+          vaccinations={created.vaccinations}
+          failedVaccinations={created.failedVaccinations}
+          onOpenBatch={() => navigate(`/batches/${created.batch.batchId}`)}
+          onDashboard={() => navigate('/dashboard')}
+        />
       )}
 
     </div>
