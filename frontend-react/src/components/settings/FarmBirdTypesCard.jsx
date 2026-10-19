@@ -8,7 +8,7 @@ import { SettingsCard, PrimaryButton } from './ui';
 import { BIRD_PURPOSES, BIRD_TYPES, birdTypeId } from '../../lib/batch';
 
 const INPUT =
-  'w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70';
+  'w-full bg-white dark:bg-[#1E2124] border border-stone-200 dark:border-[#2B3238] rounded-lg px-3 py-2 text-sm text-stone-900 dark:text-[#F5F7F5] placeholder:text-stone-400 dark:placeholder:text-[#64748B] transition-colors focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70';
 
 const purposeLabel = (p) => BIRD_PURPOSES.find((x) => x.value === p)?.label || 'Other';
 
@@ -74,23 +74,23 @@ export function FarmBirdTypesCard() {
     >
       <div className="space-y-5">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wide text-stone-400 mb-2">Built in</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-stone-400 dark:text-[#64748B] mb-2">Built in</div>
           <div className="flex flex-wrap gap-2">
             {BIRD_TYPES.map((t) => (
-              <span key={t.value} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-stone-200 bg-stone-50 text-xs text-stone-700">
+              <span key={t.value} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-stone-200 dark:border-[#2B3238] bg-stone-50 dark:bg-[#252A2E] text-xs text-stone-700 dark:text-[#94A3B8]">
                 <span className="font-semibold">{t.label}</span>
-                <span className="text-stone-400">· {purposeLabel(t.purpose)}</span>
+                <span className="text-stone-400 dark:text-[#64748B]">· {purposeLabel(t.purpose)}</span>
               </span>
             ))}
           </div>
         </div>
 
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wide text-stone-400 mb-2">Your bird types</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-stone-400 dark:text-[#64748B] mb-2">Your bird types</div>
           {types.length === 0 ? (
-            <p className="text-sm text-stone-500">None added yet.</p>
+            <p className="text-sm text-stone-500 dark:text-[#94A3B8]">None added yet.</p>
           ) : (
-            <ul className="divide-y divide-stone-100 rounded-lg border border-stone-200">
+            <ul className="divide-y divide-stone-100 dark:divide-[#2B3238] rounded-lg border border-stone-200 dark:border-[#2B3238]">
               {types.map((t) => {
                 const used = usedBy(t.id).length;
                 return (
@@ -112,13 +112,13 @@ export function FarmBirdTypesCard() {
                         {BIRD_PURPOSES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
                       </select>
                       {used > 0 && (
-                        <span className="shrink-0 text-[11px] text-stone-500 whitespace-nowrap">{used} batch{used === 1 ? '' : 'es'}</span>
+                        <span className="shrink-0 text-[11px] text-stone-500 dark:text-[#64748B] whitespace-nowrap">{used} batch{used === 1 ? '' : 'es'}</span>
                       )}
                       <button
                         type="button"
                         onClick={() => remove(t)}
                         disabled={used > 0}
-                        className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-stone-400"
+                        className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-stone-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-[#2D1419] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-stone-400"
                         aria-label={`Remove ${t.label}`}
                       >
                         <Trash2 size={15} />
@@ -131,7 +131,7 @@ export function FarmBirdTypesCard() {
           )}
         </div>
 
-        <div className="rounded-lg border border-dashed border-stone-300 p-3 flex flex-col sm:flex-row gap-2">
+        <div className="rounded-lg border border-dashed border-stone-300 dark:border-[#374151] p-3 flex flex-col sm:flex-row gap-2">
           <input
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
@@ -152,12 +152,12 @@ export function FarmBirdTypesCard() {
           <button
             type="button"
             onClick={add}
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-[#D2EC7A] text-sm font-semibold text-[#4D6600] hover:bg-[#F7FFE0] transition-colors cursor-pointer shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg border border-[#D2EC7A] dark:border-[#274220] text-sm font-semibold text-[#4D6600] dark:text-[#DFFF83] hover:bg-[#F7FFE0] dark:hover:bg-[#142312] transition-colors cursor-pointer shrink-0"
           >
             <Plus size={15} /> Add
           </button>
         </div>
-        <p className="text-xs text-stone-500">
+        <p className="text-xs text-stone-500 dark:text-[#64748B]">
           {BIRD_PURPOSES.map((p) => `${p.label}: ${p.description.toLowerCase()}`).join(' · ')}.
         </p>
       </div>

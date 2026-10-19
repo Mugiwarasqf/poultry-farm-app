@@ -76,8 +76,8 @@ export function SettingsPage() {
   return (
     <div className="max-w-6xl mx-auto pb-12 space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-stone-950 font-heading">Settings</h1>
-        <p className="text-sm text-stone-500 mt-1.5">
+        <h1 className="text-2xl sm:text-3xl font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Settings</h1>
+        <p className="text-sm text-stone-500 dark:text-[#94A3B8] mt-1.5">
           Manage your account, farm preferences, and app settings.
         </p>
       </div>
@@ -85,7 +85,7 @@ export function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)] gap-6 items-start">
         {/* Category list — stays visible beside every sub-page on desktop and
             stacks above the panel on smaller screens. */}
-        <nav className="bg-white rounded-xl border border-stone-200 shadow-xs p-2" aria-label="Settings sections">
+        <nav className="bg-white dark:bg-[#17191A] rounded-xl border border-stone-200 dark:border-[#2B3238] shadow-xs p-2 transition-colors" aria-label="Settings sections">
           {SECTIONS.map((item) => {
             const Icon = item.icon;
             const isActive = item.id === active.id;
@@ -96,15 +96,15 @@ export function SettingsPage() {
                 onClick={() => navigate(item.id === 'account' ? '/settings' : `/settings/${item.id}`)}
                 aria-current={isActive ? 'page' : undefined}
                 className={`w-full text-left flex items-center gap-3 px-3 py-3 rounded-lg transition-colors cursor-pointer ${
-                  isActive ? 'bg-stone-100' : 'hover:bg-stone-50'
+                  isActive ? 'bg-stone-100 dark:bg-[#1E2124] text-stone-900 dark:text-white' : 'hover:bg-stone-50 dark:hover:bg-[#1E2124]/60'
                 }`}
               >
-                <Icon size={20} strokeWidth={2.25} className="text-stone-700 shrink-0" />
+                <Icon size={20} strokeWidth={2.25} className={`shrink-0 ${isActive ? 'text-stone-900 dark:text-[#DFFF83]' : 'text-stone-700 dark:text-[#94A3B8]'}`} />
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold text-stone-900 truncate">{item.label}</div>
-                  <div className="text-xs text-stone-500 truncate">{item.description}</div>
+                  <div className={`text-sm font-bold truncate ${isActive ? 'text-stone-950 dark:text-white' : 'text-stone-900 dark:text-[#F5F7F5]'}`}>{item.label}</div>
+                  <div className="text-xs text-stone-500 dark:text-[#94A3B8] truncate">{item.description}</div>
                 </div>
-                <ChevronRight size={16} strokeWidth={2.5} className="text-stone-400 shrink-0" />
+                <ChevronRight size={16} strokeWidth={2.5} className="text-stone-400 dark:text-[#64748B] shrink-0" />
               </button>
             );
           })}

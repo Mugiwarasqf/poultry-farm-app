@@ -39,6 +39,17 @@ export interface Farm {
    */
   emailBounced?: boolean;
   emailBouncedAt?: string;
+  /** Preferences controlling which in-app alerts and daily reminder emails are active. */
+  notificationPrefs?: NotificationPrefs;
+}
+
+export interface NotificationPrefs {
+  emailAlerts?: boolean;
+  vaccinationReminders?: boolean;
+  loggingNudges?: boolean;
+  feedAlerts?: boolean;
+  medicationAlerts?: boolean;
+  activityLogs?: boolean;
 }
 
 export interface Pen {

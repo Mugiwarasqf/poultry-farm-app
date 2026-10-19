@@ -1,3 +1,6 @@
+import { Mail, MapPin } from "lucide-react";
+import {Logo} from "../LandingPage"
+
 function FacebookIcon({ size = 15, className = "" }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -24,140 +27,167 @@ function TwitterIcon({ size = 15, className = "" }) {
   );
 }
 
-function LinkedinIcon({ size = 15, className = "" }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2z" />
-    </svg>
-  );
-}
-
-function YoutubeIcon({ size = 15, className = "" }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-    </svg>
-  );
-}
-
-/**
- * Shared logo mark — a simple rounded tag/checkmark shape standing in for
- * "a record, logged" rather than a literal bird/egg icon (avoids the
- * generic farm-icon look most competitors use). Works on light or dark
- * backgrounds via the `variant` prop.
- */
-export function Logo({ variant = "dark", className = "" }) {
-  const textColor = variant === "dark" ? "text-neutral-900" : "text-white";
-  const accent = "text-emerald-500";
-
-  return (
-    <a href="#" className={`flex items-center gap-2 shrink-0 ${className}`}>
-      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-        <rect
-          x="1"
-          y="1"
-          width="24"
-          height="24"
-          rx="7"
-          className={variant === "dark" ? "fill-neutral-900" : "fill-white"}
-        />
-        <path
-          d="M7.5 13.2L11 16.7L18.5 9.2"
-          stroke={variant === "dark" ? "white" : "#0a0a0a"}
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <span className={`text-[20px] font-bold tracking-tight ${textColor}`}>
-        farm<span className={accent}>book</span>
-      </span>
-    </a>
-  );
-}
-
-const COMPANY_LINKS = [
-  { label: "Home", href: "#" },
-  { label: "Features", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "About us", href: "#about" },
-];
-
-const SOCIALS = [
-  { icon: FacebookIcon, href: "#", label: "Facebook" },
-  { icon: InstagramIcon, href: "#", label: "Instagram" },
-  { icon: TwitterIcon, href: "#", label: "X" },
-  { icon: LinkedinIcon, href: "#", label: "LinkedIn" },
-  { icon: YoutubeIcon, href: "#", label: "YouTube" },
+const LINK_COLUMNS = [
+  {
+    title: "Links",
+    links: [
+      { label: "Features", href: "#features" },
+      { label: "Batches & Mortality", href: "/batches" },
+      { label: "Feed & Inventory", href: "/inventory" },
+      { label: "Vaccination Schedule", href: "/dashboard" },
+    ],
+  },
+  {
+    title: "Links",
+    links: [
+      { label: "About TrackFarm", href: "#" },
+      { label: "Support & Contact", href: "mailto:hello@trackfarm.cc" },
+      { label: "Log in", href: "/login" },
+      { label: "Get started free", href: "/signup" },
+    ],
+  },
+  {
+    title: "Links",
+    links: [
+      { label: "Privacy Policy", href: "#" },
+      { label: "Terms & Conditions", href: "#" },
+      { label: "Offline Resilience", href: "#" },
+      { label: "Farm Security", href: "#" },
+    ],
+  },
 ];
 
 export default function Footer() {
   return (
-    <footer className="bg-neutral-950 pt-16">
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="flex flex-col justify-between gap-12 pb-14 md:flex-row md:gap-8">
-          <h2 className="max-w-[480px] text-[34px] font-bold leading-[1.15] tracking-tight text-white sm:text-[42px]">
-            TrackFarm helps farmers
-            <br />
-            turn daily records
-            <br />
-            into real profit
-          </h2>
+    <footer className="relative bg-[#0d140f] text-white overflow-hidden">
+      {/* Background artwork */}
+      <div
+        className="relative w-full bg-cover bg-bottom bg-no-repeat pt-44 sm:pt-60 md:pt-72 pb-16"
+        style={{
+          backgroundImage: "url('/images/Gemini_Generated_Image_12whj312whj312wh.jpg')",
+        }}
+      >
+        {/* Soft top gradient to blend cleanly from page above */}
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-stone-50/80 via-white/20 to-transparent pointer-events-none" />
 
-          <div className="flex gap-16">
-            <div>
-              <h3 className="text-[14px] font-semibold text-white">Contact</h3>
-              <p className="mt-4 max-w-[220px] text-[14px] leading-relaxed text-neutral-400">
-                Questions or feedback? Reach us anytime.
-              </p>
-              <a
-                href="mailto:hello@trackfarm.cc"
-                className="mt-1 inline-block text-[14px] text-neutral-300 underline-offset-4 hover:text-white hover:underline"
-              >
-                hello@trackfarm.cc
-              </a>
+        {/* Shading gradient over lower forest to ensure high contrast */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a110c] via-[#0a110c]/85 via-45% to-transparent pointer-events-none" />
 
-              <div className="mt-5 flex items-center gap-3">
-                {SOCIALS.map(({ icon: Icon, href, label }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    aria-label={label}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
-                  >
-                    <Icon size={15} />
+        {/* Links & Contact Container */}
+        <div className="relative z-10 mx-auto max-w-6xl px-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-14 items-start">
+            
+            {/* 3 Columns of Links with Underline Headers matching reference image */}
+            <div className="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-8">
+              {LINK_COLUMNS.map((col, idx) => (
+                <div key={idx}>
+                  <div className="border-b border-white/30 pb-2 mb-3.5">
+                    <h3 className="text-sm font-bold tracking-wide text-white">
+                      {col.title}
+                    </h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {col.links.map((link) => (
+                      <li key={link.label}>
+                        <a
+                          href={link.href}
+                          className="text-[13.5px] text-stone-300 hover:text-white transition-colors"
+                        >
+                          {link.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            {/* Right side: Circular Social Icons & Address / Contact */}
+            <div className="md:col-span-5 flex flex-col md:items-end md:text-right">
+              {/* Circular Social Icons matching reference image */}
+              <div className="flex items-center gap-3 mb-6">
+                <a
+                  href="mailto:hello@trackfarm.cc"
+                  aria-label="Email"
+                  className="w-10 h-10 rounded-full border border-white/50 hover:border-white hover:bg-white/15 flex items-center justify-center text-white transition-all shadow-sm"
+                >
+                  <Mail size={16} />
+                </a>
+                <a
+                  href="#"
+                  aria-label="Facebook"
+                  className="w-10 h-10 rounded-full border border-white/50 hover:border-white hover:bg-white/15 flex items-center justify-center text-white transition-all shadow-sm"
+                >
+                  <FacebookIcon size={15} />
+                </a>
+                <a
+                  href="#"
+                  aria-label="Instagram"
+                  className="w-10 h-10 rounded-full border border-white/50 hover:border-white hover:bg-white/15 flex items-center justify-center text-white transition-all shadow-sm"
+                >
+                  <InstagramIcon size={15} />
+                </a>
+                <a
+                  href="#"
+                  aria-label="Twitter / X"
+                  className="w-10 h-10 rounded-full border border-white/50 hover:border-white hover:bg-white/15 flex items-center justify-center text-white transition-all shadow-sm"
+                >
+                  <TwitterIcon size={15} />
+                </a>
+              </div>
+
+              {/* Company Info & Contact Details */}
+              <div className="space-y-1.5 text-stone-300">
+                <div className="text-base font-bold text-white tracking-tight">
+                  TrackFarm.cc
+                </div>
+                <div className="flex items-center gap-1.5 md:justify-end text-xs text-stone-300">
+                  <MapPin size={13} className="text-emerald-400 shrink-0" />
+                  <span>Ikorodu & Lagos, Nigeria ↗</span>
+                </div>
+                <div className="flex items-center gap-1.5 md:justify-end text-xs text-stone-300">
+                  <Mail size={13} className="text-emerald-400 shrink-0" />
+                  <a href="mailto:hello@trackfarm.cc" className="hover:text-white transition-colors">
+                    hello@trackfarm.cc
                   </a>
-                ))}
+                </div>
+                <div className="text-xs text-stone-400 pt-1">
+                  Built for Nigerian Poultry Farmers
+                </div>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-[14px] font-semibold text-white">Company</h3>
-              <ul className="mt-4 flex flex-col gap-3">
-                {COMPANY_LINKS.map((link) => (
-                  <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-[14px] text-neutral-400 transition-colors hover:text-white"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
-        </div>
-
-        <div className="border-t border-white/10 py-8">
-          <Logo variant="light" />
         </div>
       </div>
 
-      <div className="border-t border-white/10 px-6 py-6">
-        <p className="mx-auto max-w-6xl text-[13px] text-neutral-500">
-          © 2026 TrackFarm. All rights reserved.
-        </p>
+      {/* Very Bottom Bar: Contains the requested tagline and copyright */}
+      <div className="border-t border-white/10 bg-[#080d09] px-6 py-5">
+        <div className="mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+          
+          {/* User's requested tagline: "TrackFarm helps farmers turn daily records into real profit" */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+            <p className="text-xs sm:text-sm font-medium text-emerald-300 tracking-tight">
+              TrackFarm helps farmers turn daily records into real profit
+            </p> 
+            <span className="hidden sm:inline text-white/30 text-sm">|</span>
+          </div>
+
+          {/* Legal / Copyright (NO credit cards) */}
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[12px] text-stone-400">
+            <a href="#" className="hover:text-white transition-colors">
+              End User License Agreement
+            </a>
+            <a href="#" className="hover:text-white transition-colors">
+              Privacy Policy
+            </a>
+            <a href="#" className="hover:text-white transition-colors">
+              Terms & Conditions
+            </a>
+            <span>© 2026 TrackFarm. All rights reserved.</span>
+          </div>
+
+        </div>
       </div>
     </footer>
   );

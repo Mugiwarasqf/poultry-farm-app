@@ -1,6 +1,6 @@
 {
-  "name": "FarmBook",
-  "short_name": "FarmBook",
+  "name": "TrackFarm",
+  "short_name": "TrackFarm",
   "description": "Poultry record keeping: mortality, feed, eggs and vaccinations.",
   "start_url": "/dashboard",
   "scope": "/",

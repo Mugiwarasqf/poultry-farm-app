@@ -8,8 +8,12 @@ export const PREFS_KEY = 'farmbook_notification_prefs';
 export const PREFS_EVENT = 'farmbook:notification-prefs';
 
 export const DEFAULT_PREFS = {
+  emailAlerts: true,
   vaccinationReminders: true,
   loggingNudges: true,
+  feedAlerts: true,
+  medicationAlerts: true,
+  activityLogs: true,
 };
 
 export function readPrefs() {
@@ -23,9 +27,25 @@ export function readPrefs() {
 
 export function writePrefs(prefs) {
   try {
-    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    const next = { ...readPrefs(), ...prefs };
+    localStorage.setItem(PREFS_KEY, JSON.stringify(next));
   } catch {
     // Storage blocked — the change still applies for this session.
+  }
+  window.dispatchEvent(new Event(PREFS_EVENT));
+}
+
+/**
+ * Reconciles remote farm preferences with device storage upon sign-in or farm refresh.
+ */
+export function syncPrefsFromFarm(remotePrefs) {
+  if (!remotePrefs || typeof remotePrefs !== 'object') return;
+  const current = readPrefs();
+  const merged = { ...current, ...remotePrefs };
+  try {
+    localStorage.setItem(PREFS_KEY, JSON.stringify(merged));
+  } catch {
+    // Storage blocked
   }
   window.dispatchEvent(new Event(PREFS_EVENT));
 }

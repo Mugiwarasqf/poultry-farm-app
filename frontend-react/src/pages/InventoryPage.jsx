@@ -37,9 +37,9 @@ import { CalendarIcon } from '../components/ui/CalendarIcon';
 
 function StatCard({ icon: Icon, label, value, hint, loading = false }) {
   return (
-    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80" aria-busy={loading || undefined}>
-      <span className="text-xs font-semibold text-stone-500 flex items-center gap-1.5">
-        <Icon size={14} className="text-[#4D6600]" /> {label}
+    <div className="p-4 rounded-2xl bg-stone-50 dark:bg-[#1E2124] border border-stone-200/80 dark:border-[#2B3238] transition-colors" aria-busy={loading || undefined}>
+      <span className="text-xs font-semibold text-stone-500 dark:text-[#94A3B8] flex items-center gap-1.5">
+        <Icon size={14} className="text-[#4D6600] dark:text-[#DFFF83]" /> {label}
       </span>
       {loading ? (
         // Same height as the real number and hint, so nothing shifts when data lands.
@@ -49,8 +49,8 @@ function StatCard({ icon: Icon, label, value, hint, loading = false }) {
         </>
       ) : (
         <>
-          <span className="text-2xl sm:text-3xl font-extrabold text-stone-950 mt-1 block">{value}</span>
-          {hint && <span className="text-[11px] text-stone-500 mt-0.5 block">{hint}</span>}
+          <span className="text-2xl sm:text-3xl font-extrabold text-stone-950 dark:text-[#F5F7F5] mt-1 block">{value}</span>
+          {hint && <span className="text-[11px] text-stone-500 dark:text-[#94A3B8] mt-0.5 block">{hint}</span>}
         </>
       )}
     </div>
@@ -60,7 +60,7 @@ function StatCard({ icon: Icon, label, value, hint, loading = false }) {
 /** Placeholder for a feed-store card while stock loads. */
 function StockCardSkeleton() {
   return (
-    <div className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs flex flex-col gap-3" aria-hidden="true">
+    <div className="bg-white dark:bg-[#17191A] border border-stone-200/90 dark:border-[#2B3238] rounded-2xl p-5 shadow-xs flex flex-col gap-3" aria-hidden="true">
       <div className="space-y-1.5">
         <Skeleton className="h-4 w-32" />
         <Skeleton className="h-3 w-24" />
@@ -336,23 +336,23 @@ export function InventoryPage() {
       <div className="flex items-center gap-3">
         <Link
           to="/dashboard"
-          className="p-2 rounded-full hover:bg-stone-100 text-stone-600 hover:text-stone-950 transition-colors"
+          className="p-2 rounded-full hover:bg-stone-100 dark:hover:bg-[#1E2124] text-stone-600 dark:text-[#94A3B8] hover:text-stone-950 dark:hover:text-[#F5F7F5] transition-colors"
           aria-label="Back to home"
         >
           <ChevronLeft size={20} />
         </Link>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-950 font-heading">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-950 dark:text-[#F5F7F5] font-heading">
             Inventory
           </h1>
-          <p className="text-xs sm:text-sm text-stone-500">
+          <p className="text-xs sm:text-sm text-stone-500 dark:text-[#94A3B8]">
             Track feed stock, manage vaccination programs, and log farm supplements.
           </p>
         </div>
       </div>
 
       {/* Inventory Navigation Tabs */}
-      <div className="flex items-center gap-0 border-b border-stone-200 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="flex items-center gap-0 border-b border-stone-200 dark:border-[#2B3238] overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
         {[
           { id: 'feed', label: 'Feed' },
           { id: 'eggs', label: 'Eggs' },
@@ -364,8 +364,8 @@ export function InventoryPage() {
             onClick={() => setActiveTab(tab.id)}
             className={`flex-shrink-0 px-5 py-3 text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
               activeTab === tab.id
-                ? 'border-[#B7DA3E] text-[#4D6600]'
-                : 'border-transparent text-stone-500 hover:text-stone-900'
+                ? 'border-[#B7DA3E] dark:border-[#DFFF83] text-[#4D6600] dark:text-[#DFFF83]'
+                : 'border-transparent text-stone-500 dark:text-[#94A3B8] hover:text-stone-900 dark:hover:text-[#F5F7F5]'
             }`}
           >
             {tab.label}
@@ -376,21 +376,21 @@ export function InventoryPage() {
       {/* ===================== TAB 1: FEED ===================== */}
       {activeTab === 'feed' && (
         <div className="space-y-6 animate-fade-in">
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="bg-white dark:bg-[#17191A] border border-stone-200/90 dark:border-[#2B3238] rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl text-[#4D6600] flex items-center justify-center shadow-2xs shrink-0">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl text-[#4D6600] dark:text-[#DFFF83] flex items-center justify-center shadow-2xs shrink-0">
                   <FeedIcon size={22} />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Feed Store</h3>
-                  <p className="text-xs text-stone-500">Feed you bought, minus what your batches have used</p>
+                  <h3 className="text-base sm:text-lg font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Feed Store</h3>
+                  <p className="text-xs text-stone-500 dark:text-[#94A3B8]">Feed you bought, minus what your batches have used</p>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={() => openUsage()}
-                  className="w-full sm:w-auto px-4 py-2.5 border border-[#D2EC7A] text-[#4D6600] hover:bg-[#F7FFE0] rounded-xl text-sm font-bold transition-all cursor-pointer inline-flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-[#D2EC7A] dark:border-[#334418] text-[#4D6600] dark:text-[#DFFF83] hover:bg-[#F7FFE0] dark:hover:bg-[#1C2612] rounded-xl text-sm font-bold transition-all cursor-pointer inline-flex items-center justify-center gap-2"
                 >
                   <CircleMinus size={16} /> Record Usage
                 </button>
@@ -419,9 +419,9 @@ export function InventoryPage() {
               <StockCardSkeleton />
             </div>
           ) : feedStore.stock.lines.length === 0 ? (
-            <div className="bg-white border border-dashed border-stone-300 rounded-3xl p-8 text-center space-y-3">
-              <p className="text-sm font-semibold text-stone-800">Your feed store is empty</p>
-              <p className="text-xs text-stone-500 max-w-md mx-auto">
+            <div className="bg-white dark:bg-[#17191A] border border-dashed border-stone-300 dark:border-[#2B3238] rounded-3xl p-8 text-center space-y-3">
+              <p className="text-sm font-semibold text-stone-800 dark:text-[#F5F7F5]">Your feed store is empty</p>
+              <p className="text-xs text-stone-500 dark:text-[#94A3B8] max-w-md mx-auto">
                 {feedStore.error
                   ? 'The feed store could not be loaded. It needs the latest backend deployed.'
                   : 'Add the feed you buy here. When a batch records feed, it comes off this stock automatically.'}
@@ -438,16 +438,16 @@ export function InventoryPage() {
               {feedStore.stock.lines.map((line) => {
                 const pct = line.bought ? Math.max(0, Math.min(100, (line.left / line.bought) * 100)) : 0;
                 const badge = line.status === 'out'
-                  ? { text: 'Out of stock', cls: 'bg-rose-50 text-rose-700 border-rose-200' }
+                  ? { text: 'Out of stock', cls: 'bg-rose-50 dark:bg-[#260D12] text-rose-700 dark:text-[#FB7185] border-rose-200 dark:border-[#4C1A24]' }
                   : line.status === 'low'
-                  ? { text: 'Running low', cls: 'bg-amber-50 text-amber-800 border-amber-200' }
+                  ? { text: 'Running low', cls: 'bg-amber-50 dark:bg-[#261B06] text-amber-800 dark:text-[#FCD34D] border-amber-200 dark:border-[#4A350C]' }
                   : null;
                 return (
-                  <div key={line.key} className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs flex flex-col gap-3">
+                  <div key={line.key} className="bg-white dark:bg-[#17191A] border border-stone-200/90 dark:border-[#2B3238] rounded-2xl p-5 shadow-xs flex flex-col gap-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <div className="text-sm font-bold text-stone-950 truncate">{line.feedType}</div>
-                        <div className="text-[11px] text-stone-500 truncate">
+                        <div className="text-sm font-bold text-stone-950 dark:text-[#F5F7F5] truncate">{line.feedType}</div>
+                        <div className="text-[11px] text-stone-500 dark:text-[#94A3B8] truncate">
                           {[line.brand, `${line.bagSizeKg}kg bags`].filter(Boolean).join(' · ')}
                         </div>
                       </div>
@@ -456,12 +456,12 @@ export function InventoryPage() {
 
                     <div>
                       <div className="flex items-baseline gap-1.5">
-                        <span className={`text-3xl font-extrabold ${line.left <= 0 ? 'text-rose-600' : 'text-stone-950'}`}>
+                        <span className={`text-3xl font-extrabold ${line.left <= 0 ? 'text-rose-600 dark:text-[#FB7185]' : 'text-stone-950 dark:text-[#F5F7F5]'}`}>
                           {Math.max(line.left, 0).toLocaleString()}
                         </span>
-                        <span className="text-xs text-stone-500">bag{line.left === 1 ? '' : 's'} left of {line.bought.toLocaleString()}</span>
+                        <span className="text-xs text-stone-500 dark:text-[#94A3B8]">bag{line.left === 1 ? '' : 's'} left of {line.bought.toLocaleString()}</span>
                       </div>
-                      <div className="w-full bg-stone-100 h-2 rounded-full overflow-hidden mt-2">
+                      <div className="w-full bg-stone-100 dark:bg-[#1E2124] h-2 rounded-full overflow-hidden mt-2">
                         <div
                           className={`h-full rounded-full transition-all ${line.status === 'out' ? 'bg-rose-500' : line.status === 'low' ? 'bg-amber-500' : 'bg-[#DFFF83]'}`}
                           style={{ width: `${pct}%` }}
@@ -471,19 +471,19 @@ export function InventoryPage() {
 
                     <div className="grid grid-cols-2 gap-2 text-[11px]">
                       <div>
-                        <span className="text-stone-400 block">Lasts about</span>
-                        <span className="font-bold text-stone-800">
+                        <span className="text-stone-400 dark:text-[#64748B] block">Lasts about</span>
+                        <span className="font-bold text-stone-800 dark:text-[#F5F7F5]">
                           {line.left <= 0 ? '—' : line.daysLeft == null ? 'No recent use' : `${line.daysLeft} day${line.daysLeft === 1 ? '' : 's'}`}
                         </span>
                       </div>
                       <div>
-                        <span className="text-stone-400 block">Average price</span>
-                        <span className="font-bold text-stone-800">{line.avgPrice ? `${formatNaira(line.avgPrice)}/bag` : '—'}</span>
+                        <span className="text-stone-400 dark:text-[#64748B] block">Average price</span>
+                        <span className="font-bold text-stone-800 dark:text-[#F5F7F5]">{line.avgPrice ? `${formatNaira(line.avgPrice)}/bag` : '—'}</span>
                       </div>
                     </div>
 
                     {line.bestBefore && (
-                      <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                      <div className="text-[11px] text-amber-800 dark:text-[#FCD34D] bg-amber-50 dark:bg-[#261B06] border border-amber-200 dark:border-[#4A350C] rounded-lg px-2.5 py-1.5">
                         Use before {formatDate(line.bestBefore)}
                       </div>
                     )}
@@ -491,7 +491,7 @@ export function InventoryPage() {
                     <button
                       onClick={() => openUsage(line.key)}
                       disabled={line.left <= 0}
-                      className="mt-auto w-full py-2 rounded-xl border border-stone-200 text-xs font-bold text-stone-700 hover:border-[#D2EC7A] hover:text-[#4D6600] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      className="mt-auto w-full py-2 rounded-xl border border-stone-200 dark:border-[#2B3238] text-xs font-bold text-stone-700 dark:text-[#94A3B8] hover:border-[#D2EC7A] dark:hover:border-[#DFFF83] hover:text-[#4D6600] dark:hover:text-[#DFFF83] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Record usage from this feed
                     </button>
@@ -502,16 +502,16 @@ export function InventoryPage() {
           )}
 
           {/* Everything that went in and out */}
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
-            <h4 className="text-sm font-bold text-stone-950 font-heading">Feed Activity</h4>
+          <div className="bg-white dark:bg-[#17191A] border border-stone-200/90 dark:border-[#2B3238] rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
+            <h4 className="text-sm font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Feed Activity</h4>
             {feedLoading ? (
               <SkeletonRows rows={4} />
             ) : feedActivity.length === 0 ? (
-              <p className="py-6 text-center text-xs text-stone-400 font-medium">No feed bought or used yet.</p>
+              <p className="py-6 text-center text-xs text-stone-400 dark:text-[#64748B] font-medium">No feed bought or used yet.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-stone-200 text-stone-400 uppercase text-[10px]">
+                  <thead className="border-b border-stone-200 dark:border-[#2B3238] text-stone-400 dark:text-[#94A3B8] uppercase text-[10px]">
                     <tr>
                       <th className="py-3 font-bold">Date</th>
                       <th className="py-3 font-bold">Feed</th>
@@ -520,19 +520,19 @@ export function InventoryPage() {
                       <th className="py-3 font-bold text-right hidden sm:table-cell">Amount</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone-100 font-medium">
+                  <tbody className="divide-y divide-stone-100 dark:divide-[#2B3238] font-medium">
                     {feedActivity.slice(0, 20).map((row) => (
-                      <tr key={row.key} className="hover:bg-stone-50/60 transition-colors">
-                        <td className="py-3 text-stone-700 whitespace-nowrap">{formatDate(row.date)}</td>
+                      <tr key={row.key} className="hover:bg-stone-50/60 dark:hover:bg-[#1E2124]/50 transition-colors">
+                        <td className="py-3 text-stone-700 dark:text-[#94A3B8] whitespace-nowrap">{formatDate(row.date)}</td>
                         <td className="py-3">
-                          <div className="font-semibold text-stone-900">{row.feed}</div>
-                          <div className="text-[11px] text-stone-400 sm:hidden">{row.who}</div>
+                          <div className="font-semibold text-stone-900 dark:text-[#F5F7F5]">{row.feed}</div>
+                          <div className="text-[11px] text-stone-400 dark:text-[#64748B] sm:hidden">{row.who}</div>
                         </td>
-                        <td className="py-3 text-stone-600 hidden sm:table-cell">{row.who}</td>
-                        <td className={`py-3 text-right font-bold whitespace-nowrap ${row.kind === 'in' ? 'text-[#4D6600]' : 'text-stone-900'}`}>
+                        <td className="py-3 text-stone-600 dark:text-[#94A3B8] hidden sm:table-cell">{row.who}</td>
+                        <td className={`py-3 text-right font-bold whitespace-nowrap ${row.kind === 'in' ? 'text-[#4D6600] dark:text-[#DFFF83]' : 'text-stone-900 dark:text-[#F5F7F5]'}`}>
                           {row.kind === 'in' ? '+' : '−'}{Math.round(row.bags * 100) / 100}
                         </td>
-                        <td className="py-3 text-right text-stone-600 hidden sm:table-cell">{row.amount ? formatNaira(row.amount) : '—'}</td>
+                        <td className="py-3 text-right text-stone-600 dark:text-[#94A3B8] hidden sm:table-cell">{row.amount ? formatNaira(row.amount) : '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -540,7 +540,7 @@ export function InventoryPage() {
               </div>
             )}
             {feedStore.stock.untracked.length > 0 && (
-              <p className="text-[11px] text-stone-400">
+              <p className="text-[11px] text-stone-400 dark:text-[#64748B]">
                 {feedStore.stock.untracked.length} usage entr{feedStore.stock.untracked.length === 1 ? 'y was' : 'ies were'} recorded without matching feed in the store (for example, before the store existed), so they don't reduce the stock above.
               </p>
             )}
@@ -551,14 +551,14 @@ export function InventoryPage() {
       {/* ===================== TAB: EGGS ===================== */}
       {activeTab === 'eggs' && (
         <div className="space-y-6 animate-fade-in">
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="bg-white dark:bg-[#17191A] border border-stone-200/90 dark:border-[#2B3238] rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl  text-[#4D6600] flex items-center justify-center shadow-2xs shrink-0">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl text-[#4D6600] dark:text-[#DFFF83] flex items-center justify-center shadow-2xs shrink-0">
                 <EggIcon size={22} />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Egg Inventory</h3>
-                <p className="text-xs text-stone-500">Every egg collection a layer batch records is added here automatically</p>
+                <h3 className="text-base sm:text-lg font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Egg Inventory</h3>
+                <p className="text-xs text-stone-500 dark:text-[#94A3B8]">Every egg collection a layer batch records is added here automatically</p>
               </div>
             </div>
 
@@ -576,17 +576,17 @@ export function InventoryPage() {
 
             {eggsByBatch.length > 0 && (
               <div className="space-y-2">
-                <span className="text-xs font-bold text-stone-800 block">By batch</span>
+                <span className="text-xs font-bold text-stone-800 dark:text-[#F5F7F5] block">By batch</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {eggsByBatch.map(b => (
                     <Link
                       key={b.batchId}
                       to={`/batches/${b.batchId}`}
-                      className="flex items-center justify-between p-3 rounded-xl border border-stone-200/80 hover:border-[#D2EC7A] hover:bg-[#F7FFE0]/40 transition-colors"
+                      className="flex items-center justify-between p-3 rounded-xl border border-stone-200/80 dark:border-[#2B3238] hover:border-[#D2EC7A] dark:hover:border-[#DFFF83] hover:bg-[#F7FFE0]/40 dark:hover:bg-[#1C2612]/40 transition-colors"
                     >
-                      <span className="text-xs font-bold text-stone-900 truncate">{b.name}</span>
-                      <span className="text-xs text-stone-600 shrink-0">
-                        {loading ? <Skeleton className="h-3.5 w-16" /> : <><span className="font-extrabold text-stone-950">{b.eggs.toLocaleString()}</span> eggs</>}
+                      <span className="text-xs font-bold text-stone-900 dark:text-[#F5F7F5] truncate">{b.name}</span>
+                      <span className="text-xs text-stone-600 dark:text-[#94A3B8] shrink-0">
+                        {loading ? <Skeleton className="h-3.5 w-16" /> : <><span className="font-extrabold text-stone-950 dark:text-[#F5F7F5]">{b.eggs.toLocaleString()}</span> eggs</>}
                       </span>
                     </Link>
                   ))}
@@ -595,13 +595,13 @@ export function InventoryPage() {
             )}
           </div>
 
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
-            <h4 className="text-sm font-bold text-stone-950 font-heading">Recent Egg Collections</h4>
+          <div className="bg-white dark:bg-[#17191A] border border-stone-200/90 dark:border-[#2B3238] rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
+            <h4 className="text-sm font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Recent Egg Collections</h4>
 
             {loading ? (
               <SkeletonRows rows={4} />
             ) : allEggLogs.length === 0 ? (
-              <p className="py-6 text-center text-xs text-stone-400 font-medium">
+              <p className="py-6 text-center text-xs text-stone-400 dark:text-[#64748B] font-medium">
                 {eggsByBatch.length === 0
                   ? 'No layer batches yet. Eggs appear here once a layer batch records production.'
                   : 'No eggs recorded yet. Log eggs from a layer batch and they will be added here.'}
@@ -609,7 +609,7 @@ export function InventoryPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-stone-200 text-stone-400 uppercase text-[10px]">
+                  <thead className="border-b border-stone-200 dark:border-[#2B3238] text-stone-400 dark:text-[#94A3B8] uppercase text-[10px]">
                     <tr>
                       <th className="py-3 font-bold">Date</th>
                       <th className="py-3 font-bold">Batch</th>
@@ -618,14 +618,14 @@ export function InventoryPage() {
                       <th className="py-3 font-bold text-right">Total Eggs</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone-100 font-medium">
+                  <tbody className="divide-y divide-stone-100 dark:divide-[#2B3238] font-medium">
                     {allEggLogs.slice(0, 15).map((log, idx) => (
-                      <tr key={log.entryId || idx} className="hover:bg-stone-50/60 transition-colors">
-                        <td className="py-3.5 text-stone-900 font-semibold">{formatDate(log.date)}</td>
-                        <td className="py-3.5 text-stone-700">{log.batchName}</td>
-                        <td className="py-3.5 text-stone-700">{Number(log.crates) || 0}</td>
-                        <td className="py-3.5 text-stone-700">{Number(log.looseEggs) || 0}</td>
-                        <td className="py-3.5 font-bold text-stone-950 text-right">{eggCount(log).toLocaleString()}</td>
+                      <tr key={log.entryId || idx} className="hover:bg-stone-50/60 dark:hover:bg-[#1E2124]/50 transition-colors">
+                        <td className="py-3.5 text-stone-900 dark:text-[#F5F7F5] font-semibold">{formatDate(log.date)}</td>
+                        <td className="py-3.5 text-stone-700 dark:text-[#94A3B8]">{log.batchName}</td>
+                        <td className="py-3.5 text-stone-700 dark:text-[#94A3B8]">{Number(log.crates) || 0}</td>
+                        <td className="py-3.5 text-stone-700 dark:text-[#94A3B8]">{Number(log.looseEggs) || 0}</td>
+                        <td className="py-3.5 font-bold text-stone-950 dark:text-[#F5F7F5] text-right">{eggCount(log).toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -639,16 +639,16 @@ export function InventoryPage() {
       {/* ===================== TAB 2: VACCINATION ===================== */}
       {activeTab === 'vaccination' && (
         <div className="space-y-6 animate-fade-in">
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="bg-white dark:bg-[#17191A] border border-stone-200/90 dark:border-[#2B3238] rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Vaccination</h3>
-                <p className="text-xs text-stone-500 mt-0.5">Schedule upcoming vaccines and keep a record of every one given.</p>
+                <h3 className="text-base sm:text-lg font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Vaccination</h3>
+                <p className="text-xs text-stone-500 dark:text-[#94A3B8] mt-0.5">Schedule upcoming vaccines and keep a record of every one given.</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={() => openVaccination({ mode: 'record' })}
-                  className="w-full sm:w-auto px-4 py-2.5 border border-[#D2EC7A] text-[#4D6600] hover:bg-[#F7FFE0] rounded-xl text-sm font-bold transition-all cursor-pointer inline-flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-4 py-2.5 border border-[#D2EC7A] dark:border-[#334418] text-[#4D6600] dark:text-[#DFFF83] hover:bg-[#F7FFE0] dark:hover:bg-[#1C2612] rounded-xl text-sm font-bold transition-all cursor-pointer inline-flex items-center justify-center gap-2"
                 >
                   <ClipboardCheck size={16} /> Record Given
                 </button>
@@ -662,29 +662,29 @@ export function InventoryPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 rounded-2xl bg-[#F7FFE0]/70 border border-[#E3F5A8]">
-                <span className="text-xs font-bold text-[#3A4D00] flex items-center gap-1.5">
-                  <CalendarIcon size={15} className="text-[#4D6600]" /> Upcoming
+              <div className="p-4 rounded-2xl bg-[#F7FFE0]/70 dark:bg-[#142312] border border-[#E3F5A8] dark:border-[#274220]">
+                <span className="text-xs font-bold text-[#3A4D00] dark:text-[#DFFF83] flex items-center gap-1.5">
+                  <CalendarIcon size={15} className="text-[#4D6600] dark:text-[#DFFF83]" /> Upcoming
                 </span>
-                {loading ? <Skeleton className="h-8 sm:h-9 w-12 mt-1" /> : <span className="text-2xl sm:text-3xl font-extrabold text-[#3A4D00] mt-1 block">{upcomingVaccines.length}</span>}
+                {loading ? <Skeleton className="h-8 sm:h-9 w-12 mt-1" /> : <span className="text-2xl sm:text-3xl font-extrabold text-[#3A4D00] dark:text-[#DFFF83] mt-1 block">{upcomingVaccines.length}</span>}
               </div>
-              <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200/70">
-                <span className="text-xs font-bold text-rose-800 flex items-center gap-1.5">
-                  <AlertTriangle size={15} className="text-rose-600" /> Overdue
+              <div className="p-4 rounded-2xl bg-rose-50/60 dark:bg-[#260D12] border border-rose-200/70 dark:border-[#4C1A24]">
+                <span className="text-xs font-bold text-rose-800 dark:text-[#FB7185] flex items-center gap-1.5">
+                  <AlertTriangle size={15} className="text-rose-600 dark:text-[#FB7185]" /> Overdue
                 </span>
-                {loading ? <Skeleton className="h-8 sm:h-9 w-12 mt-1" /> : <span className="text-2xl sm:text-3xl font-extrabold text-rose-950 mt-1 block">{overdueVaccines.length}</span>}
+                {loading ? <Skeleton className="h-8 sm:h-9 w-12 mt-1" /> : <span className="text-2xl sm:text-3xl font-extrabold text-rose-950 dark:text-[#FB7185] mt-1 block">{overdueVaccines.length}</span>}
               </div>
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80">
-                <span className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
-                  <CheckCircle2 size={15} className="text-stone-500" /> Given this month
+              <div className="p-4 rounded-2xl bg-stone-50 dark:bg-[#1E2124] border border-stone-200/80 dark:border-[#2B3238]">
+                <span className="text-xs font-bold text-stone-700 dark:text-[#94A3B8] flex items-center gap-1.5">
+                  <CheckCircle2 size={15} className="text-stone-500 dark:text-[#94A3B8]" /> Given this month
                 </span>
-                {loading ? <Skeleton className="h-8 sm:h-9 w-12 mt-1" /> : <span className="text-2xl sm:text-3xl font-extrabold text-stone-950 mt-1 block">{givenThisMonth}</span>}
+                {loading ? <Skeleton className="h-8 sm:h-9 w-12 mt-1" /> : <span className="text-2xl sm:text-3xl font-extrabold text-stone-950 dark:text-[#F5F7F5] mt-1 block">{givenThisMonth}</span>}
               </div>
             </div>
           </div>
 
           {/* Health calendar — every appointment in its date box */}
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs">
+          <div className="bg-white dark:bg-[#17191A] border border-stone-200/90 dark:border-[#2B3238] rounded-3xl p-4 sm:p-6 shadow-xs">
             <CalendarPicker
               variant="full"
               value={calendarDate}
@@ -703,7 +703,7 @@ export function InventoryPage() {
                   <button
                     type="button"
                     onClick={() => setShowMultiModal(true)}
-                    className="px-2.5 h-7 rounded-lg border border-stone-200 hover:border-[#D2EC7A] text-stone-700 text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                    className="px-2.5 h-7 rounded-lg border border-stone-200 dark:border-[#2B3238] hover:border-[#D2EC7A] dark:hover:border-[#DFFF83] text-stone-700 dark:text-[#94A3B8] text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
                   >
                     <Plus size={12} /> Vitamin
                   </button>
@@ -713,28 +713,28 @@ export function InventoryPage() {
           </div>
 
           {/* Due and overdue */}
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-3">
-            <h4 className="text-sm font-bold text-stone-950 font-heading">Due Vaccinations</h4>
+          <div className="bg-white dark:bg-[#17191A] border border-stone-200/90 dark:border-[#2B3238] rounded-3xl p-4 sm:p-6 shadow-xs space-y-3">
+            <h4 className="text-sm font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Due Vaccinations</h4>
             {loading ? (
               <SkeletonRows rows={2} />
             ) : dueVaccines.length === 0 ? (
-              <p className="py-4 text-center text-xs text-stone-400 font-medium">
+              <p className="py-4 text-center text-xs text-stone-400 dark:text-[#64748B] font-medium">
                 Nothing scheduled. Use "Schedule Vaccination" to plan the next one.
               </p>
             ) : (
-              <ul className="divide-y divide-stone-100">
+              <ul className="divide-y divide-stone-100 dark:divide-[#2B3238]">
                 {dueVaccines.map((item) => {
                   const overdue = item.dueDate < today;
                   return (
                     <li key={item.scheduleId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 py-3">
                       <div className="min-w-0">
-                        <div className="text-sm font-bold text-stone-900 break-words">
+                        <div className="text-sm font-bold text-stone-900 dark:text-[#F5F7F5] break-words">
                           {item.vaccineName}
-                          {item.doseNumber && <span className="font-medium text-stone-500"> · {item.doseNumber}</span>}
+                          {item.doseNumber && <span className="font-medium text-stone-500 dark:text-[#94A3B8]"> · {item.doseNumber}</span>}
                         </div>
-                        <div className="text-xs text-stone-500">
+                        <div className="text-xs text-stone-500 dark:text-[#94A3B8]">
                           {item.batchName} · {ROUTES[item.route]?.label ? `${ROUTES[item.route].label} · ` : ''}
-                          <span className={overdue ? 'text-rose-600 font-semibold' : ''}>
+                          <span className={overdue ? 'text-rose-600 dark:text-[#FB7185] font-semibold' : ''}>
                             {overdue ? 'Overdue since ' : 'Due '}{formatDate(item.dueDate)}
                           </span>
                         </div>
@@ -748,7 +748,7 @@ export function InventoryPage() {
                           scheduleId: item.scheduleId,
                           date: today,
                         })}
-                        className="w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold border border-[#D2EC7A] text-[#4D6600] hover:bg-[#F7FFE0] transition-colors cursor-pointer shrink-0"
+                        className="w-full sm:w-auto px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold border border-[#D2EC7A] dark:border-[#334418] text-[#4D6600] dark:text-[#DFFF83] hover:bg-[#F7FFE0] dark:hover:bg-[#1C2612] transition-colors cursor-pointer shrink-0"
                       >
                         Record as given
                       </button>
@@ -760,18 +760,18 @@ export function InventoryPage() {
           </div>
 
           {/* History */}
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-3">
-            <h4 className="text-sm font-bold text-stone-950 font-heading">Vaccination History</h4>
+          <div className="bg-white dark:bg-[#17191A] border border-stone-200/90 dark:border-[#2B3238] rounded-3xl p-4 sm:p-6 shadow-xs space-y-3">
+            <h4 className="text-sm font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Vaccination History</h4>
             {loading ? (
               <SkeletonRows rows={3} />
             ) : vaccinationHistory.length === 0 ? (
-              <p className="py-4 text-center text-xs text-stone-400 font-medium">
+              <p className="py-4 text-center text-xs text-stone-400 dark:text-[#64748B] font-medium">
                 No vaccinations recorded yet.
               </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-stone-200 text-stone-400 uppercase text-[10px]">
+                  <thead className="border-b border-stone-200 dark:border-[#2B3238] text-stone-400 dark:text-[#94A3B8] uppercase text-[10px]">
                     <tr>
                       <th className="py-3 font-bold">Date</th>
                       <th className="py-3 font-bold">Batch</th>
@@ -781,18 +781,18 @@ export function InventoryPage() {
                       <th className="py-3 font-bold hidden md:table-cell">Given by</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone-100">
+                  <tbody className="divide-y divide-stone-100 dark:divide-[#2B3238]">
                     {vaccinationHistory.map((r) => (
-                      <tr key={r.key} className="hover:bg-stone-50/60 transition-colors">
-                        <td className="py-3 text-stone-700 whitespace-nowrap">{formatDate(r.date)}</td>
-                        <td className="py-3 font-semibold text-stone-900">{r.batchName}</td>
-                        <td className="py-3 font-bold text-stone-950">
+                      <tr key={r.key} className="hover:bg-stone-50/60 dark:hover:bg-[#1E2124]/50 transition-colors">
+                        <td className="py-3 text-stone-700 dark:text-[#94A3B8] whitespace-nowrap">{formatDate(r.date)}</td>
+                        <td className="py-3 font-semibold text-stone-900 dark:text-[#F5F7F5]">{r.batchName}</td>
+                        <td className="py-3 font-bold text-stone-950 dark:text-[#F5F7F5]">
                           {r.vaccineName}
-                          {r.doseNumber && <span className="font-medium text-stone-500"> · {r.doseNumber}</span>}
+                          {r.doseNumber && <span className="font-medium text-stone-500 dark:text-[#94A3B8]"> · {r.doseNumber}</span>}
                         </td>
-                        <td className="py-3 text-stone-600 hidden sm:table-cell">{ROUTES[r.route]?.label || '—'}</td>
-                        <td className="py-3 text-stone-600 hidden sm:table-cell">{r.birds ? Number(r.birds).toLocaleString() : '—'}</td>
-                        <td className="py-3 text-stone-600 hidden md:table-cell">{r.administeredBy || '—'}</td>
+                        <td className="py-3 text-stone-600 dark:text-[#94A3B8] hidden sm:table-cell">{ROUTES[r.route]?.label || '—'}</td>
+                        <td className="py-3 text-stone-600 dark:text-[#94A3B8] hidden sm:table-cell">{r.birds ? Number(r.birds).toLocaleString() : '—'}</td>
+                        <td className="py-3 text-stone-600 dark:text-[#94A3B8] hidden md:table-cell">{r.administeredBy || '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -806,15 +806,15 @@ export function InventoryPage() {
       {/* ===================== TAB 3: VITAMINS & SUPPLEMENTS ===================== */}
       {activeTab === 'multivitamins' && (
         <div className="space-y-6 animate-fade-in">
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="bg-white dark:bg-[#17191A] border border-stone-200/90 dark:border-[#2B3238] rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl  text-[#4D6600] flex items-center justify-center shadow-2xs shrink-0">
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl text-[#4D6600] dark:text-[#DFFF83] flex items-center justify-center shadow-2xs shrink-0">
                   <PillIcon size={22} />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-stone-950 font-heading">Vitamins &amp; Supplements</h3>
-                  <p className="text-xs text-stone-500">Multivitamins, anti-stress, calcium, dewormers and more</p>
+                  <h3 className="text-base sm:text-lg font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Vitamins &amp; Supplements</h3>
+                  <p className="text-xs text-stone-500 dark:text-[#94A3B8]">Multivitamins, anti-stress, calcium, dewormers and more</p>
                 </div>
               </div>
               <button
@@ -837,19 +837,19 @@ export function InventoryPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-stone-200/90 rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="bg-white dark:bg-[#17191A] border border-stone-200/90 dark:border-[#2B3238] rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between gap-3">
-              <h4 className="text-sm font-bold text-stone-950 font-heading">Recent Records</h4>
-              <span className="text-[11px] text-stone-400">Saved on this device only</span>
+              <h4 className="text-sm font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Recent Records</h4>
+              <span className="text-[11px] text-stone-400 dark:text-[#64748B]">Saved on this device only</span>
             </div>
             {supplements.length === 0 ? (
-              <p className="py-6 text-center text-xs text-stone-400 font-medium">
+              <p className="py-6 text-center text-xs text-stone-400 dark:text-[#64748B] font-medium">
                 No vitamins or supplements recorded yet. Click "Record Vitamin" to add one.
               </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-stone-200 text-stone-400 uppercase text-[10px]">
+                  <thead className="border-b border-stone-200 dark:border-[#2B3238] text-stone-400 dark:text-[#94A3B8] uppercase text-[10px]">
                     <tr>
                       <th className="py-3 font-bold">Started</th>
                       <th className="py-3 font-bold">Batch</th>
@@ -858,20 +858,20 @@ export function InventoryPage() {
                       <th className="py-3 font-bold hidden md:table-cell">Reason</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-stone-100">
+                  <tbody className="divide-y divide-stone-100 dark:divide-[#2B3238]">
                     {supplements.map((s) => (
-                      <tr key={s.id} className="hover:bg-stone-50/60 transition-colors align-top">
-                        <td className="py-3 text-stone-700 whitespace-nowrap">{formatDate(s.date)}</td>
-                        <td className="py-3 text-stone-700">{s.batchName || batchNames[s.batchId] || '—'}</td>
+                      <tr key={s.id} className="hover:bg-stone-50/60 dark:hover:bg-[#1E2124]/50 transition-colors align-top">
+                        <td className="py-3 text-stone-700 dark:text-[#94A3B8] whitespace-nowrap">{formatDate(s.date)}</td>
+                        <td className="py-3 text-stone-700 dark:text-[#94A3B8]">{s.batchName || batchNames[s.batchId] || '—'}</td>
                         <td className="py-3">
-                          <div className="font-bold text-stone-950">{s.product}</div>
-                          <div className="text-[11px] text-stone-500">{findSupplementType(s.type)?.label || 'Supplement'}</div>
+                          <div className="font-bold text-stone-950 dark:text-[#F5F7F5]">{s.product}</div>
+                          <div className="text-[11px] text-stone-500 dark:text-[#94A3B8]">{findSupplementType(s.type)?.label || 'Supplement'}</div>
                           {s.withdrawalDays > 0 && (
-                            <div className="text-[11px] text-amber-700 font-semibold">{s.withdrawalDays}-day withdrawal</div>
+                            <div className="text-[11px] text-amber-700 dark:text-[#FCD34D] font-semibold">{s.withdrawalDays}-day withdrawal</div>
                           )}
                         </td>
-                        <td className="py-3 text-stone-600 hidden sm:table-cell">{describeDose(s) || '—'}</td>
-                        <td className="py-3 text-stone-500 hidden md:table-cell">{s.reason || s.notes || '—'}</td>
+                        <td className="py-3 text-stone-600 dark:text-[#94A3B8] hidden sm:table-cell">{describeDose(s) || '—'}</td>
+                        <td className="py-3 text-stone-500 dark:text-[#94A3B8] hidden md:table-cell">{s.reason || s.notes || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

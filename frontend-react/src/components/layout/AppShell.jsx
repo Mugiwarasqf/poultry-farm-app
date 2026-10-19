@@ -70,7 +70,7 @@ export function AppShell() {
   // Every page inside the app uses the plain white background (it started
   // with History and the dashboard).
   return (
-    <div className="min-h-screen flex selection:bg-[#DFFF83] selection:text-[#17191A] text-stone-900 font-sans bg-white">
+    <div className="min-h-screen flex selection:bg-[#DFFF83] selection:text-[#17191A] text-stone-900 dark:text-[#F5F7F5] font-sans bg-white dark:bg-[#0F1112] transition-colors">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -78,10 +78,10 @@ export function AppShell() {
 
       <div className="flex-1 min-w-0 flex flex-col min-h-screen md:pl-62">
         {/* Top Header Bar with frosted glass blur */}
-        <header className="sticky top-0 z-30 min-h-18 pt-[env(safe-area-inset-top)] bg-white/90 backdrop-blur-md border-b border-[#E1E8EF] px-4 sm:px-6 lg:px-7 flex items-center justify-between gap-3 sm:gap-4 transition-all">
+        <header className="sticky top-0 z-30 min-h-18 pt-[env(safe-area-inset-top)] bg-white/90 dark:bg-[#17191A]/90 backdrop-blur-md border-b border-[#E1E8EF] dark:border-[#2B3238] px-4 sm:px-6 lg:px-7 flex items-center justify-between gap-3 sm:gap-4 transition-all">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <button
-              className="md:hidden p-2 -ml-2 text-stone-600 hover:text-stone-900 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer"
+              className="md:hidden p-2 -ml-2 text-stone-600 dark:text-[#94A3B8] hover:text-stone-900 dark:hover:text-white rounded-lg hover:bg-stone-100 dark:hover:bg-[#1E2124] transition-colors cursor-pointer"
               onClick={() => setSidebarOpen(true)}
               aria-label="Open menu"
             >
@@ -102,7 +102,7 @@ export function AppShell() {
                 onClick={flush}
                 disabled={sending}
                 title="These entries are saved on this phone and will send by themselves"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer disabled:opacity-70"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-amber-50 dark:bg-[#261B06] text-amber-800 dark:text-[#FCD34D] border border-amber-200 dark:border-[#4A350C] hover:bg-amber-100 dark:hover:bg-[#38280A] transition-colors cursor-pointer disabled:opacity-70"
               >
                 {sending ? (
                   <RefreshCw size={13} className="animate-spin shrink-0" />
@@ -124,33 +124,25 @@ export function AppShell() {
               <button
                 type="button"
                 onClick={() => setUserMenuOpen((prev) => !prev)}
-                className="flex items-center gap-2 sm:gap-2.5 pl-1 pr-1.5 cursor-pointer group py-1 rounded-xl hover:bg-stone-50 transition-colors focus:outline-none"
+                className="flex items-center gap-2 sm:gap-2.5 pl-1 pr-1.5 cursor-pointer group py-1 rounded-xl hover:bg-stone-50 dark:hover:bg-[#1E2124] transition-colors focus:outline-none"
                 aria-expanded={userMenuOpen}
                 aria-haspopup="true"
               >
                 {/* Avatar circle */}
-                <div className="w-9 h-9 rounded-full bg-[#EFFFC4] text-[#4D6600] border border-[#E3F5A8] flex items-center justify-center text-xs font-bold shadow-2xs overflow-hidden shrink-0">
-                  <img
-                    src="/images/irvan-maulana-ENQIxReDFKE-unsplash.jpg"
-                    alt={farmerDisplayName}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                 
+                <div className="w-9 h-9 rounded-full bg-[#EFFFC4] dark:bg-[#142312] text-[#4D6600] dark:text-[#DFFF83] border border-[#E3F5A8] dark:border-[#274220] flex items-center justify-center shadow-2xs shrink-0">
+                  <User size={18} strokeWidth={2.2} />
                 </div>
 
                 {/* User Name in bold */}
-                <span className="hidden sm:inline text-sm font-semibold text-[#142033] transition-colors max-w-[180px] truncate">
+                <span className="hidden sm:inline text-sm font-semibold text-[#142033] dark:text-[#F5F7F5] transition-colors max-w-[180px] truncate">
                   {farmerDisplayName}
                 </span>
 
                 {/* Dropdown Chevron */}
                 <ChevronDown
                   size={15}
-                  className={`text-stone-400 group-hover:text-stone-700 transition-transform duration-200 ${
-                    userMenuOpen ? 'rotate-180 text-stone-800' : ''
+                  className={`text-stone-400 dark:text-[#64748B] group-hover:text-stone-700 dark:group-hover:text-[#F5F7F5] transition-transform duration-200 ${
+                    userMenuOpen ? 'rotate-180 text-stone-800 dark:text-white' : ''
                   }`}
                 />
               </button>
@@ -158,11 +150,9 @@ export function AppShell() {
               {/* User Dropdown Menu */}
               {userMenuOpen && (
                 <div
-                  className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-stone-200/90 py-1.5 z-50 animate-slide-up"
+                  className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#1E2124] rounded-2xl shadow-xl border border-stone-200/90 dark:border-[#2B3238] py-1.5 z-50 animate-slide-up"
                   role="menu"
                 >
-                 
-
                   <div className="p-1">
                     <button
                       type="button"
@@ -170,7 +160,7 @@ export function AppShell() {
                         setUserMenuOpen(false);
                         logout();
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-left"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-[#FB7185] hover:bg-rose-50 dark:hover:bg-[#260D12] transition-colors cursor-pointer text-left"
                       role="menuitem"
                     >
                       <LogOut size={15} className="shrink-0" />
@@ -192,7 +182,7 @@ export function AppShell() {
         </main>
 
         {/* Mobile Bottom Navigation Bar */}
-        <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-stone-200 px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around md:hidden shadow-lg">
+        <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-[#17191A] border-t border-stone-200 dark:border-[#2B3238] px-4 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around md:hidden shadow-lg transition-colors">
           {[
             { to: '/dashboard', icon: FarmIcon, label: 'Home' },
             { to: '/batches', icon: BatchIcon, label: 'Batches' },
@@ -207,12 +197,18 @@ export function AppShell() {
                 to={item.to}
                 className={({ isActive }) =>
                   `flex flex-col items-center justify-center py-1 text-xs font-semibold transition-colors ${
-                    isActive ? 'text-[#4D6600] font-bold' : 'text-stone-500 hover:text-stone-900'
+                    isActive
+                      ? 'text-[#4D6600] dark:text-[#DFFF83] font-bold'
+                      : 'text-stone-500 dark:text-[#94A3B8] hover:text-stone-900 dark:hover:text-white'
                   }`
                 }
               >
-                <Icon size={18} className="mb-0.5" />
-                <span>{item.label}</span>
+                {({ isActive }) => (
+                  <>
+                    <Icon size={18} className={`mb-0.5 ${isActive ? '' : 'dark:invert dark:opacity-85'}`} />
+                    <span>{item.label}</span>
+                  </>
+                )}
               </NavLink>
             );
           })}

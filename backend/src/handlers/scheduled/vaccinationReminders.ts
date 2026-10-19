@@ -50,6 +50,7 @@ export const handler: ScheduledHandler = async () => {
   let sent = 0;
   let skippedSuppressed = 0;
   let skippedNoFarmOrEmail = 0;
+  let skippedDisabled = 0;
 
   for (const item of dueSoon.Items ?? []) {
     const batch = await ddb.send(
@@ -74,6 +75,14 @@ export const handler: ScheduledHandler = async () => {
       skippedNoFarmOrEmail++;
       continue;
     }
+
+    const prefs = farm.Item?.notificationPrefs;
+    if (prefs?.emailAlerts === false || prefs?.vaccinationReminders === false) {
+      logger.info("vaccination_reminder_skipped_disabled", { farmId, email });
+      skippedDisabled++;
+      continue;
+    }
+
     if (await isSuppressed(email)) {
       logger.warn("vaccination_reminder_skipped_suppressed", { email, batchId: item.batchId });
       skippedSuppressed++;
@@ -105,5 +114,6 @@ export const handler: ScheduledHandler = async () => {
     sent,
     skippedSuppressed,
     skippedNoFarmOrEmail,
+    skippedDisabled,
   });
 };

@@ -22,19 +22,19 @@ export function Modal({ open, isOpen, title, children, actions, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/75 backdrop-blur-xs animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-stone-200 p-6 animate-slide-up"
+        className="w-full max-w-md bg-white dark:bg-[#17191A] rounded-2xl shadow-xl border border-stone-200 dark:border-[#2B3238] p-6 animate-slide-up transition-colors"
         onClick={e => e.stopPropagation()}
       >
         {title && (
-          <div className="text-lg font-bold text-stone-900 mb-2 font-heading">
+          <div className="text-lg font-bold text-stone-900 dark:text-[#F5F7F5] mb-2 font-heading">
             {title}
           </div>
         )}
-        <div className="text-sm text-stone-600 mb-6 leading-relaxed">
+        <div className="text-sm text-stone-600 dark:text-[#94A3B8] mb-6 leading-relaxed">
           {children}
         </div>
         {actions && (

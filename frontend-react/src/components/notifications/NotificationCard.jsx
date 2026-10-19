@@ -20,9 +20,9 @@ export function NotificationCard({ notification: n, now, onSelect, onDelete }) {
 
   return (
     <div
-      className={`group relative flex items-center gap-3 sm:gap-4 rounded-xl border bg-white px-4 sm:px-5 py-4 shadow-xs transition-all hover:shadow-sm ${
-        unread ? 'border-stone-200' : 'border-stone-200/70'
-      } hover:border-stone-300 focus-within:border-stone-300`}
+      className={`group relative flex items-center gap-3 sm:gap-4 rounded-xl border bg-white dark:bg-[#1E2124] px-4 sm:px-5 py-4 shadow-xs transition-all hover:shadow-sm ${
+        unread ? 'border-stone-200 dark:border-[#2B3238]' : 'border-stone-200/70 dark:border-[#2B3238]/70'
+      } hover:border-stone-300 dark:hover:border-[#374151] focus-within:border-stone-300 dark:focus-within:border-[#374151]`}
     >
       <NotificationIcon type={n.type} size="lg" />
 
@@ -34,19 +34,19 @@ export function NotificationCard({ notification: n, now, onSelect, onDelete }) {
           aria-label={`${unread ? 'Unread. ' : ''}${n.title}. ${n.message} ${fullTime(n.created_at)}`}
           className="block w-full text-left cursor-pointer outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-[#B7DA3E]/50"
         >
-          <span className={`block text-sm leading-5 truncate ${unread ? 'font-bold text-stone-950' : 'font-semibold text-stone-700'}`}>
+          <span className={`block text-sm leading-5 truncate ${unread ? 'font-bold text-stone-950 dark:text-[#F5F7F5]' : 'font-semibold text-stone-700 dark:text-[#94A3B8]'}`}>
             {n.title}
           </span>
-          <span className="block mt-0.5 text-[13px] leading-[18px] text-stone-500 line-clamp-2">{n.message}</span>
+          <span className="block mt-0.5 text-[13px] leading-[18px] text-stone-500 dark:text-[#64748B] line-clamp-2">{n.message}</span>
           {/* On phones the time sits here, leaving the right edge for the dot and controls. */}
-          <time dateTime={n.created_at} className="sm:hidden block mt-1 text-[11px] text-stone-400">
+          <time dateTime={n.created_at} className="sm:hidden block mt-1 text-[11px] text-stone-400 dark:text-[#4B5563]">
             {relativeTimeLong(n.created_at, now)}
           </time>
         </button>
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-        <time dateTime={n.created_at} title={fullTime(n.created_at)} className="hidden sm:inline text-xs text-stone-400 whitespace-nowrap">
+        <time dateTime={n.created_at} title={fullTime(n.created_at)} className="hidden sm:inline text-xs text-stone-400 dark:text-[#4B5563] whitespace-nowrap">
           {relativeTimeLong(n.created_at, now)}
         </time>
 
@@ -60,12 +60,12 @@ export function NotificationCard({ notification: n, now, onSelect, onDelete }) {
           onClick={() => onDelete(n.id)}
           aria-label={`Delete "${n.title}"`}
           title="Delete"
-          className="relative z-10 w-7 h-7 -my-1 inline-flex items-center justify-center rounded-md text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-stone-300 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+          className="relative z-10 w-7 h-7 -my-1 inline-flex items-center justify-center rounded-md text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-[#2B3238] transition-all cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-stone-300 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
         >
           <X size={15} strokeWidth={2} aria-hidden="true" />
         </button>
 
-        <ChevronRight size={18} strokeWidth={2} className="text-stone-400 shrink-0" aria-hidden="true" />
+        <ChevronRight size={18} strokeWidth={2} className="text-stone-400 dark:text-[#64748B] shrink-0" aria-hidden="true" />
       </div>
     </div>
   );

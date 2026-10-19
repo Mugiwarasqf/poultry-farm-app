@@ -9,8 +9,8 @@ import { birdTypeLabel } from '../../lib/batch';
 import { FeedIcon } from './FeedIcon';
 import { CalendarIcon } from './CalendarIcon';
 
-const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400';
-const LABEL = 'text-xs font-bold text-stone-800 block mb-1.5';
+const FIELD = 'w-full px-3.5 py-2.5 bg-white dark:bg-[#1E2124] border border-stone-300 dark:border-[#2B3238] rounded-xl text-sm text-stone-900 dark:text-[#F5F7F5] focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400 dark:placeholder:text-[#64748B]';
+const LABEL = 'text-xs font-bold text-stone-800 dark:text-[#F5F7F5] block mb-1.5';
 
 function formatShort(iso) {
   if (!iso) return '';
@@ -125,22 +125,22 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={onClose} />
 
-      <div className="relative bg-white w-full sm:max-w-2xl sm:rounded-3xl rounded-t-3xl shadow-2xl z-10 animate-fade-in flex flex-col max-h-[92vh]">
-        <div className="flex items-center justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b border-stone-100 shrink-0">
+      <div className="relative bg-white dark:bg-[#17191A] w-full sm:max-w-2xl sm:rounded-3xl rounded-t-3xl shadow-2xl z-10 animate-fade-in flex flex-col max-h-[92vh] border border-stone-200/50 dark:border-[#2B3238]">
+        <div className="flex items-center justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b border-stone-100 dark:border-[#2B3238] shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             {step === 2 && (
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 transition-colors cursor-pointer shrink-0"
+                className="w-8 h-8 flex items-center justify-center rounded-full text-stone-500 dark:text-[#94A3B8] hover:bg-stone-100 dark:hover:bg-[#1E2124] transition-colors cursor-pointer shrink-0"
                 aria-label="Back to calendar"
               >
                 <ChevronLeft size={20} />
               </button>
             )}
             <div className="min-w-0">
-              <h2 className="text-lg font-bold text-stone-950 font-heading truncate">Record Vitamin / Supplement</h2>
-              <p className="text-xs text-stone-500 mt-0.5 truncate">
+              <h2 className="text-lg font-bold text-stone-950 dark:text-[#F5F7F5] font-heading truncate">Record Vitamin / Supplement</h2>
+              <p className="text-xs text-stone-500 dark:text-[#94A3B8] mt-0.5 truncate">
                 {step === 1 ? 'Pick the day the course starts.' : batch ? `${batch.name} · ${birdTypeLabel(batch.type)}` : ''}
               </p>
             </div>
@@ -148,7 +148,7 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-colors cursor-pointer shrink-0"
+            className="w-9 h-9 flex items-center justify-center rounded-full text-stone-400 dark:text-[#94A3B8] hover:text-stone-900 dark:hover:text-[#F5F7F5] hover:bg-stone-100 dark:hover:bg-[#1E2124] transition-colors cursor-pointer shrink-0"
             aria-label="Close"
           >
             <X size={20} />
@@ -175,12 +175,12 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
 
           {step === 2 && (
             <>
-              <div className="flex items-center gap-2.5 px-4 py-2.5 bg-[#F7FFE0] border border-[#E3F5A8] rounded-2xl">
-                <CalendarIcon size={15} className="text-[#4D6600] shrink-0" />
-                <span className="text-sm font-bold text-[#3A4D00]">
+              <div className="flex items-center gap-2.5 px-4 py-2.5 bg-[#F7FFE0] dark:bg-[#142312] border border-[#E3F5A8] dark:border-[#274220] rounded-2xl">
+                <CalendarIcon size={15} className="text-[#4D6600] dark:text-[#DFFF83] shrink-0" />
+                <span className="text-sm font-bold text-[#3A4D00] dark:text-[#DFFF83]">
                   {days > 1 ? `${formatShort(date)} to ${formatShort(lastDay)}` : formatShort(date)}
                 </span>
-                <button type="button" onClick={() => setStep(1)} className="ml-auto text-[11px] font-bold text-[#4D6600] hover:underline cursor-pointer">
+                <button type="button" onClick={() => setStep(1)} className="ml-auto text-[11px] font-bold text-[#4D6600] dark:text-[#DFFF83] hover:underline cursor-pointer">
                   Change
                 </button>
               </div>
@@ -197,7 +197,7 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
                       className={`px-3 py-2.5 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer ${
                         typeId === t.id
                           ? 'bg-[#DFFF83] text-[#17191A] border-[#B7DA3E]'
-                          : 'bg-white text-stone-700 border-stone-200 hover:border-[#D2EC7A]'
+                          : 'bg-white dark:bg-[#1E2124] text-stone-700 dark:text-[#94A3B8] border-stone-200 dark:border-[#2B3238] hover:border-[#D2EC7A]'
                       }`}
                     >
                       {t.label}
@@ -227,8 +227,8 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
                           onClick={() => chooseMethod(m.id)}
                           className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                             method === m.id
-                              ? 'bg-[#F7FFE0] text-[#4D6600] border-[#B7DA3E]'
-                              : 'bg-white text-stone-600 border-stone-200 hover:border-[#D2EC7A]'
+                              ? 'bg-[#F7FFE0] dark:bg-[#142312] text-[#4D6600] dark:text-[#DFFF83] border-[#B7DA3E] dark:border-[#274220]'
+                              : 'bg-white dark:bg-[#1E2124] text-stone-600 dark:text-[#94A3B8] border-stone-200 dark:border-[#2B3238] hover:border-[#D2EC7A]'
                           }`}
                         >
                           <m.icon size={15} />
@@ -255,7 +255,7 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
                       <select value={doseUnit} onChange={(e) => setDoseUnit(e.target.value)} className={`${FIELD} w-20 cursor-pointer`}>
                         {methodInfo.units.map((u) => <option key={u} value={u}>{u}</option>)}
                       </select>
-                      <span className="text-xs text-stone-500">per</span>
+                      <span className="text-xs text-stone-500 dark:text-[#94A3B8]">per</span>
                       <input
                         type="number"
                         min="0"
@@ -265,9 +265,9 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
                         onChange={(e) => setPerQuantity(e.target.value)}
                         className={`${FIELD} w-20`}
                       />
-                      <span className="text-xs text-stone-600">{methodInfo.per}</span>
+                      <span className="text-xs text-stone-600 dark:text-[#94A3B8]">{methodInfo.per}</span>
                     </div>
-                    <p className="text-[11px] text-stone-400 mt-1.5">Use the dose on the product label.</p>
+                    <p className="text-[11px] text-stone-400 dark:text-[#64748B] mt-1.5">Use the dose on the product label.</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -276,14 +276,14 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
                       <input type="number" min="1" inputMode="numeric" value={durationDays} onChange={(e) => setDurationDays(e.target.value)} className={FIELD} />
                     </div>
                     <div>
-                      <label className={LABEL}>Cost (₦) <span className="text-stone-400 font-normal">(optional)</span></label>
+                      <label className={LABEL}>Cost (₦) <span className="text-stone-400 dark:text-[#64748B] font-normal">(optional)</span></label>
                       <input type="number" min="0" inputMode="numeric" value={cost} onChange={(e) => setCost(e.target.value)} className={FIELD} placeholder="e.g. 3500" />
                     </div>
                   </div>
 
                   {type.withdrawal && (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 space-y-2">
-                      <label className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                    <div className="rounded-2xl border border-amber-200 dark:border-[#4A350C] bg-amber-50/60 dark:bg-[#261B06] p-4 space-y-2">
+                      <label className="text-xs font-bold text-amber-900 dark:text-[#FCD34D] flex items-center gap-1.5">
                         <AlertTriangle size={14} /> Withdrawal period (days)
                       </label>
                       <input
@@ -295,7 +295,7 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
                         className={`${FIELD} w-32`}
                         placeholder="From label"
                       />
-                      <p className="text-[11px] text-amber-900/80">
+                      <p className="text-[11px] text-amber-900/80 dark:text-[#FCD34D]/80">
                         {safeDate
                           ? `Don't sell or eat eggs or meat from this batch until ${formatShort(safeDate)}.`
                           : 'Days after the last dose before eggs or meat are safe to sell. It is printed on the label.'}
@@ -314,7 +314,7 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
                           className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
                             reason === r
                               ? 'bg-[#DFFF83] text-[#17191A] border-[#B7DA3E]'
-                              : 'bg-white text-stone-600 border-stone-200 hover:border-[#D2EC7A] hover:text-[#4D6600]'
+                              : 'bg-white dark:bg-[#1E2124] text-stone-600 dark:text-[#94A3B8] border-stone-200 dark:border-[#2B3238] hover:border-[#D2EC7A] hover:text-[#4D6600] dark:hover:text-[#DFFF83]'
                           }`}
                         >
                           {r}
@@ -324,7 +324,7 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
                   </div>
 
                   <div>
-                    <label className={LABEL}>Notes <span className="text-stone-400 font-normal">(optional)</span></label>
+                    <label className={LABEL}>Notes <span className="text-stone-400 dark:text-[#64748B] font-normal">(optional)</span></label>
                     <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} className={`${FIELD} resize-none`} placeholder="e.g. Given in the morning water only" />
                   </div>
                 </>
@@ -333,7 +333,7 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
           )}
         </div>
 
-        <div className="px-5 sm:px-6 pb-5 pt-3 border-t border-stone-100 shrink-0 space-y-2">
+        <div className="px-5 sm:px-6 pb-5 pt-3 border-t border-stone-100 dark:border-[#2B3238] shrink-0 space-y-2">
           {step === 1 ? (
             <button
               type="button"
@@ -347,10 +347,10 @@ export function SupplementModal({ isOpen, onClose, onSaved, batches: batchOption
           ) : (
             <>
               {canSave && (
-                <div className="flex items-center gap-2.5 px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-2xl text-xs text-stone-700">
-                  <PillIcon size={15} className="text-[#4D6600] shrink-0" />
+                <div className="flex items-center gap-2.5 px-4 py-2.5 bg-stone-50 dark:bg-[#1E2124] border border-stone-200 dark:border-[#2B3238] rounded-2xl text-xs text-stone-700 dark:text-[#94A3B8]">
+                  <PillIcon size={15} className="text-[#4D6600] dark:text-[#DFFF83] shrink-0" />
                   <span className="truncate">
-                    <strong className="text-stone-900">{product.trim()}</strong>
+                    <strong className="text-stone-900 dark:text-[#F5F7F5]">{product.trim()}</strong>
                     {' · '}
                     {describeDose({ doseAmount, doseUnit, method, perQuantity, durationDays: days })}
                   </span>

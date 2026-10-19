@@ -100,10 +100,10 @@ export function CalendarPicker({
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <div className={`font-bold text-stone-950 font-heading ${full ? 'text-lg sm:text-xl' : 'text-base'}`}>
+          <div className={`font-bold text-stone-950 dark:text-[#F5F7F5] font-heading ${full ? 'text-lg sm:text-xl' : 'text-base'}`}>
             {MONTHS[viewMonth]} {viewYear}
           </div>
-          <div className="text-[11px] text-stone-500">
+          <div className="text-[11px] text-stone-500 dark:text-[#94A3B8]">
             {monthCount === 0 ? 'Nothing planned this month' : `${monthCount} appointment${monthCount === 1 ? '' : 's'} this month`}
           </div>
         </div>
@@ -111,14 +111,14 @@ export function CalendarPicker({
           <button
             type="button"
             onClick={goToday}
-            className="px-3 h-8 rounded-lg border border-stone-200 text-xs font-semibold text-stone-700 hover:border-[#D2EC7A] hover:text-[#4D6600] transition-colors cursor-pointer"
+            className="px-3 h-8 rounded-lg border border-stone-200 dark:border-[#2B3238] text-xs font-semibold text-stone-700 dark:text-[#94A3B8] hover:border-[#D2EC7A] dark:hover:border-[#DFFF83] hover:text-[#4D6600] dark:hover:text-[#DFFF83] transition-colors cursor-pointer"
           >
             Today
           </button>
           <button
             type="button"
             onClick={() => shiftMonth(-1)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-stone-200 dark:border-[#2B3238] text-stone-600 dark:text-[#94A3B8] hover:bg-stone-50 dark:hover:bg-[#1E2124] transition-colors cursor-pointer"
             aria-label="Previous month"
           >
             <ChevronLeft size={16} />
@@ -126,7 +126,7 @@ export function CalendarPicker({
           <button
             type="button"
             onClick={() => shiftMonth(1)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors cursor-pointer"
+            className="w-8 h-8 flex items-center justify-center rounded-lg border border-stone-200 dark:border-[#2B3238] text-stone-600 dark:text-[#94A3B8] hover:bg-stone-50 dark:hover:bg-[#1E2124] transition-colors cursor-pointer"
             aria-label="Next month"
           >
             <ChevronRight size={16} />
@@ -135,17 +135,17 @@ export function CalendarPicker({
       </div>
 
       {/* Grid */}
-      <div className="rounded-2xl border border-stone-200 overflow-hidden">
-        <div className="grid grid-cols-7 bg-stone-50 border-b border-stone-200">
+      <div className="rounded-2xl border border-stone-200 dark:border-[#2B3238] overflow-hidden">
+        <div className="grid grid-cols-7 bg-stone-50 dark:bg-[#1E2124] border-b border-stone-200 dark:border-[#2B3238]">
           {DAYS.map((d) => (
-            <div key={d} className="py-2 text-center text-[10px] sm:text-[11px] font-bold text-stone-400 uppercase tracking-wide">
+            <div key={d} className="py-2 text-center text-[10px] sm:text-[11px] font-bold text-stone-400 dark:text-[#94A3B8] uppercase tracking-wide">
               <span className="sm:hidden">{d.charAt(0)}</span>
               <span className="hidden sm:inline">{d}</span>
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-px bg-stone-200">
+        <div className="grid grid-cols-7 gap-px bg-stone-200 dark:bg-[#2B3238]">
           {cells.map((cell) => {
             const dayEvents = eventsByDate.get(cell.iso) || [];
             const selectable = isSelectable(cell.iso);
@@ -165,12 +165,12 @@ export function CalendarPicker({
                   full ? 'min-h-14 sm:min-h-28' : 'min-h-12 sm:min-h-20'
                 } ${
                   selected
-                    ? 'bg-[#F7FFE0] ring-2 ring-inset ring-[#B7DA3E] z-10'
+                    ? 'bg-[#F7FFE0] dark:bg-[#1C2612] ring-2 ring-inset ring-[#B7DA3E] dark:ring-[#DFFF83] z-10'
                     : !selectable
-                    ? 'bg-stone-50 cursor-not-allowed'
+                    ? 'bg-stone-50 dark:bg-[#121415] cursor-not-allowed'
                     : cell.inMonth
-                    ? 'bg-white hover:bg-[#F7FFE0] cursor-pointer'
-                    : 'bg-stone-50/80 hover:bg-[#F7FFE0] cursor-pointer'
+                    ? 'bg-white dark:bg-[#17191A] hover:bg-[#F7FFE0] dark:hover:bg-[#1E2124] cursor-pointer'
+                    : 'bg-stone-50/80 dark:bg-[#141618] hover:bg-[#F7FFE0] dark:hover:bg-[#1E2124] cursor-pointer'
                 }`}
               >
                 <span
@@ -178,10 +178,10 @@ export function CalendarPicker({
                     isToday
                       ? 'bg-[#DFFF83] text-[#17191A]'
                       : !selectable
-                      ? 'text-stone-300'
+                      ? 'text-stone-300 dark:text-[#475569]'
                       : cell.inMonth
-                      ? 'text-stone-800'
-                      : 'text-stone-400'
+                      ? 'text-stone-800 dark:text-[#F5F7F5]'
+                      : 'text-stone-400 dark:text-[#64748B]'
                   }`}
                 >
                   {cell.day}
@@ -204,14 +204,14 @@ export function CalendarPicker({
                         key={e.id}
                         title={`${e.title}${e.batchName ? ` — ${e.batchName}` : ''}`}
                         className={`block truncate rounded-[4px] border-l-2 px-1 py-px text-[10px] font-semibold leading-tight ${EVENT_STYLES[e.status].chip} ${
-                          e.status === 'done' ? 'line-through decoration-stone-400/60' : ''
+                          e.status === 'done' ? 'line-through decoration-stone-400/60 dark:decoration-[#64748B]' : ''
                         }`}
                       >
                         {e.title}
                       </span>
                     ))}
                     {hidden > 0 && (
-                      <span className="text-[10px] font-semibold text-stone-500 px-1">+{hidden} more</span>
+                      <span className="text-[10px] font-semibold text-stone-500 dark:text-[#94A3B8] px-1">+{hidden} more</span>
                     )}
                   </span>
                 )}
@@ -224,7 +224,7 @@ export function CalendarPicker({
       {/* Legend */}
       <div className="flex flex-wrap gap-x-4 gap-y-1.5">
         {Object.entries(EVENT_STYLES).map(([key, s]) => (
-          <span key={key} className="inline-flex items-center gap-1.5 text-[11px] text-stone-500">
+          <span key={key} className="inline-flex items-center gap-1.5 text-[11px] text-stone-500 dark:text-[#94A3B8]">
             <span className={`w-2 h-2 rounded-full ${s.dot}`} />
             {s.label}
           </span>
@@ -233,21 +233,21 @@ export function CalendarPicker({
 
       {/* Agenda for the selected (or today's) date */}
       {(full || agendaEvents.length > 0) && (
-        <div className="rounded-2xl border border-stone-200 bg-white">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 px-4 py-3 border-b border-stone-100">
+        <div className="rounded-2xl border border-stone-200 dark:border-[#2B3238] bg-white dark:bg-[#17191A]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 px-4 py-3 border-b border-stone-100 dark:border-[#2B3238]">
             <div className="flex items-center gap-2 min-w-0">
-              <CalendarDays size={15} className="text-[#4D6600] shrink-0" />
-              <span className="text-xs font-bold text-stone-900 truncate">
+              <CalendarDays size={15} className="text-[#4D6600] dark:text-[#DFFF83] shrink-0" />
+              <span className="text-xs font-bold text-stone-900 dark:text-[#F5F7F5] truncate">
                 {agendaDate === todayIso ? 'Today' : formatLongDate(agendaDate)}
               </span>
-              {agendaDate === todayIso && <span className="hidden sm:inline text-[11px] text-stone-400 truncate">{formatLongDate(agendaDate)}</span>}
+              {agendaDate === todayIso && <span className="hidden sm:inline text-[11px] text-stone-400 dark:text-[#94A3B8] truncate">{formatLongDate(agendaDate)}</span>}
             </div>
             {agendaActions && <div className="shrink-0 flex flex-wrap gap-1.5">{agendaActions(agendaDate)}</div>}
           </div>
           {agendaEvents.length === 0 ? (
-            <div className="px-4 py-4 text-xs text-stone-400">Nothing planned for this day.</div>
+            <div className="px-4 py-4 text-xs text-stone-400 dark:text-[#64748B]">Nothing planned for this day.</div>
           ) : (
-            <ul className="divide-y divide-stone-100">
+            <ul className="divide-y divide-stone-100 dark:divide-[#2B3238]">
               {agendaEvents.map((e) => {
                 const Icon = e.kind === 'supplement' ? PillIcon : VaccineIcon;
                 const clickable = Boolean(onEventClick);
@@ -258,19 +258,19 @@ export function CalendarPicker({
                       tabIndex={clickable ? 0 : undefined}
                       onClick={clickable ? () => onEventClick(e) : undefined}
                       onKeyDown={clickable ? (ev) => { if (ev.key === 'Enter') onEventClick(e); } : undefined}
-                      className={`flex items-center gap-3 px-4 py-2.5 ${clickable ? 'hover:bg-stone-50 cursor-pointer' : ''}`}
+                      className={`flex items-center gap-3 px-4 py-2.5 ${clickable ? 'hover:bg-stone-50 dark:hover:bg-[#1E2124] cursor-pointer' : ''}`}
                     >
                       <span className={`w-1 self-stretch rounded-full ${EVENT_STYLES[e.status].dot}`} />
-                      <Icon size={15} className="text-stone-500 shrink-0" />
+                      <Icon size={15} className="text-stone-500 dark:text-[#94A3B8] shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <div className={`text-xs font-semibold text-stone-900 truncate ${e.status === 'done' ? 'line-through text-stone-500' : ''}`}>
+                        <div className={`text-xs font-semibold text-stone-900 dark:text-[#F5F7F5] truncate ${e.status === 'done' ? 'line-through text-stone-500 dark:text-[#64748B]' : ''}`}>
                           {e.title}
                         </div>
-                        <div className="text-[11px] text-stone-500 truncate">
+                        <div className="text-[11px] text-stone-500 dark:text-[#94A3B8] truncate">
                           {[e.batchName, e.detail].filter(Boolean).join(' · ')}
                         </div>
                       </div>
-                      <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wide text-stone-400 shrink-0">
+                      <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wide text-stone-400 dark:text-[#64748B] shrink-0">
                         {EVENT_STYLES[e.status].label}
                       </span>
                     </div>

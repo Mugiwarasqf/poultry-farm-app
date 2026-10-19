@@ -48,8 +48,21 @@ export function LineChart({ points, height = 170, formatTick = (v) => v.toLocale
 
       {ticks.map((t) => (
         <g key={t}>
-          <line x1={pad.left} x2={W - pad.right} y1={y(t)} y2={y(t)} stroke="#E1E8EF" strokeWidth="1" />
-          <text x={pad.left - 8} y={y(t) + 3.5} textAnchor="end" fontSize="10.5" fill="#70829B">
+          <line
+            x1={pad.left}
+            x2={W - pad.right}
+            y1={y(t)}
+            y2={y(t)}
+            strokeWidth="1"
+            className="stroke-[#E1E8EF] dark:stroke-[#2B3238] transition-colors"
+          />
+          <text
+            x={pad.left - 8}
+            y={y(t) + 3.5}
+            textAnchor="end"
+            fontSize="10.5"
+            className="fill-[#70829B] dark:fill-[#94A3B8] transition-colors"
+          >
             {formatTick(t)}
           </text>
         </g>
@@ -60,11 +73,24 @@ export function LineChart({ points, height = 170, formatTick = (v) => v.toLocale
 
       {points.map((p, i) => (
         <g key={`${p.label}-${i}`}>
-          <circle cx={x(i)} cy={y(p.value)} r="3.5" fill={color} stroke="#fff" strokeWidth="1.5">
+          <circle
+            cx={x(i)}
+            cy={y(p.value)}
+            r="3.5"
+            fill={color}
+            strokeWidth="1.5"
+            className="stroke-white dark:stroke-[#17191A] transition-colors"
+          >
             <title>{`${p.label}: ${p.value.toLocaleString()}`}</title>
           </circle>
           {showLabel(i) && (
-            <text x={x(i)} y={H - 6} textAnchor="middle" fontSize="10.5" fill="#70829B">
+            <text
+              x={x(i)}
+              y={H - 6}
+              textAnchor="middle"
+              fontSize="10.5"
+              className="fill-[#70829B] dark:fill-[#94A3B8] transition-colors"
+            >
               {p.label}
             </text>
           )}

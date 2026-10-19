@@ -30,7 +30,7 @@ export default function App() {
   // "batch created" confirmation.
   if (isLoggedIn && ((farmLoading && !farm) || !batchesReady)) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-[#0F1112] flex items-center justify-center">
         <LoadingIndicator label="Loading your farm" />
       </div>
     );
@@ -43,7 +43,7 @@ export default function App() {
   // unknown. Don't guess "not set up" and send them to onboarding.
   if (isLoggedIn && !isSetupComplete && batchesError) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-6">
+      <div className="min-h-screen bg-white dark:bg-[#0F1112] flex items-center justify-center px-6">
         <div className="max-w-sm text-center">
           <span className="mx-auto w-14 h-14 rounded-full bg-stone-100 flex items-center justify-center" aria-hidden="true">
             <WifiOff size={26} strokeWidth={1.75} className="text-[#17191A]" />

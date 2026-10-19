@@ -76,44 +76,44 @@ function HeaderStat({ icon: Icon, label, value }) {
 
 function SummaryTile({ icon: Icon, label, value, suffix, hint }) {
   return (
-    <div className="rounded-xl border border-stone-200 p-4">
-      <div className="flex items-center gap-2 text-stone-500">
-        <Icon size={15} strokeWidth={2.5} className="text-stone-500 shrink-0" />
+    <div className="rounded-xl border border-stone-200 dark:border-[#2B3238] bg-white dark:bg-[#1E2124] p-4">
+      <div className="flex items-center gap-2 text-stone-500 dark:text-[#64748B]">
+        <Icon size={15} strokeWidth={2.5} className="text-stone-500 dark:text-[#64748B] shrink-0" />
         <span className="text-xs font-medium truncate">{label}</span>
       </div>
       <div className="mt-2 flex items-baseline gap-1.5">
-        <span className="text-2xl font-bold text-stone-950 font-heading">{value}</span>
-        {suffix && <span className="text-xs text-stone-400">{suffix}</span>}
+        <span className="text-2xl font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">{value}</span>
+        {suffix && <span className="text-xs text-stone-400 dark:text-[#64748B]">{suffix}</span>}
       </div>
-      {hint && <div className="text-[11px] text-stone-400 mt-0.5">{hint}</div>}
+      {hint && <div className="text-[11px] text-stone-400 dark:text-[#64748B] mt-0.5">{hint}</div>}
     </div>
   );
 }
 
 function InsightRow({ icon: Icon, label, sub, value }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3 border-b border-stone-100 last:border-0">
+    <div className="flex items-center justify-between gap-4 py-3 border-b border-stone-100 dark:border-[#2B3238] last:border-0">
       <div className="flex items-start gap-2.5 min-w-0">
-        <Icon size={15} strokeWidth={2.5} className="text-stone-400 shrink-0 mt-0.5" />
+        <Icon size={15} strokeWidth={2.5} className="text-stone-400 dark:text-[#64748B] shrink-0 mt-0.5" />
         <div className="min-w-0">
-          <div className="text-xs text-stone-600 truncate">{label}</div>
-          {sub && <div className="text-[11px] text-stone-400 truncate">{sub}</div>}
+          <div className="text-xs text-stone-600 dark:text-[#94A3B8] truncate">{label}</div>
+          {sub && <div className="text-[11px] text-stone-400 dark:text-[#64748B] truncate">{sub}</div>}
         </div>
       </div>
-      <span className="text-sm font-semibold text-stone-900 shrink-0">{value}</span>
+      <span className="text-sm font-semibold text-stone-900 dark:text-[#F5F7F5] shrink-0">{value}</span>
     </div>
   );
 }
 
 function EmptyState({ icon: Icon, title, description }) {
   return (
-    <div className="rounded-xl border border-stone-200 bg-stone-50/60 p-6 flex items-center gap-4">
-      <div className="w-11 h-11 rounded-full bg-white border border-stone-200 flex items-center justify-center shrink-0">
-        <Icon size={18} strokeWidth={2.5} className="text-stone-400" />
+    <div className="rounded-xl border border-stone-200 dark:border-[#2B3238] bg-stone-50/60 dark:bg-[#17191A] p-6 flex items-center gap-4">
+      <div className="w-11 h-11 rounded-full bg-white dark:bg-[#1E2124] border border-stone-200 dark:border-[#2B3238] flex items-center justify-center shrink-0">
+        <Icon size={18} strokeWidth={2.5} className="text-stone-400 dark:text-[#64748B]" />
       </div>
       <div className="min-w-0">
-        <div className="text-sm font-semibold text-stone-800">{title}</div>
-        {description && <div className="text-xs text-stone-500 mt-0.5">{description}</div>}
+        <div className="text-sm font-semibold text-stone-800 dark:text-[#F5F7F5]">{title}</div>
+        {description && <div className="text-xs text-stone-500 dark:text-[#94A3B8] mt-0.5">{description}</div>}
       </div>
     </div>
   );
@@ -121,26 +121,26 @@ function EmptyState({ icon: Icon, title, description }) {
 
 function LogRow({ icon: Icon, primary, secondary, value, pending }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3.5 border-b border-stone-100 last:border-0">
+    <div className="flex items-center justify-between gap-4 py-3.5 border-b border-stone-100 dark:border-[#2B3238] last:border-0">
       <div className="flex items-center gap-3 min-w-0">
         {Icon && (
-          <div className="w-9 h-9 rounded-lg bg-stone-100 flex items-center justify-center shrink-0">
-            <Icon size={16} strokeWidth={2.5} className="text-stone-600" />
+          <div className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-[#2B3238] flex items-center justify-center shrink-0">
+            <Icon size={16} strokeWidth={2.5} className="text-stone-600 dark:text-[#94A3B8]" />
           </div>
         )}
         <div className="min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm font-semibold text-stone-900 truncate">{primary}</span>
+            <span className="text-sm font-semibold text-stone-900 dark:text-[#F5F7F5] truncate">{primary}</span>
             {pending && (
-              <span className="shrink-0 px-1.5 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-[10px] font-semibold text-amber-800">
+              <span className="shrink-0 px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-[#261B06] border border-amber-200 dark:border-[#4A350C] text-[10px] font-semibold text-amber-800 dark:text-[#FCD34D]">
                 Waiting to send
               </span>
             )}
           </div>
-          {secondary && <div className="text-xs text-stone-500 truncate mt-0.5">{secondary}</div>}
+          {secondary && <div className="text-xs text-stone-500 dark:text-[#64748B] truncate mt-0.5">{secondary}</div>}
         </div>
       </div>
-      {value && <span className="text-sm font-semibold text-stone-900 shrink-0">{value}</span>}
+      {value && <span className="text-sm font-semibold text-stone-900 dark:text-[#F5F7F5] shrink-0">{value}</span>}
     </div>
   );
 }
@@ -150,10 +150,10 @@ function QuickAction({ icon: Icon, label, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="rounded-xl border border-stone-200 p-4 flex flex-col items-center justify-center gap-2 text-center hover:border-stone-300 hover:bg-stone-50 transition-colors cursor-pointer"
+      className="rounded-xl border border-stone-200 dark:border-[#2B3238] bg-white dark:bg-[#1E2124] p-4 flex flex-col items-center justify-center gap-2 text-center hover:border-stone-300 dark:hover:border-[#374151] hover:bg-stone-50 dark:hover:bg-[#2B3238] transition-colors cursor-pointer"
     >
-      <Icon size={20} strokeWidth={2.5} className="text-stone-800" />
-      <span className="text-xs font-semibold text-stone-800 leading-tight">{label}</span>
+      <Icon size={20} strokeWidth={2.5} className="text-stone-800 dark:text-[#F5F7F5]" />
+      <span className="text-xs font-semibold text-stone-800 dark:text-[#F5F7F5] leading-tight">{label}</span>
     </button>
   );
 }
@@ -731,27 +731,27 @@ export function BatchDetailPage() {
       </Link>
 
       {/* Header card */}
-      <div className="bg-white rounded-xl shadow-sm p-5">
+      <div className="bg-white dark:bg-[#1E2124] rounded-xl shadow-sm p-5">
         <div className="flex flex-col lg:flex-row lg:items-center gap-5">
           <div className="flex items-start gap-4 flex-1 min-w-0">
             <img
               src={batchImage(batch)}
               alt={batch.name}
-              className="w-20 h-20 rounded-lg object-cover bg-stone-100 shrink-0"
+              className="w-20 h-20 rounded-lg object-cover bg-stone-100 dark:bg-[#2B3238] shrink-0"
             />
             <div className="min-w-0 space-y-2">
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-xl font-bold text-stone-950 font-heading truncate">{batch.name}</h1>
+                <h1 className="text-xl font-bold text-stone-950 dark:text-[#F5F7F5] font-heading truncate">{batch.name}</h1>
                 <span className={typePillClass(batchType)}>{birdTypeLabel(batchType)}</span>
               </div>
-              <div className="space-y-1.5 text-xs text-stone-600">
+              <div className="space-y-1.5 text-xs text-stone-600 dark:text-[#94A3B8]">
                 <div className="inline-flex items-center gap-1.5">
-                  <CalendarIcon size={13} strokeWidth={2.5} className="text-stone-500" />
+                  <CalendarIcon size={13} strokeWidth={2.5} className="text-stone-500 dark:text-[#64748B]" />
                   {formatDate(batch.startDate)} - {batch.closedAt ? formatDate(batch.closedAt) : 'Ongoing'}
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
                   <span className="inline-flex items-center gap-1.5">
-                    <BirdIcon size={13} className="text-stone-500" />
+                    <BirdIcon size={13} className="text-stone-500 dark:text-[#64748B]" />
                     {Number(batch.birdCount || 0).toLocaleString()} birds
                   </span>
                   <span className="inline-flex items-center gap-1.5">
@@ -817,7 +817,7 @@ export function BatchDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-stone-200">
+      <div className="border-b border-stone-200 dark:border-[#2B3238]">
         <div className="flex gap-1 overflow-x-auto scrollbar-none">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -827,13 +827,12 @@ export function BatchDetailPage() {
                 type="button"
                 onClick={(e) => {
                   setActiveTab(tab.id);
-                  // On phones the tab row scrolls sideways; keep the chosen tab fully in view.
                   e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
                 }}
                 className={`shrink-0 whitespace-nowrap px-3.5 sm:px-4 py-2.5 rounded-t-lg text-sm transition-colors cursor-pointer border-b-2 ${
                   isActive
-                    ? 'bg-[#F7FFE0] text-[#4D6600] font-semibold border-[#B7DA3E]'
-                    : 'text-stone-500 border-transparent hover:text-stone-900 hover:bg-stone-50'
+                    ? 'bg-[#F7FFE0] dark:bg-[#142312] text-[#4D6600] dark:text-[#DFFF83] font-semibold border-[#B7DA3E]'
+                    : 'text-stone-500 dark:text-[#64748B] border-transparent hover:text-stone-900 dark:hover:text-[#F5F7F5] hover:bg-stone-50 dark:hover:bg-[#1E2124]'
                 }`}
               >
                 {tab.label}

@@ -126,16 +126,16 @@ function useBatchStats(batch, logs) {
 
 function StatTile({ icon: Icon, label, value, suffix, hint }) {
   return (
-    <div className="rounded-xl border border-stone-200 p-4">
-      <div className="flex items-center gap-2 text-stone-500">
-        <Icon size={15} strokeWidth={2.5} className="text-stone-400 shrink-0" />
+    <div className="rounded-xl border border-stone-200 dark:border-[#2B3238] bg-white dark:bg-[#1E2124] p-4">
+      <div className="flex items-center gap-2 text-stone-500 dark:text-[#64748B]">
+        <Icon size={15} strokeWidth={2.5} className="text-stone-400 dark:text-[#64748B] shrink-0" />
         <span className="text-xs font-medium truncate">{label}</span>
       </div>
       <div className="mt-2 flex items-baseline gap-1.5">
-        <span className="text-2xl font-bold text-stone-950 font-heading">{value}</span>
-        {suffix && <span className="text-xs text-stone-400">{suffix}</span>}
+        <span className="text-2xl font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">{value}</span>
+        {suffix && <span className="text-xs text-stone-400 dark:text-[#64748B]">{suffix}</span>}
       </div>
-      {hint && <div className="text-[11px] text-stone-400 mt-0.5">{hint}</div>}
+      {hint && <div className="text-[11px] text-stone-400 dark:text-[#64748B] mt-0.5">{hint}</div>}
     </div>
   );
 }
@@ -144,23 +144,23 @@ function InsightRow({ icon: Icon, label, value }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3">
       <div className="flex items-center gap-2.5 min-w-0">
-        <Icon size={15} strokeWidth={2.5} className="text-stone-400 shrink-0" />
-        <span className="text-sm text-stone-600 truncate">{label}</span>
+        <Icon size={15} strokeWidth={2.5} className="text-stone-400 dark:text-[#64748B] shrink-0" />
+        <span className="text-sm text-stone-600 dark:text-[#94A3B8] truncate">{label}</span>
       </div>
-      <span className="text-sm font-semibold text-stone-900 shrink-0">{value}</span>
+      <span className="text-sm font-semibold text-stone-900 dark:text-[#F5F7F5] shrink-0">{value}</span>
     </div>
   );
 }
 
 function EmptyState({ icon: Icon, title, description }) {
   return (
-    <div className="rounded-xl border border-stone-200 bg-stone-50/60 p-5 flex items-center gap-4">
-      <div className="w-11 h-11 rounded-full bg-white border border-stone-200 flex items-center justify-center shrink-0">
-        <Icon size={18} strokeWidth={2.5} className="text-stone-400" />
+    <div className="rounded-xl border border-stone-200 dark:border-[#2B3238] bg-stone-50/60 dark:bg-[#17191A] p-5 flex items-center gap-4">
+      <div className="w-11 h-11 rounded-full bg-white dark:bg-[#1E2124] border border-stone-200 dark:border-[#2B3238] flex items-center justify-center shrink-0">
+        <Icon size={18} strokeWidth={2.5} className="text-stone-400 dark:text-[#64748B]" />
       </div>
       <div className="min-w-0">
-        <div className="text-sm font-semibold text-stone-800">{title}</div>
-        {description && <div className="text-xs text-stone-500 mt-0.5">{description}</div>}
+        <div className="text-sm font-semibold text-stone-800 dark:text-[#F5F7F5]">{title}</div>
+        {description && <div className="text-xs text-stone-500 dark:text-[#94A3B8] mt-0.5">{description}</div>}
       </div>
     </div>
   );
@@ -170,10 +170,10 @@ function LogRow({ primary, secondary, value }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3">
       <div className="min-w-0">
-        <div className="text-sm font-medium text-stone-800 truncate">{primary}</div>
-        {secondary && <div className="text-xs text-stone-500 truncate mt-0.5">{secondary}</div>}
+        <div className="text-sm font-medium text-stone-800 dark:text-[#F5F7F5] truncate">{primary}</div>
+        {secondary && <div className="text-xs text-stone-500 dark:text-[#64748B] truncate mt-0.5">{secondary}</div>}
       </div>
-      {value && <span className="text-sm font-semibold text-stone-900 shrink-0">{value}</span>}
+      {value && <span className="text-sm font-semibold text-stone-900 dark:text-[#F5F7F5] shrink-0">{value}</span>}
     </div>
   );
 }
@@ -194,14 +194,14 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
   const dateRange = `${formatDate(batch.startDate)} – ${batch.closedAt ? formatDate(batch.closedAt) : 'Closed'}`;
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm ${className}`}>
+    <div className={`bg-white dark:bg-[#1E2124] rounded-xl shadow-sm ${className}`}>
       {/* Header */}
       <div className="p-5 sm:p-6 space-y-5">
         {onBack && (
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 text-sm font-medium text-stone-500 hover:text-stone-900 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 text-sm font-medium text-stone-500 dark:text-[#64748B] hover:text-stone-900 dark:hover:text-[#F5F7F5] transition-colors cursor-pointer"
           >
             <ChevronLeft size={16} strokeWidth={2.5} />
             <span>Back to History</span>
@@ -212,13 +212,13 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
           <img
             src={batchImage(batch)}
             alt={batch.name}
-            className="w-16 h-16 rounded-lg object-cover bg-stone-100 shrink-0"
+            className="w-16 h-16 rounded-lg object-cover bg-stone-100 dark:bg-[#2B3238] shrink-0"
           />
 
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5 flex-wrap min-w-0">
-                <h2 className="text-lg sm:text-xl font-bold text-stone-950 font-heading truncate">
+                <h2 className="text-lg sm:text-xl font-bold text-stone-950 dark:text-[#F5F7F5] font-heading truncate">
                   {batch.name}
                 </h2>
                 <span className={typePillClass(type)}>
@@ -230,18 +230,18 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-sm text-stone-500">
-              <CalendarIcon size={13} strokeWidth={3} className="text-stone-500 shrink-0" />
+            <div className="flex items-center gap-1.5 text-sm text-stone-500 dark:text-[#94A3B8]">
+              <CalendarIcon size={13} strokeWidth={3} className="text-stone-500 dark:text-[#64748B] shrink-0" />
               <span className="truncate">{dateRange}</span>
             </div>
 
-            <div className="flex items-center gap-4 text-sm text-stone-500 flex-wrap">
+            <div className="flex items-center gap-4 text-sm text-stone-500 dark:text-[#94A3B8] flex-wrap">
               <span className="inline-flex items-center gap-1.5">
-                <BirdIcon size={13} strokeWidth={3} className="text-stone-500 shrink-0" />
+                <BirdIcon size={13} strokeWidth={3} className="text-stone-500 dark:text-[#64748B] shrink-0" />
                 {stats.totalBirds.toLocaleString()} birds
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <LocationIcon size={13} strokeWidth={3} className="text-stone-500 shrink-0" />
+                <LocationIcon size={13} strokeWidth={3} className="text-stone-500 dark:text-[#64748B] shrink-0" />
                 {batch.housing || 'No house recorded'}
               </span>
             </div>
@@ -250,10 +250,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-stone-200 px-5 sm:px-6">
-        {/* Plain text tabs with an underline on the active one — they wrap if
-            the panel gets narrow rather than sitting in a scroll container,
-            which would put a scrollbar right under the underline. */}
+      <div className="border-b border-stone-200 dark:border-[#2B3238] px-5 sm:px-6">
         <div className="flex flex-wrap gap-x-5">
           {TABS.map((item) => {
             const isActive = item === tab;
@@ -264,8 +261,8 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
                 onClick={() => setTab(item)}
                 className={`relative py-3 text-sm whitespace-nowrap transition-colors cursor-pointer border-b-2 -mb-px ${
                   isActive
-                    ? 'border-stone-900 text-stone-950 font-semibold'
-                    : 'border-transparent text-stone-500 hover:text-stone-800'
+                    ? 'border-stone-900 dark:border-[#DFFF83] text-stone-950 dark:text-[#F5F7F5] font-semibold'
+                    : 'border-transparent text-stone-500 dark:text-[#64748B] hover:text-stone-800 dark:hover:text-[#94A3B8]'
                 }`}
               >
                 {item}
@@ -278,14 +275,11 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
       {/* Tab content */}
       <div className="p-5 sm:p-6">
         {loading ? (
-          <div className="py-12 flex items-center justify-center gap-2 text-sm text-stone-400">
+          <div className="py-12 flex items-center justify-center gap-2 text-sm text-stone-400 dark:text-[#64748B]">
             <Loader2 size={16} className="animate-spin" />
             <span>Loading batch records…</span>
           </div>
         ) : (
-          /* key={tab} remounts this subtree on every tab switch, which is what
-             restarts the CSS enter animation — without it the panel would swap
-             instantly and the animation would only ever play once. */
           <div key={tab} className="animate-tab-panel">
             {tab === 'Overview' && <OverviewTab batch={batch} stats={stats} />}
 
@@ -297,7 +291,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
                   description="Egg production is only available for layer batches."
                 />
               ) : (
-                <div className="divide-y divide-stone-100">
+                <div className="divide-y divide-stone-100 dark:divide-[#2B3238]">
                   {logs.eggs.map((entry) => (
                     <LogRow
                       key={entry.entryId}
@@ -314,7 +308,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
               logs.feed.length === 0 ? (
                 <EmptyState icon={FeedIcon} title="No feed recorded for this batch." />
               ) : (
-                <div className="divide-y divide-stone-100">
+                <div className="divide-y divide-stone-100 dark:divide-[#2B3238]">
                   {logs.feed.map((entry) => (
                     <LogRow
                       key={entry.entryId}
@@ -331,7 +325,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
               logs.mortality.length === 0 ? (
                 <EmptyState icon={Skull} title="No mortality recorded for this batch." />
               ) : (
-                <div className="divide-y divide-stone-100">
+                <div className="divide-y divide-stone-100 dark:divide-[#2B3238]">
                   {logs.mortality.map((entry) => (
                     <LogRow
                       key={entry.entryId}
@@ -348,7 +342,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
               logs.vaccinations.length === 0 ? (
                 <EmptyState icon={VaccineIcon} title="No vaccinations recorded for this batch." />
               ) : (
-                <div className="divide-y divide-stone-100">
+                <div className="divide-y divide-stone-100 dark:divide-[#2B3238]">
                   {logs.vaccinations.map((entry) => (
                     <LogRow
                       key={entry.entryId}
@@ -362,7 +356,7 @@ export function BatchHistoryDetail({ batch, onBack, className = '' }) {
 
             {tab === 'Notes' && (
               batch.notes ? (
-                <p className="text-sm text-stone-600 leading-relaxed whitespace-pre-wrap">{batch.notes}</p>
+                <p className="text-sm text-stone-600 dark:text-[#94A3B8] leading-relaxed whitespace-pre-wrap">{batch.notes}</p>
               ) : (
                 <EmptyState icon={FileText} title="No notes were saved for this batch." />
               )
@@ -378,7 +372,7 @@ function OverviewTab({ batch, stats }) {
   return (
     <div className="space-y-7">
       <section className="space-y-3">
-        <h3 className="text-base font-bold text-stone-950 font-heading">Batch Summary</h3>
+        <h3 className="text-base font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Batch Summary</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <StatTile icon={BirdIcon} label="Total Birds" value={stats.totalBirds.toLocaleString()} />
           <StatTile icon={ShoppingCart} label="Birds Sold" value={stats.birdsSold.toLocaleString()} />
@@ -410,17 +404,17 @@ function OverviewTab({ batch, stats }) {
       </section>
 
       <section className="space-y-3">
-        <h3 className="text-base font-bold text-stone-950 font-heading">Production Performance</h3>
+        <h3 className="text-base font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Production Performance</h3>
         {stats.totalEggs > 0 ? (
-          <div className="rounded-xl border border-stone-200 p-5 flex items-center gap-4">
-            <div className="w-11 h-11 rounded-full bg-[#F7FFE0] border border-[#E3F5A8] flex items-center justify-center shrink-0">
-              <TrendingUp size={18} strokeWidth={2.5} className="text-[#4D6600]" />
+          <div className="rounded-xl border border-stone-200 dark:border-[#2B3238] bg-white dark:bg-[#1E2124] p-5 flex items-center gap-4">
+            <div className="w-11 h-11 rounded-full bg-[#F7FFE0] dark:bg-[#142312] border border-[#E3F5A8] dark:border-[#274220] flex items-center justify-center shrink-0">
+              <TrendingUp size={18} strokeWidth={2.5} className="text-[#4D6600] dark:text-[#DFFF83]" />
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-stone-800">
+              <div className="text-sm font-semibold text-stone-800 dark:text-[#F5F7F5]">
                 {stats.totalEggs.toLocaleString()} eggs collected over this batch's run.
               </div>
-              <div className="text-xs text-stone-500 mt-0.5">
+              <div className="text-xs text-stone-500 dark:text-[#94A3B8] mt-0.5">
                 {stats.avgEggsPerDay != null
                   ? `Averaging ${stats.avgEggsPerDay.toLocaleString()} eggs per day`
                   : 'Daily average needs a recorded close date'}
@@ -438,8 +432,8 @@ function OverviewTab({ batch, stats }) {
       </section>
 
       <section className="space-y-1">
-        <h3 className="text-base font-bold text-stone-950 font-heading mb-2">Key Insights</h3>
-        <div className="divide-y divide-stone-100">
+        <h3 className="text-base font-bold text-stone-950 dark:text-[#F5F7F5] font-heading mb-2">Key Insights</h3>
+        <div className="divide-y divide-stone-100 dark:divide-[#2B3238]">
           <InsightRow
             icon={EggIcon}
             label="Peak egg production (if applicable)"

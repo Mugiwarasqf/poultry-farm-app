@@ -19,13 +19,13 @@ export function NotificationItem({ notification: n, now, onSelect, compact = fal
   const unread = !n.read;
 
   return (
-    <div className="group relative flex items-stretch bg-white transition-colors hover:bg-stone-50/80">
+    <div className="group relative flex items-stretch bg-white dark:bg-[#1E2124] transition-colors hover:bg-stone-50/80 dark:hover:bg-[#252A2E]">
       <button
         type="button"
         data-notification-item=""
         onClick={() => onSelect(n)}
         aria-label={`${unread ? 'Unread. ' : ''}${n.title}. ${n.message} ${fullTime(n.created_at)}`}
-        className={`flex-1 min-w-0 flex items-start gap-3 text-left cursor-pointer outline-none transition-colors focus-visible:bg-stone-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-300 ${
+        className={`flex-1 min-w-0 flex items-start gap-3 text-left cursor-pointer outline-none transition-colors focus-visible:bg-stone-50 dark:focus-visible:bg-[#252A2E] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-300 dark:focus-visible:ring-[#2B3238] ${
           compact ? 'px-4 py-3' : 'px-4 sm:px-5 py-3.5'
         }`}
       >
@@ -35,7 +35,7 @@ export function NotificationItem({ notification: n, now, onSelect, compact = fal
           <span className="flex items-start justify-between gap-3 min-w-0">
             <span
               className={`min-w-0 text-[13px] leading-5 truncate ${
-                unread ? 'font-semibold text-stone-900' : 'font-medium text-stone-600'
+                unread ? 'font-semibold text-stone-900 dark:text-[#F5F7F5]' : 'font-medium text-stone-600 dark:text-[#94A3B8]'
               }`}
             >
               {n.title}
@@ -43,14 +43,14 @@ export function NotificationItem({ notification: n, now, onSelect, compact = fal
             <time
               dateTime={n.created_at}
               title={fullTime(n.created_at)}
-              className="shrink-0 text-[11px] leading-5 text-stone-400 tabular-nums"
+              className="shrink-0 text-[11px] leading-5 text-stone-400 dark:text-[#64748B] tabular-nums"
             >
               {relativeTime(n.created_at, now)}
             </time>
           </span>
           <span
             className={`mt-0.5 block text-[12.5px] leading-[18px] line-clamp-2 ${
-              unread ? 'text-stone-500' : 'text-stone-400'
+              unread ? 'text-stone-500 dark:text-[#94A3B8]' : 'text-stone-400 dark:text-[#64748B]'
             }`}
           >
             {n.message}

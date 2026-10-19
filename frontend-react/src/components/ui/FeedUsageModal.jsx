@@ -11,8 +11,8 @@ import { toIso } from '../../lib/supplements';
 import { FeedIcon } from './FeedIcon';
 import { Spinner } from './Spinner';
 
-const FIELD = 'w-full px-3.5 py-2.5 bg-white border border-stone-300 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400';
-const LABEL = 'text-xs font-bold text-stone-800 block mb-1.5';
+const FIELD = 'w-full px-3.5 py-2.5 bg-white dark:bg-[#1E2124] border border-stone-300 dark:border-[#2B3238] rounded-xl text-sm text-stone-900 dark:text-[#F5F7F5] focus:outline-hidden focus:ring-2 focus:ring-[#DFFF83]/70 focus:border-[#B7DA3E] transition-all placeholder:text-stone-400 dark:placeholder:text-[#64748B]';
+const LABEL = 'text-xs font-bold text-stone-800 dark:text-[#F5F7F5] block mb-1.5';
 const OFF_STOCK = '__off_stock__';
 const QUICK_BAGS = [0.25, 0.5, 1, 2];
 
@@ -114,20 +114,20 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={onClose} />
-      <div className="relative bg-white w-full sm:max-w-xl sm:rounded-3xl rounded-t-3xl shadow-2xl z-10 animate-fade-in flex flex-col max-h-[92vh]">
-        <div className="flex items-center justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b border-stone-100 shrink-0">
+      <div className="relative bg-white dark:bg-[#17191A] w-full sm:max-w-xl sm:rounded-3xl rounded-t-3xl shadow-2xl z-10 animate-fade-in flex flex-col max-h-[92vh] border border-stone-200/50 dark:border-[#2B3238]">
+        <div className="flex items-center justify-between gap-3 px-5 sm:px-6 pt-5 pb-4 border-b border-stone-100 dark:border-[#2B3238] shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-[#F7FFE0] text-[#4D6600] flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#F7FFE0] dark:bg-[#142312] text-[#4D6600] dark:text-[#DFFF83] flex items-center justify-center shrink-0">
               <FeedIcon size={20} />
             </div>
             <div className="min-w-0">
-              <h2 className="text-lg font-bold text-stone-950 font-heading truncate">Record Feed Usage</h2>
-              <p className="text-xs text-stone-500 truncate">
+              <h2 className="text-lg font-bold text-stone-950 dark:text-[#F5F7F5] font-heading truncate">Record Feed Usage</h2>
+              <p className="text-xs text-stone-500 dark:text-[#94A3B8] truncate">
                 {batch ? `${batch.name} · ${birdTypeLabel(batch.type)} · ${Number(batch.birdCount || 0).toLocaleString()} birds` : 'Feed taken from the store for a batch'}
               </p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-colors cursor-pointer shrink-0" aria-label="Close">
+          <button type="button" onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full text-stone-400 dark:text-[#94A3B8] hover:text-stone-900 dark:hover:text-[#F5F7F5] hover:bg-stone-100 dark:hover:bg-[#1E2124] transition-colors cursor-pointer shrink-0" aria-label="Close">
             <X size={20} />
           </button>
         </div>
@@ -155,12 +155,12 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
           <div>
             <label className={LABEL}>Feed from the store <span className="text-rose-500">*</span></label>
             {loading ? (
-              <div className="py-6 text-center text-xs text-stone-400">Checking the feed store…</div>
+              <div className="py-6 text-center text-xs text-stone-400 dark:text-[#64748B]">Checking the feed store…</div>
             ) : (
               <div className="space-y-2">
                 {lines.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-stone-300 p-4 text-center space-y-2">
-                    <p className="text-xs text-stone-600">
+                  <div className="rounded-2xl border border-dashed border-stone-300 dark:border-[#2B3238] p-4 text-center space-y-2">
+                    <p className="text-xs text-stone-600 dark:text-[#94A3B8]">
                       {error ? 'The feed store could not be loaded.' : 'No feed in the store yet. Add what you bought first, so usage takes it off the stock.'}
                     </p>
                     {onAddStock && (
@@ -180,11 +180,13 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
                       type="button"
                       onClick={() => setLineKey(l.key)}
                       className={`w-full flex items-center justify-between gap-3 p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                        selected ? 'border-[#B7DA3E] bg-[#F7FFE0] ring-1 ring-[#B7DA3E]' : 'border-stone-200 hover:border-[#D2EC7A]'
+                        selected
+                          ? 'border-[#B7DA3E] dark:border-[#DFFF83] bg-[#F7FFE0] dark:bg-[#1C2612] ring-1 ring-[#B7DA3E] dark:ring-[#DFFF83]'
+                          : 'border-stone-200 dark:border-[#2B3238] bg-white dark:bg-[#17191A] hover:border-[#D2EC7A]'
                       } ${l.left <= 0 && !selected ? 'opacity-60' : ''}`}
                     >
                       <div className="min-w-0">
-                        <div className="text-sm font-bold text-stone-900 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                        <div className="text-sm font-bold text-stone-900 dark:text-[#F5F7F5] flex flex-wrap items-center gap-x-1.5 gap-y-1">
                           <span className="break-words">{l.label}</span>
                           {suits && (
                             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-[#DFFF83] text-[#17191A] text-[9px] font-bold shrink-0">
@@ -192,15 +194,15 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-stone-500">
+                        <div className="text-[11px] text-stone-500 dark:text-[#94A3B8]">
                           {l.bagSizeKg}kg bags{l.avgPrice ? ` · about ${formatNaira(l.avgPrice)}/bag` : ''}
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <div className={`text-sm font-extrabold ${l.left <= 0 ? 'text-rose-600' : l.status === 'low' ? 'text-amber-700' : 'text-stone-950'}`}>
+                        <div className={`text-sm font-extrabold ${l.left <= 0 ? 'text-rose-600 dark:text-[#FB7185]' : l.status === 'low' ? 'text-amber-700 dark:text-[#FCD34D]' : 'text-stone-950 dark:text-[#F5F7F5]'}`}>
                           {l.left <= 0 ? 'Out of stock' : formatBags(l.left)}
                         </div>
-                        {l.left > 0 && <div className="text-[10px] text-stone-400">left</div>}
+                        {l.left > 0 && <div className="text-[10px] text-stone-400 dark:text-[#64748B]">left</div>}
                       </div>
                     </button>
                   );
@@ -210,7 +212,9 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
                   type="button"
                   onClick={() => setLineKey(OFF_STOCK)}
                   className={`w-full p-3 rounded-xl border text-left text-xs font-semibold transition-all cursor-pointer ${
-                    offStock ? 'border-[#B7DA3E] bg-[#F7FFE0] ring-1 ring-[#B7DA3E] text-stone-900' : 'border-dashed border-stone-300 text-stone-500 hover:border-[#D2EC7A]'
+                    offStock
+                      ? 'border-[#B7DA3E] dark:border-[#DFFF83] bg-[#F7FFE0] dark:bg-[#1C2612] ring-1 ring-[#B7DA3E] dark:ring-[#DFFF83] text-stone-900 dark:text-[#F5F7F5]'
+                      : 'border-dashed border-stone-300 dark:border-[#2B3238] text-stone-500 dark:text-[#94A3B8] hover:border-[#D2EC7A]'
                   }`}
                 >
                   Feed not from the store (bought and used the same day, or given to you)
@@ -220,7 +224,7 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
           </div>
 
           {offStock && (
-            <div className="space-y-4 rounded-2xl border border-stone-200 p-4">
+            <div className="space-y-4 rounded-2xl border border-stone-200 dark:border-[#2B3238] p-4">
               <div>
                 <label className={LABEL}>Feed type <span className="text-rose-500">*</span></label>
                 <input type="text" list="feed-type-options" value={offType} onChange={(e) => setOffType(e.target.value)} className={FIELD} placeholder="e.g. Layer mash" />
@@ -264,7 +268,9 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
                     type="button"
                     onClick={() => setBags(String(q))}
                     className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                      bagCount === q ? 'bg-[#DFFF83] text-[#17191A] border-[#B7DA3E]' : 'bg-white text-stone-700 border-stone-200 hover:border-[#D2EC7A]'
+                      bagCount === q
+                        ? 'bg-[#DFFF83] text-[#17191A] border-[#B7DA3E]'
+                        : 'bg-white dark:bg-[#1E2124] text-stone-700 dark:text-[#94A3B8] border-stone-200 dark:border-[#2B3238] hover:border-[#D2EC7A]'
                     }`}
                   >
                     {q === 0.25 ? '¼' : q === 0.5 ? '½' : q} bag{q > 1 ? 's' : ''}
@@ -272,13 +278,13 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
                 ))}
               </div>
               {expected != null && (
-                <p className="text-[11px] text-stone-500 mt-2">
+                <p className="text-[11px] text-stone-500 dark:text-[#94A3B8] mt-2">
                   Rough guide: {Number(batch.birdCount).toLocaleString()} birds on {findFeedType(feedTypeLabel)?.label.toLowerCase()} eat about{' '}
-                  <strong className="text-stone-800">{formatBags(Math.round(expected * 4) / 4 || 0.25)} a day</strong>.
+                  <strong className="text-stone-800 dark:text-[#F5F7F5]">{formatBags(Math.round(expected * 4) / 4 || 0.25)} a day</strong>.
                 </p>
               )}
               {overdraw && (
-                <p className="mt-2 flex items-start gap-1.5 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                <p className="mt-2 flex items-start gap-1.5 text-[11px] text-amber-800 dark:text-[#FCD34D] bg-amber-50 dark:bg-[#261B06] border border-amber-200 dark:border-[#4A350C] rounded-xl px-3 py-2">
                   <AlertTriangle size={13} className="shrink-0 mt-px" />
                   Only {formatBags(Math.max(line.left, 0))} left of this feed. If you bought more, add it to the store so the count stays right.
                 </p>
@@ -287,19 +293,19 @@ export function FeedUsageModal({ isOpen, onClose, onSaved, defaultBatchId = '', 
           )}
 
           <div>
-            <label className={LABEL}>Notes <span className="text-stone-400 font-normal">(optional)</span></label>
+            <label className={LABEL}>Notes <span className="text-stone-400 dark:text-[#64748B] font-normal">(optional)</span></label>
             <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} className={FIELD} placeholder="e.g. Birds ate less, hot day" />
           </div>
         </div>
 
-        <div className="px-5 sm:px-6 pb-5 pt-3 border-t border-stone-100 shrink-0 space-y-2">
+        <div className="px-5 sm:px-6 pb-5 pt-3 border-t border-stone-100 dark:border-[#2B3238] shrink-0 space-y-2">
           {canSave && (
-            <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-2xl text-xs text-stone-700">
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-stone-50 dark:bg-[#1E2124] border border-stone-200 dark:border-[#2B3238] rounded-2xl text-xs text-stone-700 dark:text-[#94A3B8]">
               <span className="truncate">
-                <strong className="text-stone-900">{formatBags(bagCount)}</strong> of {feedTypeLabel}
+                <strong className="text-stone-900 dark:text-[#F5F7F5]">{formatBags(bagCount)}</strong> of {feedTypeLabel}
                 {line && ` · ${formatBags(Math.max(line.left - bagCount, 0))} left after this`}
               </span>
-              {cost > 0 && <strong className="text-stone-900 shrink-0">{formatNaira(cost)}</strong>}
+              {cost > 0 && <strong className="text-stone-900 dark:text-[#F5F7F5] shrink-0">{formatNaira(cost)}</strong>}
             </div>
           )}
           <button

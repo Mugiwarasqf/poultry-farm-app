@@ -51,8 +51,8 @@ export function HeaderWeather() {
   if (weather.status === 'loading') {
     return (
       <div className="flex items-center gap-2.5" aria-label="Loading weather">
-        <span className="w-9 h-9 rounded-full bg-stone-100 animate-pulse" />
-        <span className="hidden sm:block w-28 h-3.5 rounded bg-stone-100 animate-pulse" />
+        <span className="w-9 h-9 rounded-full bg-stone-100 dark:bg-[#1E2124] animate-pulse" />
+        <span className="hidden sm:block w-28 h-3.5 rounded bg-stone-100 dark:bg-[#1E2124] animate-pulse" />
       </div>
     );
   }
@@ -62,7 +62,7 @@ export function HeaderWeather() {
     return (
       <Link
         to="/settings/farm"
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold text-[#142033] hover:bg-stone-50 transition-colors"
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold text-[#142033] dark:text-[#F5F7F5] hover:bg-stone-50 dark:hover:bg-[#1E2124] transition-colors"
       >
         <span className="text-xl leading-none" aria-hidden="true">📍</span>
         <span className="hidden sm:inline">Add farm location for weather</span>
@@ -86,7 +86,7 @@ export function HeaderWeather() {
         aria-expanded={open}
         aria-haspopup="dialog"
         title="See today's and tomorrow's weather"
-        className="flex items-center gap-2.5 sm:gap-3 pl-1 pr-2 py-1 rounded-xl hover:bg-stone-50 transition-colors cursor-pointer text-left"
+        className="flex items-center gap-2.5 sm:gap-3 pl-1 pr-2 py-1 rounded-xl hover:bg-stone-50 dark:hover:bg-[#1E2124] transition-colors cursor-pointer text-left"
       >
         <span
           className="text-[30px] sm:text-[34px] leading-none drop-shadow-[0_2px_4px_rgba(20,32,51,0.18)] select-none"
@@ -97,18 +97,18 @@ export function HeaderWeather() {
         </span>
         <span className="flex flex-col leading-tight min-w-0">
           <span className="flex items-baseline gap-1.5">
-            <span className="text-base font-semibold text-[#142033] font-heading tabular-nums">{deg(current.temperature)}C</span>
-            <span className="hidden sm:inline text-sm text-[#142033]/80 truncate">
+            <span className="text-base font-semibold text-[#142033] dark:text-[#F5F7F5] font-heading tabular-nums">{deg(current.temperature)}C</span>
+            <span className="hidden sm:inline text-sm text-[#142033]/80 dark:text-[#F5F7F5]/80 truncate">
               {now.label}
               {weather.place?.name ? ` · ${weather.place.name}` : ''}
             </span>
           </span>
-          <span className="hidden md:inline text-[11px] text-[#70829B] tabular-nums">
+          <span className="hidden md:inline text-[11px] text-[#70829B] dark:text-[#94A3B8] tabular-nums">
             Tomorrow {next.emoji} {deg(tomorrow.max)}/{deg(tomorrow.min)}
             {tomorrow.rainChance != null ? ` · 💧 ${tomorrow.rainChance}%` : ''}
           </span>
         </span>
-        <ChevronDown size={15} className={`text-[#70829B] shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={15} className={`text-[#70829B] dark:text-[#94A3B8] shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (

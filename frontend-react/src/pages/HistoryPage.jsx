@@ -21,22 +21,22 @@ function BatchRow({ batch, selected, onSelect }) {
     <button
       type="button"
       onClick={() => onSelect(batch.batchId)}
-      className={`w-full text-left bg-white rounded-xl border p-4 flex items-center gap-4 transition-all cursor-pointer ${
+      className={`w-full text-left bg-white dark:bg-[#1E2124] rounded-xl border p-4 flex items-center gap-4 transition-all cursor-pointer ${
         selected
-          ? 'border-stone-900 shadow-md'
+          ? 'border-stone-900 dark:border-[#DFFF83] shadow-md'
           : 'border-transparent shadow-sm hover:shadow-md'
       }`}
     >
       <img
         src={batchImage(batch)}
         alt={batch.name}
-        className="w-[72px] h-[72px] rounded-lg object-cover bg-stone-100 shrink-0"
+        className="w-[72px] h-[72px] rounded-lg object-cover bg-stone-100 dark:bg-[#2B3238] shrink-0"
       />
 
       <div className="flex-1 min-w-0 space-y-1.5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2.5 flex-wrap min-w-0">
-            <span className="text-[15px] font-bold text-stone-950 font-heading truncate">
+            <span className="text-[15px] font-bold text-stone-950 dark:text-[#F5F7F5] font-heading truncate">
               {batch.name}
             </span>
             <span className={typePillClass(type)}>
@@ -48,26 +48,26 @@ function BatchRow({ batch, selected, onSelect }) {
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs text-stone-500">
-          <CalendarIcon size={12} strokeWidth={3} className="text-stone-500 shrink-0" />
+        <div className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-[#94A3B8]">
+          <CalendarIcon size={12} strokeWidth={3} className="text-stone-500 dark:text-[#94A3B8] shrink-0" />
           <span className="truncate">
             {formatDate(batch.startDate)} – {batch.closedAt ? formatDate(batch.closedAt) : 'Closed'}
           </span>
         </div>
 
-        <div className="flex items-center gap-4 text-xs text-stone-500 flex-wrap">
+        <div className="flex items-center gap-4 text-xs text-stone-500 dark:text-[#94A3B8] flex-wrap">
           <span className="inline-flex items-center gap-1.5">
-            <BirdIcon size={12} strokeWidth={3} className="text-black shrink-0" />
+            <BirdIcon size={12} strokeWidth={3} className="text-black dark:text-[#F5F7F5] shrink-0" />
             {Number(batch.birdCount || 0).toLocaleString()} birds
           </span>
           <span className="inline-flex items-center gap-1.5 min-w-0">
-            <LocationIcon size={12} strokeWidth={3} className="text-black shrink-0" />
+            <LocationIcon size={12} strokeWidth={3} className="text-black dark:text-[#F5F7F5] shrink-0" />
             <span className="truncate">{batch.housing || 'No house recorded'}</span>
           </span>
         </div>
       </div>
 
-      <ChevronRight size={18} strokeWidth={2} className="text-stone-400 shrink-0" />
+      <ChevronRight size={18} strokeWidth={2} className="text-stone-400 dark:text-[#64748B] shrink-0" />
     </button>
   );
 }
@@ -130,10 +130,10 @@ export function HistoryPage() {
       {/* Left column — heading, filters, list */}
       <div className="min-w-0 space-y-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-stone-950 font-heading">
+          <h1 className="text-2xl sm:text-3xl font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">
             Batch History
           </h1>
-          <p className="text-sm text-stone-500 mt-2 max-w-xl leading-relaxed">
+          <p className="text-sm text-stone-500 dark:text-[#94A3B8] mt-2 max-w-xl leading-relaxed">
             View details and summary of your completed or closed batches. These batches are no
             longer active but you can still access their records and performance insights.
           </p>
@@ -147,7 +147,7 @@ export function HistoryPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search batches..."
-              className="w-full bg-white border border-stone-200 rounded-xl pl-10 pr-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-xs focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 transition-colors"
+              className="w-full bg-white dark:bg-[#1E2124] border border-stone-200 dark:border-[#2B3238] rounded-xl pl-10 pr-4 py-3 text-sm text-stone-900 dark:text-[#F5F7F5] placeholder:text-stone-400 dark:placeholder:text-[#64748B] shadow-xs focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 transition-colors"
             />
           </div>
 
@@ -157,7 +157,7 @@ export function HistoryPage() {
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
               aria-label="Filter batches by type"
-              className="appearance-none w-full sm:w-auto bg-white border border-stone-200 rounded-xl pl-10 pr-10 py-3 text-sm font-medium text-stone-700 shadow-xs cursor-pointer focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 transition-colors"
+              className="appearance-none w-full sm:w-auto bg-white dark:bg-[#1E2124] border border-stone-200 dark:border-[#2B3238] rounded-xl pl-10 pr-10 py-3 text-sm font-medium text-stone-700 dark:text-[#F5F7F5] shadow-xs cursor-pointer focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 transition-colors"
             >
               {typeFilterOptions().map((option) => (
                 <option key={option.value} value={option.value}>
@@ -170,8 +170,8 @@ export function HistoryPage() {
         </div>
 
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-lg font-bold text-stone-950 font-heading">Completed Batches</h2>
-          <span className="text-sm text-stone-500 shrink-0">
+          <h2 className="text-lg font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">Completed Batches</h2>
+          <span className="text-sm text-stone-500 dark:text-[#94A3B8] shrink-0">
             {filtered.length} {filtered.length === 1 ? 'batch' : 'batches'}
           </span>
         </div>
@@ -179,14 +179,14 @@ export function HistoryPage() {
         {loading ? (
           <div className="py-12 text-center text-sm text-stone-400">Loading batches…</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 px-4 bg-white rounded-xl shadow-sm">
-            <div className="w-14 h-14 mx-auto bg-stone-100 rounded-xl flex items-center justify-center mb-3">
-              <HistoryIcon size={24} strokeWidth={2.5} className="text-stone-400" />
+          <div className="text-center py-12 px-4 bg-white dark:bg-[#1E2124] rounded-xl shadow-sm">
+            <div className="w-14 h-14 mx-auto bg-stone-100 dark:bg-[#2B3238] rounded-xl flex items-center justify-center mb-3">
+              <HistoryIcon size={24} strokeWidth={2.5} className="text-stone-400 dark:text-[#64748B]" />
             </div>
-            <h3 className="text-base font-bold text-stone-900 font-heading mb-1">
+            <h3 className="text-base font-bold text-stone-900 dark:text-[#F5F7F5] font-heading mb-1">
               {closedBatches.length === 0 ? 'No completed batches yet' : 'No batches match your search'}
             </h3>
-            <p className="text-sm text-stone-500 max-w-sm mx-auto">
+            <p className="text-sm text-stone-500 dark:text-[#94A3B8] max-w-sm mx-auto">
               {closedBatches.length === 0
                 ? 'Once you close out a batch from the Batches page, it will show up here with its full summary.'
                 : 'Try a different name or switch the type filter back to All Types.'}
@@ -212,14 +212,14 @@ export function HistoryPage() {
         {selectedBatch ? (
           <BatchHistoryDetail batch={selectedBatch} onBack={handleClosePanel} />
         ) : (
-          <div className="bg-white rounded-xl shadow-sm p-10 text-center">
-            <div className="w-14 h-14 mx-auto bg-stone-100 rounded-xl flex items-center justify-center mb-3">
-              <HistoryIcon size={24} strokeWidth={2.5} className="text-stone-400" />
+          <div className="bg-white dark:bg-[#1E2124] rounded-xl shadow-sm p-10 text-center">
+            <div className="w-14 h-14 mx-auto bg-stone-100 dark:bg-[#2B3238] rounded-xl flex items-center justify-center mb-3">
+              <HistoryIcon size={24} strokeWidth={2.5} className="text-stone-400 dark:text-[#64748B]" />
             </div>
-            <h3 className="text-base font-bold text-stone-900 font-heading mb-1">
+            <h3 className="text-base font-bold text-stone-900 dark:text-[#F5F7F5] font-heading mb-1">
               Select a batch
             </h3>
-            <p className="text-sm text-stone-500">
+            <p className="text-sm text-stone-500 dark:text-[#94A3B8]">
               Pick a completed batch on the left to see its full summary here.
             </p>
           </div>

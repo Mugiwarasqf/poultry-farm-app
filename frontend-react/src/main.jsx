@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { BatchProvider } from './context/BatchContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './components/ui/Toast';
 import App from './App';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -18,15 +19,17 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
     <BrowserRouter>
-      <ToastProvider>
-        <AuthProvider>
-          <BatchProvider>
-            <NotificationProvider>
-              <App />
-            </NotificationProvider>
-          </BatchProvider>
-        </AuthProvider>
-      </ToastProvider>
+      <ThemeProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <BatchProvider>
+              <NotificationProvider>
+                <App />
+              </NotificationProvider>
+            </BatchProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </ThemeProvider>
     </BrowserRouter>
     </ErrorBoundary>
   </StrictMode>

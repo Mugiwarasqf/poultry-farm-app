@@ -109,15 +109,17 @@ export function NotificationBell() {
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
-        className={`relative p-2 rounded-full transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-stone-300 ${
-          open ? 'bg-stone-100 text-stone-900' : 'text-stone-500 hover:text-stone-900 hover:bg-stone-100'
+        className={`relative p-2 rounded-full transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-stone-300 dark:focus-visible:ring-[#2B3238] ${
+          open
+            ? 'bg-stone-100 dark:bg-[#252A2E] text-stone-900 dark:text-[#F5F7F5]'
+            : 'text-stone-500 dark:text-[#94A3B8] hover:text-stone-900 dark:hover:text-[#F5F7F5] hover:bg-stone-100 dark:hover:bg-[#252A2E]'
         }`}
       >
         <BellIcon size={19} strokeWidth={1.9} aria-hidden="true" />
         {unreadCount > 0 && (
           <span
             aria-hidden="true"
-            className="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-stone-900 text-white text-[10px] font-semibold leading-4 text-center tabular-nums ring-2 ring-white"
+            className="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-stone-900 dark:bg-[#DFFF83] text-white dark:text-[#17191A] text-[10px] font-semibold leading-4 text-center tabular-nums ring-2 ring-white dark:ring-[#17191A]"
           >
             {badgeCount(unreadCount)}
           </span>
@@ -133,16 +135,16 @@ export function NotificationBell() {
           tabIndex={-1}
           onKeyDown={onPanelKeyDown}
           onBlur={onPanelBlur}
-          className={`z-50 fixed left-3 right-3 top-[68px] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[384px] flex flex-col max-h-[min(560px,calc(100dvh-5rem))] rounded-xl border border-stone-200/90 bg-white outline-none shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-6px_rgba(0,0,0,0.12),0_24px_48px_-16px_rgba(0,0,0,0.10)] origin-top sm:origin-top-right transition-[opacity,transform] duration-[180ms] ease-out motion-reduce:transition-none ${
+          className={`z-50 fixed left-3 right-3 top-[68px] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[384px] flex flex-col max-h-[min(560px,calc(100dvh-5rem))] rounded-xl border border-stone-200/90 dark:border-[#2B3238] bg-white dark:bg-[#1E2124] outline-none shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-6px_rgba(0,0,0,0.12),0_24px_48px_-16px_rgba(0,0,0,0.10)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)] origin-top sm:origin-top-right transition-[opacity,transform] duration-[180ms] ease-out motion-reduce:transition-none ${
             visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-1 scale-[0.98] pointer-events-none'
           }`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between gap-3 px-4 h-12 border-b border-stone-100 shrink-0">
+          <div className="flex items-center justify-between gap-3 px-4 h-12 border-b border-stone-100 dark:border-[#2B3238] shrink-0">
             <div className="flex items-center gap-2 min-w-0">
-              <h2 className="text-[13px] font-semibold text-stone-900">Notifications</h2>
+              <h2 className="text-[13px] font-semibold text-stone-900 dark:text-[#F5F7F5]">Notifications</h2>
               {unreadCount > 0 && (
-                <span className="px-1.5 h-5 inline-flex items-center rounded-md bg-stone-100 text-[11px] font-medium text-stone-600 tabular-nums">
+                <span className="px-1.5 h-5 inline-flex items-center rounded-md bg-stone-100 dark:bg-[#252A2E] text-[11px] font-medium text-stone-600 dark:text-[#DFFF83] tabular-nums">
                   {unreadCount} unread
                 </span>
               )}
@@ -151,7 +153,7 @@ export function NotificationBell() {
               type="button"
               onClick={markAllRead}
               disabled={unreadCount === 0}
-              className="inline-flex items-center gap-1.5 h-7 px-2 -mr-2 rounded-md text-[12px] font-medium text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-stone-300 disabled:opacity-40 disabled:pointer-events-none"
+              className="inline-flex items-center gap-1.5 h-7 px-2 -mr-2 rounded-md text-[12px] font-medium text-stone-500 dark:text-[#94A3B8] hover:text-stone-900 dark:hover:text-[#F5F7F5] hover:bg-stone-100 dark:hover:bg-[#252A2E] transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-stone-300 dark:focus-visible:ring-[#2B3238] disabled:opacity-40 disabled:pointer-events-none"
             >
               <CheckCheck size={14} strokeWidth={2} aria-hidden="true" />
               Mark all as read
@@ -167,7 +169,7 @@ export function NotificationBell() {
             ) : recent.length === 0 ? (
               <NotificationsEmpty compact />
             ) : (
-              <ul className="divide-y divide-stone-100" aria-label="Recent notifications">
+              <ul className="divide-y divide-stone-100 dark:divide-[#2B3238]" aria-label="Recent notifications">
                 {recent.map((n) => (
                   <li key={n.id}>
                     <NotificationItem notification={n} now={now} onSelect={openNotification} compact />
@@ -178,11 +180,11 @@ export function NotificationBell() {
           </div>
 
           {/* Footer */}
-          <div className="border-t border-stone-100 p-1.5 shrink-0">
+          <div className="border-t border-stone-100 dark:border-[#2B3238] p-1.5 shrink-0">
             <Link
               to="/notifications"
               onClick={() => setOpen(false)}
-              className="flex items-center justify-center h-9 rounded-lg text-[12.5px] font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-50 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-stone-300"
+              className="flex items-center justify-center h-9 rounded-lg text-[12.5px] font-medium text-stone-600 dark:text-[#94A3B8] hover:text-stone-900 dark:hover:text-[#F5F7F5] hover:bg-stone-50 dark:hover:bg-[#252A2E] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-stone-300 dark:focus-visible:ring-[#2B3238]"
             >
               View all notifications
             </Link>

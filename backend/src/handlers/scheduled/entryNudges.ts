@@ -31,8 +31,16 @@ export const handler: ScheduledHandler = async () => {
   let skippedSuppressed = 0;
   let skippedUpToDate = 0;
   let skippedNoActiveBatches = 0;
+  let skippedDisabled = 0;
 
   for (const farm of farms.Items ?? []) {
+    const prefs = farm.notificationPrefs;
+    if (prefs?.emailAlerts === false || prefs?.loggingNudges === false) {
+      logger.info("entry_nudge_skipped_disabled", { farmId: farm.farmId });
+      skippedDisabled++;
+      continue;
+    }
+
     const batches = await ddb.send(
       new QueryCommand({
         TableName: tables.batches,
@@ -96,5 +104,6 @@ export const handler: ScheduledHandler = async () => {
     skippedSuppressed,
     skippedUpToDate,
     skippedNoActiveBatches,
+    skippedDisabled,
   });
 };

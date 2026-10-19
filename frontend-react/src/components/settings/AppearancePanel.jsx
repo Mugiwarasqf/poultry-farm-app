@@ -1,18 +1,15 @@
-import { useState } from 'react';
 import { Sun, Moon, Monitor, Check } from 'lucide-react';
-import { SettingsCard, NotWiredNote, DetailRow } from './ui';
+import { useTheme } from '../../context/ThemeContext';
+import { SettingsCard, DetailRow } from './ui';
 
-// Only the light theme is actually implemented. The options are shown so the
-// screen matches the rest of settings, but dark and system are marked
-// unavailable rather than letting someone pick a theme that never applies.
 const THEMES = [
-  { value: 'light', label: 'Light', icon: Sun, available: true },
-  { value: 'dark', label: 'Dark', icon: Moon, available: false },
-  { value: 'system', label: 'System', icon: Monitor, available: false },
+  { value: 'light', label: 'Light', icon: Sun, available: true, description: 'Clean, bright layout' },
+  { value: 'dark', label: 'Dark', icon: Moon, available: true, description: 'Deep farm charcoal & lime' },
+  { value: 'system', label: 'System', icon: Monitor, available: true, description: 'Matches your device mode' },
 ];
 
 export function AppearancePanel() {
-  const [theme, setTheme] = useState('light');
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   return (
     <div className="space-y-5">
@@ -25,31 +22,49 @@ export function AppearancePanel() {
               <button
                 key={option.value}
                 type="button"
-                disabled={!option.available}
-                onClick={() => option.available && setTheme(option.value)}
-                className={`relative rounded-lg border p-4 text-left transition-colors
-                  ${selected ? 'border-stone-900 bg-stone-50' : 'border-stone-200 hover:border-stone-300'}
-                  ${option.available ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+                onClick={() => setTheme(option.value)}
+                className={`relative rounded-xl border p-4 text-left transition-all cursor-pointer
+                  ${
+                    selected
+                      ? 'border-stone-900 bg-stone-50 ring-2 ring-stone-900/10 dark:border-[#DFFF83] dark:bg-[#142312] dark:ring-[#DFFF83]/20 shadow-xs'
+                      : 'border-stone-200 hover:border-stone-300 bg-white hover:bg-stone-50/50 dark:border-[#2B3238] dark:bg-[#1E2124] dark:hover:border-[#3D4751] dark:hover:bg-[#252A2E]'
+                  }`}
               >
-                <Icon size={18} strokeWidth={2.5} className="text-stone-600 mb-2" />
-                <div className="text-sm font-bold text-stone-900 flex items-center gap-1.5">
-                  {option.label}
-                  {selected && <Check size={14} strokeWidth={3} className="text-stone-900" />}
+                <div className="flex items-center justify-between mb-3">
+                  <div
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+                      selected
+                        ? 'bg-stone-900 text-white dark:bg-[#DFFF83] dark:text-[#17191A]'
+                        : 'bg-stone-100 text-stone-600 dark:bg-[#252A2E] dark:text-[#94A3B8]'
+                    }`}
+                  >
+                    <Icon size={18} strokeWidth={2.25} />
+                  </div>
+                  {selected && (
+                    <span className="w-5 h-5 rounded-full bg-stone-900 dark:bg-[#DFFF83] text-white dark:text-[#17191A] flex items-center justify-center">
+                      <Check size={12} strokeWidth={3} />
+                    </span>
+                  )}
                 </div>
-                <div className="text-xs text-stone-500 mt-0.5">
-                  {option.available ? 'Available' : 'Not available yet'}
+                <div className="text-sm font-bold text-stone-900 dark:text-[#F5F7F5]">
+                  {option.label}
+                </div>
+                <div className="text-xs text-stone-500 dark:text-[#94A3B8] mt-1">
+                  {option.description}
                 </div>
               </button>
             );
           })}
         </div>
 
-        <div className="mt-5">
-          <NotWiredNote>
-            TrackFarm currently ships with the light theme only. Dark and system themes will appear
-            here once they are built.
-          </NotWiredNote>
-        </div>
+        {theme === 'system' && (
+          <div className="mt-4 p-3 rounded-lg bg-stone-50 dark:bg-[#1E2124] border border-stone-200 dark:border-[#2B3238] text-xs text-stone-600 dark:text-[#94A3B8] flex items-center gap-2">
+            <Monitor size={15} className="shrink-0 text-stone-500 dark:text-[#DFFF83]" />
+            <span>
+              Currently matching your operating system setting (active: <strong className="text-stone-900 dark:text-white capitalize">{resolvedTheme}</strong>).
+            </span>
+          </div>
+        )}
       </SettingsCard>
 
       <SettingsCard title="Display" description="How information is shown across the app.">

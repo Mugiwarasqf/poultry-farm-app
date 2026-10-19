@@ -63,7 +63,7 @@ const isActive = (b) => (b.status || 'active') !== 'closed';
 
 function Card({ className = '', children }) {
   return (
-    <section className={`bg-white rounded-lg border border-[#E1E8EF] shadow-[0_1px_2px_rgba(20,32,51,0.04)] ${className}`}>
+    <section className={`bg-white dark:bg-[#17191A] rounded-lg border border-[#E1E8EF] dark:border-[#2B3238] shadow-[0_1px_2px_rgba(20,32,51,0.04)] transition-colors ${className}`}>
       {children}
     </section>
   );
@@ -73,10 +73,10 @@ function SectionHeader({ icon: Icon, title, action }) {
   return (
     <div className="flex items-center justify-between gap-3 mb-4">
       <div className="flex items-center gap-3 min-w-0">
-        <span className="w-9 h-9 rounded-full bg-[#F7FFE0] flex items-center justify-center shrink-0">
-          <Icon size={18} strokeWidth={2} className="text-[#142033]" />
+        <span className="w-9 h-9 rounded-full bg-[#F7FFE0] dark:bg-[#1E2124] flex items-center justify-center shrink-0">
+          <Icon size={18} strokeWidth={2} className="text-[#142033] dark:text-[#DFFF83]" />
         </span>
-        <h2 className="text-base sm:text-lg font-semibold text-[#142033] font-heading truncate">{title}</h2>
+        <h2 className="text-base sm:text-lg font-semibold text-[#142033] dark:text-[#F5F7F5] font-heading truncate">{title}</h2>
       </div>
       {action}
     </div>
@@ -84,7 +84,7 @@ function SectionHeader({ icon: Icon, title, action }) {
 }
 
 function ViewAll({ to, onClick, children = 'View all' }) {
-  const cls = 'inline-flex items-center gap-1 text-xs font-medium text-[#142033]/80 hover:text-[#4D6600] transition-colors shrink-0 cursor-pointer';
+  const cls = 'inline-flex items-center gap-1 text-xs font-medium text-[#142033]/80 dark:text-[#94A3B8] hover:text-[#4D6600] dark:hover:text-[#DFFF83] transition-colors shrink-0 cursor-pointer';
   if (to) {
     return (
       <Link to={to} className={cls}>
@@ -100,22 +100,24 @@ function ViewAll({ to, onClick, children = 'View all' }) {
 }
 
 function SummaryCard({ icon: Icon, label, value, detail, detailIcon: DetailIcon, tone = 'green', detailTone = 'muted', loading }) {
-  const bg = tone === 'green' ? 'bg-[#F7FFE0] border-[#E3F5A8]' : 'bg-[#F2F7FF] border-[#DCE7F7]';
+  const bg = tone === 'green'
+    ? 'bg-[#F7FFE0] border-[#E3F5A8] dark:bg-[#142312] dark:border-[#274220]'
+    : 'bg-[#F2F7FF] border-[#DCE7F7] dark:bg-[#0F1D30] dark:border-[#1E395F]';
   const detailColor = {
-    muted: 'text-[#70829B]',
-    good: 'text-[#4D6600]',
-    warn: 'text-amber-700',
-    bad: 'text-rose-600',
+    muted: 'text-[#70829B] dark:text-[#94A3B8]',
+    good: 'text-[#4D6600] dark:text-[#DFFF83]',
+    warn: 'text-amber-700 dark:text-[#FCD34D]',
+    bad: 'text-rose-600 dark:text-[#FB7185]',
   }[detailTone];
   return (
-    <div className={`rounded-lg border ${bg} p-4 sm:p-5 min-h-[128px] flex flex-col`}>
+    <div className={`rounded-lg border ${bg} p-4 sm:p-5 min-h-[128px] flex flex-col transition-colors`}>
       <div className="flex items-center gap-3">
-        <span className="w-10 h-10 rounded-full bg-white/90 border border-white flex items-center justify-center shrink-0">
-          <Icon size={20} strokeWidth={2} className="text-[#142033]" />
+        <span className="w-10 h-10 rounded-full bg-white/90 dark:bg-[#1E2124] border border-white dark:border-[#2B3238] flex items-center justify-center shrink-0">
+          <Icon size={20} strokeWidth={2} className="text-[#142033] dark:text-[#F5F7F5]" />
         </span>
-        <span className="text-sm font-medium text-[#142033] leading-tight">{label}</span>
+        <span className="text-sm font-medium text-[#142033] dark:text-[#94A3B8] leading-tight">{label}</span>
       </div>
-      <div className="mt-3 text-2xl sm:text-[28px] font-semibold text-[#142033] font-heading leading-none tabular-nums">
+      <div className="mt-3 text-2xl sm:text-[28px] font-semibold text-[#142033] dark:text-[#F5F7F5] font-heading leading-none tabular-nums">
         {loading ? <Skeleton className="h-7 w-20" /> : value}
       </div>
       <div className={`mt-2 text-xs flex items-center gap-1.5 ${detailColor}`}>
@@ -161,19 +163,23 @@ function BatchCard({ batch, currentBirds, eggsPerDay, logsLoaded, onOpen }) {
       type="button"
       onClick={onOpen}
       className={`group text-left rounded-lg border p-4 transition-all cursor-pointer hover:shadow-md ${
-        eggsBatch ? 'bg-[#F7FFE0] border-[#E3F5A8] hover:border-[#D2EC7A]' : 'bg-[#F2F7FF] border-[#DCE7F7] hover:border-[#C2D6F2]'
+        eggsBatch
+          ? 'bg-[#F7FFE0] border-[#E3F5A8] hover:border-[#D2EC7A] dark:bg-[#142312] dark:border-[#274220] dark:hover:border-[#385E2E]'
+          : 'bg-[#F2F7FF] border-[#DCE7F7] hover:border-[#C2D6F2] dark:bg-[#0F1D30] dark:border-[#1E395F] dark:hover:border-[#2B5285]'
       }`}
     >
       <div className="flex items-center gap-3">
-        <span className="w-11 h-11 rounded-full bg-white flex items-center justify-center shrink-0">
-          <TypeIcon size={22} strokeWidth={2} className="text-[#142033]" />
+        <span className="w-11 h-11 rounded-full bg-white dark:bg-[#1E2124] flex items-center justify-center shrink-0">
+          <TypeIcon size={22} strokeWidth={2} className="text-[#142033] dark:text-[#F5F7F5]" />
         </span>
-        <h3 className="flex-1 min-w-0 text-base font-semibold text-[#142033] truncate group-hover:text-[#4D6600] transition-colors">
+        <h3 className="flex-1 min-w-0 text-base font-semibold text-[#142033] dark:text-[#F5F7F5] truncate group-hover:text-[#4D6600] dark:group-hover:text-[#DFFF83] transition-colors">
           {batch.name}
         </h3>
         <span
           className={`px-2.5 py-0.5 rounded-md text-[11px] font-medium shrink-0 ${
-            eggsBatch ? 'bg-[#EFFFC4] text-[#4D6600]' : 'bg-[#E2ECFB] text-[#2F6FD6]'
+            eggsBatch
+              ? 'bg-[#EFFFC4] text-[#4D6600] dark:bg-[#20361C] dark:text-[#DFFF83]'
+              : 'bg-[#E2ECFB] text-[#2F6FD6] dark:bg-[#152B47] dark:text-[#60A5FA]'
           }`}
         >
           {birdTypeLabel(batch.type)}
@@ -181,34 +187,33 @@ function BatchCard({ batch, currentBirds, eggsPerDay, logsLoaded, onOpen }) {
       </div>
 
       <div className="mt-4 flex items-stretch">
-        <div className="flex-1 flex items-start gap-2.5 pr-3 border-r border-[#142033]/10 min-w-0">
+        <div className="flex-1 flex items-start gap-2.5 pr-3 border-r border-[#142033]/10 dark:border-white/10 min-w-0">
           <BirdIcon size={17} className="mt-0.5 shrink-0" />
           <div className="min-w-0">
-            <div className="text-[11px] text-[#70829B]">Birds</div>
-            <div className="text-base font-semibold text-[#142033] tabular-nums">
+            <div className="text-[11px] text-[#70829B] dark:text-[#94A3B8]">Birds</div>
+            <div className="text-base font-semibold text-[#142033] dark:text-[#F5F7F5] tabular-nums">
               {logsLoaded ? currentBirds.toLocaleString() : <Skeleton className="h-4 w-12 mt-1" />}
             </div>
           </div>
         </div>
         <div className="flex-1 flex items-start gap-2.5 pl-4 min-w-0">
-          <MetricIcon size={17} strokeWidth={2} className="mt-0.5 shrink-0 text-[#142033]" />
+          <MetricIcon size={17} strokeWidth={2} className="mt-0.5 shrink-0 text-[#142033] dark:text-[#F5F7F5]" />
           <div className="min-w-0">
-            <div className="text-[11px] text-[#70829B]">{metric.label}</div>
-            <div className="text-base font-semibold text-[#142033] truncate">
+            <div className="text-[11px] text-[#70829B] dark:text-[#94A3B8]">{metric.label}</div>
+            <div className="text-base font-semibold text-[#142033] dark:text-[#F5F7F5] truncate">
               {metric.value ?? <Skeleton className="h-4 w-14 mt-1" />}
             </div>
           </div>
         </div>
-        <ChevronRight size={16} className="self-end text-[#142033]/60 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+        <ChevronRight size={16} className="self-end text-[#142033]/60 dark:text-[#94A3B8] shrink-0 group-hover:translate-x-0.5 transition-transform" />
       </div>
     </button>
   );
 }
 
-
 function TintedIcon({ tint, icon: Icon, file, size = 18 }) {
   return (
-    <span className={`w-11 h-11 ${tint} rounded-full flex items-center justify-center shrink-0 text-[#142033]`} aria-hidden="true">
+    <span className={`w-11 h-11 ${tint} rounded-full flex items-center justify-center shrink-0 text-[#142033] dark:text-[#F5F7F5]`} aria-hidden="true">
       {file ? (
         <img src={file} alt="" style={{ width: size, height: size }} className="object-contain" />
       ) : (
@@ -219,18 +224,18 @@ function TintedIcon({ tint, icon: Icon, file, size = 18 }) {
 }
 
 const ACTIVITY_STYLE = {
-  feed: { icon: FeedIcon, tint: 'bg-[#EFFFC4]' },
-  eggs: { icon: EggIcon, tint: 'bg-amber-50' },
-  vaccination: { icon: VaccineIcon, tint: 'bg-[#EFFFC4]' },
-  mortality: { icon: BirdIcon, tint: 'bg-rose-50' },
-  batch: { icon: PlusCircle, tint: 'bg-[#EAF1FC]' },
+  feed: { icon: FeedIcon, tint: 'bg-[#EFFFC4] dark:bg-[#1E2D1A]' },
+  eggs: { icon: EggIcon, tint: 'bg-amber-50 dark:bg-[#2B210B]' },
+  vaccination: { icon: VaccineIcon, tint: 'bg-[#EFFFC4] dark:bg-[#1E2D1A]' },
+  mortality: { icon: BirdIcon, tint: 'bg-rose-50 dark:bg-[#2D1419]' },
+  batch: { icon: PlusCircle, tint: 'bg-[#EAF1FC] dark:bg-[#172538]' },
 };
 
 function QuickAction({ icon: Icon, title, hint, tone, onClick, to, disabled, filledIcon }) {
   const tones = {
-    green: 'bg-[#F7FFE0] border-[#E3F5A8] hover:border-[#D2EC7A]',
-    blue: 'bg-[#F2F7FF] border-[#DCE7F7] hover:border-[#C2D6F2]',
-    red: 'bg-[#FFF4F4] border-[#F8DCDC] hover:border-[#F0C2C2]',
+    green: 'bg-[#F7FFE0] border-[#E3F5A8] hover:border-[#D2EC7A] dark:bg-[#142312] dark:border-[#274220] dark:hover:border-[#385E2E]',
+    blue: 'bg-[#F2F7FF] border-[#DCE7F7] hover:border-[#C2D6F2] dark:bg-[#0F1D30] dark:border-[#1E395F] dark:hover:border-[#2B5285]',
+    red: 'bg-[#FFF4F4] border-[#F8DCDC] hover:border-[#F0C2C2] dark:bg-[#260D12] dark:border-[#4C1A24] dark:hover:border-[#6B2433]',
   };
   const cls = `flex items-start gap-3 rounded-lg border p-3.5 sm:p-4 text-left transition-colors min-h-[84px] ${tones[tone]} ${
     disabled ? 'opacity-55 cursor-not-allowed' : 'cursor-pointer'
@@ -239,14 +244,14 @@ function QuickAction({ icon: Icon, title, hint, tone, onClick, to, disabled, fil
     <>
       <span
         className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-          filledIcon ? 'bg-[#DFFF83] text-[#17191A]' : 'bg-white text-[#142033]'
+          filledIcon ? 'bg-[#DFFF83] text-[#17191A]' : 'bg-white dark:bg-[#1E2124] text-[#142033] dark:text-[#F5F7F5]'
         }`}
       >
         <Icon size={18} strokeWidth={filledIcon ? 2.5 : 2} />
       </span>
       <span className="min-w-0">
-        <span className="block text-sm font-semibold text-[#142033] leading-tight">{title}</span>
-        <span className="block text-xs text-[#70829B] mt-1 leading-snug">{hint}</span>
+        <span className="block text-sm font-semibold text-[#142033] dark:text-[#F5F7F5] leading-tight">{title}</span>
+        <span className="block text-xs text-[#70829B] dark:text-[#94A3B8] mt-1 leading-snug">{hint}</span>
       </span>
     </>
   );
@@ -259,7 +264,7 @@ function QuickAction({ icon: Icon, title, hint, tone, onClick, to, disabled, fil
 }
 
 function EmptyNote({ children }) {
-  return <div className="flex-1 flex items-center justify-center text-center text-xs text-[#70829B] py-8 px-4">{children}</div>;
+  return <div className="flex-1 flex items-center justify-center text-center text-xs text-[#70829B] dark:text-[#94A3B8] py-8 px-4">{children}</div>;
 }
 
 // ---- page ------------------------------------------------------------------------
@@ -485,13 +490,13 @@ export function DashboardPage() {
 
   // ---- render ----------------------------------------------------------------------
   return (
-    <div className="space-y-6 pb-12 text-[#142033]">
+    <div className="space-y-6 pb-12 text-[#142033] dark:text-[#F5F7F5]">
       {/* Greeting */}
       <div>
-        <h1 className="text-2xl sm:text-[26px] font-semibold font-heading leading-tight">
+        <h1 className="text-2xl sm:text-[26px] font-semibold font-heading leading-tight text-[#142033] dark:text-[#F5F7F5]">
           {firstName ? `Hi, ${firstName}` : 'Hi there'}
         </h1>
-        <p className="text-sm text-[#70829B] mt-1">Here's what's happening on your farm today.</p>
+        <p className="text-sm text-[#70829B] dark:text-[#94A3B8] mt-1">Here's what's happening on your farm today.</p>
       </div>
 
       {loadState === 'error' && (
@@ -653,13 +658,13 @@ export function DashboardPage() {
                     <select
                       value={perfBatch?.batchId || ''}
                       onChange={(e) => setPerfBatchId(e.target.value)}
-                      className="appearance-none bg-transparent pr-5 pl-1 py-1 text-xs font-medium text-[#142033] cursor-pointer max-w-[130px] truncate focus:outline-none focus:ring-2 focus:ring-[#DFFF83]/70 rounded-md"
+                      className="appearance-none bg-transparent pr-5 pl-1 py-1 text-xs font-medium text-[#142033] dark:text-[#F5F7F5] cursor-pointer max-w-[130px] truncate focus:outline-none focus:ring-2 focus:ring-[#DFFF83]/70 rounded-md"
                     >
                       {activeBatches.map((b) => (
-                        <option key={b.batchId} value={b.batchId}>{b.name}</option>
+                        <option key={b.batchId} value={b.batchId} className="bg-white dark:bg-[#17191A] text-stone-900 dark:text-[#F5F7F5]">{b.name}</option>
                       ))}
                     </select>
-                    <ChevronDown size={14} className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-[#142033]/70" />
+                    <ChevronDown size={14} className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-[#142033]/70 dark:text-[#94A3B8]" />
                   </label>
                 )
               }
@@ -673,32 +678,32 @@ export function DashboardPage() {
               </div>
             ) : perf.empty ? (
               <>
-                <div className="text-xs font-medium text-[#70829B] mb-1">{perf.title}</div>
+                <div className="text-xs font-medium text-[#70829B] dark:text-[#94A3B8] mb-1">{perf.title}</div>
                 <EmptyNote>{perf.empty}</EmptyNote>
               </>
             ) : (
               <>
-                <div className="rounded-md bg-[#F7F9FA] px-4 py-3">
-                  <div className="text-xs font-medium text-[#142033]">
-                    {perf.title} <span className="text-[#70829B] font-normal">• {perf.caption}</span>
+                <div className="rounded-md bg-[#F7F9FA] dark:bg-[#1E2124] px-4 py-3 transition-colors">
+                  <div className="text-xs font-medium text-[#142033] dark:text-[#F5F7F5]">
+                    {perf.title} <span className="text-[#70829B] dark:text-[#94A3B8] font-normal">• {perf.caption}</span>
                   </div>
                   <div className="flex items-end justify-between gap-3 mt-1">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-[26px] font-semibold font-heading leading-none tabular-nums">{perf.value}</span>
-                      <span className="text-sm text-[#70829B]">{perf.suffix}</span>
+                      <span className="text-[26px] font-semibold font-heading leading-none tabular-nums text-[#142033] dark:text-[#F5F7F5]">{perf.value}</span>
+                      <span className="text-sm text-[#70829B] dark:text-[#94A3B8]">{perf.suffix}</span>
                     </div>
                     {perf.change && (
-                      <span className={`inline-flex items-center gap-1 text-[11px] ${perf.change.up ? 'text-[#4D6600]' : 'text-rose-600'}`}>
+                      <span className={`inline-flex items-center gap-1 text-[11px] ${perf.change.up ? 'text-[#4D6600] dark:text-[#DFFF83]' : 'text-rose-600 dark:text-[#FB7185]'}`}>
                         {perf.change.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                         {perf.change.text}
                       </span>
                     )}
                   </div>
                   {perf.extras?.length > 0 && (
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-[#70829B]">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-[#70829B] dark:text-[#94A3B8]">
                       {perf.extras.map((x) => (
                         <span key={x.label}>
-                          {x.label}: <strong className="font-semibold text-[#142033]">{x.value}</strong>
+                          {x.label}: <strong className="font-semibold text-[#142033] dark:text-[#F5F7F5]">{x.value}</strong>
                         </span>
                       ))}
                     </div>
@@ -742,9 +747,9 @@ export function DashboardPage() {
             ) : shownActivity.length === 0 ? (
               <EmptyNote>No activity logged yet.</EmptyNote>
             ) : (
-              <ul className="divide-y divide-[#E1E8EF]">
+              <ul className="divide-y divide-[#E1E8EF] dark:divide-[#2B3238] transition-colors">
                 {shownActivity.map((item, i) => {
-                  const style = ACTIVITY_STYLE[item.type] || { icon: Clock, tint: 'bg-stone-100' };
+                  const style = ACTIVITY_STYLE[item.type] || { icon: Clock, tint: 'bg-stone-100 dark:bg-[#252A2E]' };
                   return (
                     <li key={`${item.type}-${item.batchId}-${item.ms}-${i}`}>
                       <Link
@@ -754,17 +759,17 @@ export function DashboardPage() {
                         <TintedIcon tint={style.tint} icon={style.icon} size={18} />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-sm font-semibold truncate">{item.title}</span>
+                            <span className="text-sm font-semibold truncate text-[#142033] dark:text-[#F5F7F5]">{item.title}</span>
                             {item.pending && (
-                              <span className="shrink-0 px-1.5 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-[10px] font-semibold text-amber-800">
+                              <span className="shrink-0 px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-[#261B06] border border-amber-200 dark:border-[#4A350C] text-[10px] font-semibold text-amber-800 dark:text-[#FCD34D]">
                                 Waiting to send
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-[#70829B] truncate">{item.sub}</div>
-                          <div className="text-[11px] text-[#70829B]/90 truncate">{stamp(item.at)}</div>
+                          <div className="text-xs text-[#70829B] dark:text-[#94A3B8] truncate">{item.sub}</div>
+                          <div className="text-[11px] text-[#70829B]/90 dark:text-[#94A3B8]/80 truncate">{stamp(item.at)}</div>
                         </div>
-                        <ChevronRight size={16} className="text-[#70829B] shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                        <ChevronRight size={16} className="text-[#70829B] dark:text-[#94A3B8] shrink-0 group-hover:translate-x-0.5 transition-transform" />
                       </Link>
                     </li>
                   );
@@ -840,15 +845,15 @@ export function DashboardPage() {
                 setModal(null);
                 navigate(`/batches/${b.batchId}?log=mortality`);
               }}
-              className="w-full flex items-center justify-between gap-3 rounded-md border border-[#E1E8EF] px-4 py-3 text-left hover:border-[#B7DA3E] hover:bg-[#F7FFE0] transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between gap-3 rounded-md border border-[#E1E8EF] dark:border-[#2B3238] bg-white dark:bg-[#1E2124] px-4 py-3 text-left hover:border-[#B7DA3E] hover:bg-[#F7FFE0] dark:hover:bg-[#142312] dark:hover:border-[#274220] transition-colors cursor-pointer"
             >
               <span className="min-w-0">
-                <span className="block text-sm font-semibold text-[#142033] truncate">{b.name}</span>
-                <span className="block text-xs text-[#70829B]">
+                <span className="block text-sm font-semibold text-[#142033] dark:text-[#F5F7F5] truncate">{b.name}</span>
+                <span className="block text-xs text-[#70829B] dark:text-[#94A3B8]">
                   {birdTypeLabel(b.type)} • {currentBirdsOf(b).toLocaleString()} birds
                 </span>
               </span>
-              <ChevronRight size={16} className="text-[#70829B] shrink-0" />
+              <ChevronRight size={16} className="text-[#70829B] dark:text-[#94A3B8] shrink-0" />
             </button>
           ))}
         </div>

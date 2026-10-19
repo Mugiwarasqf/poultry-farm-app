@@ -4,6 +4,7 @@ import { clearOfflineRecords } from '../lib/pwa';
 import { signup as apiSignup, login as apiLogin, requestPasswordReset, confirmPasswordReset } from '../api/auth';
 import { getFarm } from '../api/farms';
 import { setCustomBirdTypes } from '../lib/batch';
+import { syncPrefsFromFarm, writePrefs } from '../lib/notifications/prefs';
 
 const AuthContext = createContext(null);
 
@@ -44,6 +45,9 @@ export function AuthProvider({ children }) {
       }
       if (data.farmerName) {
         localStorage.setItem('farmbook_farmername', data.farmerName);
+      }
+      if (data.notificationPrefs) {
+        syncPrefsFromFarm(data.notificationPrefs);
       }
     } catch (e) {
       console.warn('Could not fetch farm profile from API (route may be pending deploy):', e);
@@ -89,6 +93,9 @@ export function AuthProvider({ children }) {
     }
     if (updates.phone) {
       localStorage.setItem('farmbook_farmphone', updates.phone);
+    }
+    if (updates.notificationPrefs) {
+      writePrefs(updates.notificationPrefs);
     }
   }, []);
 

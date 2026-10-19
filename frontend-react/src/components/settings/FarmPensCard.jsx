@@ -15,13 +15,13 @@ import { PenIcon } from '../ui/PenIcon';
 
 const MAX_PENS = 200;
 const INPUT =
-  'w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 transition-colors focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70';
+  'w-full bg-white dark:bg-[#1E2124] border border-stone-200 dark:border-[#2B3238] rounded-lg px-3 py-2 text-sm text-stone-900 dark:text-[#F5F7F5] placeholder:text-stone-400 dark:placeholder:text-[#64748B] transition-colors focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70';
 
 function Stat({ label, value }) {
   return (
-    <div className="rounded-lg border border-stone-200 bg-stone-50/60 px-4 py-3">
-      <div className="text-xs text-stone-500">{label}</div>
-      <div className="text-2xl font-bold text-stone-950 font-heading mt-0.5 tabular-nums">{value}</div>
+    <div className="rounded-lg border border-stone-200 dark:border-[#2B3238] bg-stone-50/60 dark:bg-[#17191A] px-4 py-3">
+      <div className="text-xs text-stone-500 dark:text-[#94A3B8]">{label}</div>
+      <div className="text-2xl font-bold text-stone-950 dark:text-[#F5F7F5] font-heading mt-0.5 tabular-nums">{value}</div>
     </div>
   );
 }
@@ -113,12 +113,12 @@ export function FarmPensCard() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        <span className="text-sm font-medium text-stone-700">Number of pens</span>
+        <span className="text-sm font-medium text-stone-700 dark:text-[#F5F7F5]">Number of pens</span>
         <div className="flex items-stretch">
           <button
             type="button"
             onClick={() => setCount(pens.length - 1)}
-            className="w-9 rounded-l-lg border border-stone-200 flex items-center justify-center text-stone-600 hover:bg-stone-50 cursor-pointer"
+            className="w-9 rounded-l-lg border border-stone-200 dark:border-[#2B3238] bg-white dark:bg-[#1E2124] flex items-center justify-center text-stone-600 dark:text-[#94A3B8] hover:bg-stone-50 dark:hover:bg-[#2B3238] cursor-pointer"
             aria-label="One pen fewer"
           >
             <Minus size={15} />
@@ -130,13 +130,13 @@ export function FarmPensCard() {
             inputMode="numeric"
             value={pens.length}
             onChange={(e) => setCount(e.target.value)}
-            className="w-16 border-y border-stone-200 text-center text-sm font-semibold text-stone-900 focus:outline-hidden"
+            className="w-16 border-y border-stone-200 dark:border-[#2B3238] bg-white dark:bg-[#1E2124] text-center text-sm font-semibold text-stone-900 dark:text-[#F5F7F5] focus:outline-hidden"
             aria-label="Number of pens"
           />
           <button
             type="button"
             onClick={() => setCount(pens.length + 1)}
-            className="w-9 rounded-r-lg border border-stone-200 flex items-center justify-center text-stone-600 hover:bg-stone-50 cursor-pointer"
+            className="w-9 rounded-r-lg border border-stone-200 dark:border-[#2B3238] bg-white dark:bg-[#1E2124] flex items-center justify-center text-stone-600 dark:text-[#94A3B8] hover:bg-stone-50 dark:hover:bg-[#2B3238] cursor-pointer"
             aria-label="One pen more"
           >
             <Plus size={15} />
@@ -145,17 +145,17 @@ export function FarmPensCard() {
       </div>
 
       {pens.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-stone-300 px-4 py-6 text-center text-sm text-stone-500">
+        <div className="rounded-lg border border-dashed border-stone-300 dark:border-[#374151] px-4 py-6 text-center text-sm text-stone-500 dark:text-[#64748B]">
           No pens yet. Set the number above, then name each one.
         </div>
       ) : (
-        <ul className="divide-y divide-stone-100 rounded-lg border border-stone-200">
+        <ul className="divide-y divide-stone-100 dark:divide-[#2B3238] rounded-lg border border-stone-200 dark:border-[#2B3238]">
           {pens.map((pen) => {
             const inUse = usage.get(pen.id) || [];
             return (
               <li key={pen.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 py-3">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <PenIcon size={16} className="text-stone-400 shrink-0" aria-hidden="true" />
+                  <PenIcon size={16} className="text-stone-400 dark:text-[#64748B] shrink-0" aria-hidden="true" />
                   <input
                     value={pen.name}
                     onChange={(e) => update(pen.id, 'name', e.target.value)}
@@ -177,7 +177,9 @@ export function FarmPensCard() {
                   />
                   <span
                     className={`shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap ${
-                      inUse.length ? 'bg-[#F7FFE0] text-[#3A4D00] border-[#E3F5A8]' : 'bg-stone-50 text-stone-500 border-stone-200'
+                      inUse.length
+                        ? 'bg-[#F7FFE0] dark:bg-[#142312] text-[#3A4D00] dark:text-[#DFFF83] border-[#E3F5A8] dark:border-[#274220]'
+                        : 'bg-stone-50 dark:bg-[#252A2E] text-stone-500 dark:text-[#64748B] border-stone-200 dark:border-[#2B3238]'
                     }`}
                     title={inUse.map((b) => b.name).join(', ') || 'No active batch'}
                   >
@@ -187,7 +189,7 @@ export function FarmPensCard() {
                     type="button"
                     onClick={() => remove(pen)}
                     disabled={inUse.length > 0}
-                    className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-stone-400"
+                    className="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-stone-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-[#2D1419] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-stone-400"
                     aria-label={`Remove ${pen.name}`}
                   >
                     <Trash2 size={15} />

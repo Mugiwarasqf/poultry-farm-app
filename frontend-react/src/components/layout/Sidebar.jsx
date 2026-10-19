@@ -106,7 +106,7 @@ export function Sidebar({ isOpen, onClose }) {
           <img
             src="/images/svg.png"
             alt="Healthy Birds, Better Yields"
-            className="w-36 h-36 object-contain brightness-0 invert opacity-90"
+            className="w-26 h-26 object-contain brightness-0 invert opacity-90"
           />
         </div>
       </aside>

@@ -326,16 +326,20 @@ export const notificationSource = {
     const checkable = perBatch.filter((p) => p.feed && p.eggs && p.mortality).map((p) => p.batch);
 
     const built = [
-      ...(prefs.vaccinationReminders
+      ...(prefs.vaccinationReminders !== false
         ? perBatch.flatMap((p) => vaccinationNotifications(p.batch, p.schedule || [], today))
         : []),
-      ...feedNotifications(purchases, usage),
-      ...(prefs.loggingNudges ? loggingNotification(checkable, loggedToday, today) : []),
-      ...withdrawalNotifications(batchNames, today),
+      ...(prefs.feedAlerts !== false ? feedNotifications(purchases, usage) : []),
+      ...(prefs.loggingNudges !== false ? loggingNotification(checkable, loggedToday, today) : []),
+      ...(prefs.medicationAlerts !== false ? withdrawalNotifications(batchNames, today) : []),
       ...batchCompletedNotifications(batches, today),
-      ...perBatch.flatMap((p) => birdLostNotifications(p.batch, p.mortality || [], today)),
-      ...perBatch.flatMap((p) => feedLoggedNotifications(p.batch, p.feed || [], today)),
-      ...supplementNotifications(batchNames, today),
+      ...(prefs.activityLogs !== false
+        ? [
+            ...perBatch.flatMap((p) => birdLostNotifications(p.batch, p.mortality || [], today)),
+            ...perBatch.flatMap((p) => feedLoggedNotifications(p.batch, p.feed || [], today)),
+          ]
+        : []),
+      ...(prefs.medicationAlerts !== false ? supplementNotifications(batchNames, today) : []),
       ...readLocalEvents(farmId),
     ];
 

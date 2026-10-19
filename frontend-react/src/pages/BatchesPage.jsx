@@ -50,16 +50,16 @@ function Dropdown({ value, onChange, options, ariaLabel }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={ariaLabel}
-        className="appearance-none w-full bg-white border border-stone-200 rounded-xl pl-4 pr-10 py-3 text-sm font-medium text-stone-700 shadow-xs cursor-pointer focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 transition-colors"
+        className="appearance-none w-full bg-white dark:bg-[#1E2124] border border-stone-200 dark:border-[#2B3238] rounded-xl pl-4 pr-10 py-3 text-sm font-medium text-stone-700 dark:text-[#F5F7F5] shadow-xs cursor-pointer focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 transition-colors"
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value}>{option.label}</option>
+          <option key={option.value} value={option.value} className="bg-white dark:bg-[#17191A] text-stone-900 dark:text-[#F5F7F5]">{option.label}</option>
         ))}
       </select>
       <ChevronDown
         size={16}
         strokeWidth={2.5}
-        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none"
+        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 dark:text-[#64748B] pointer-events-none"
       />
     </div>
   );
@@ -67,11 +67,11 @@ function Dropdown({ value, onChange, options, ariaLabel }) {
 
 function StatCard({ icon: Icon, label, value }) {
   return (
-    <div className="bg-white rounded-xl border border-stone-200 shadow-xs p-4 sm:p-5 flex items-center gap-4">
-      <Icon size={26} strokeWidth={2} className="text-stone-900 shrink-0" />
+    <div className="bg-white dark:bg-[#17191A] rounded-xl border border-stone-200 dark:border-[#2B3238] shadow-xs p-4 sm:p-5 flex items-center gap-4 transition-colors">
+      <Icon size={26} strokeWidth={2} className="text-stone-900 dark:text-[#DFFF83] shrink-0" />
       <div className="min-w-0">
-        <div className="text-xs sm:text-sm text-stone-500 truncate">{label}</div>
-        <div className="text-xl sm:text-2xl font-bold text-stone-950 font-heading mt-0.5">{value}</div>
+        <div className="text-xs sm:text-sm text-stone-500 dark:text-[#94A3B8] truncate">{label}</div>
+        <div className="text-xl sm:text-2xl font-bold text-stone-950 dark:text-[#F5F7F5] font-heading mt-0.5">{value}</div>
       </div>
     </div>
   );
@@ -79,13 +79,13 @@ function StatCard({ icon: Icon, label, value }) {
 
 function MetricBox({ icon: Icon, label, value, detail }) {
   return (
-    <div className="bg-stone-50 border border-stone-100 rounded-lg p-3.5 flex items-center gap-3">
-      <Icon size={20} strokeWidth={2} className="text-stone-700 shrink-0" />
+    <div className="bg-stone-50 dark:bg-[#1E2124] border border-stone-100 dark:border-[#2B3238] rounded-lg p-3.5 flex items-center gap-3 transition-colors">
+      <Icon size={20} strokeWidth={2} className="text-stone-700 dark:text-[#94A3B8] shrink-0" />
       <div className="min-w-0">
-        <div className="text-[11px] text-stone-500 truncate">{label}</div>
+        <div className="text-[11px] text-stone-500 dark:text-[#94A3B8] truncate">{label}</div>
         <div className="flex items-baseline gap-1.5">
-          <span className="text-base font-bold text-stone-950 font-heading">{value}</span>
-          {detail && <span className="text-[11px] text-stone-400 truncate">{detail}</span>}
+          <span className="text-base font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">{value}</span>
+          {detail && <span className="text-[11px] text-stone-400 dark:text-[#64748B] truncate">{detail}</span>}
         </div>
       </div>
     </div>
@@ -101,8 +101,10 @@ function BatchCard({ batch, metric }) {
   // the batch page, where feed, eggs and losses could still be logged to it.
   return (
     <div
-      className={`rounded-xl border flex flex-col ${
-        closed ? 'bg-stone-50 border-stone-200/80' : 'bg-white border-stone-200 shadow-xs'
+      className={`rounded-xl border flex flex-col transition-colors ${
+        closed
+          ? 'bg-stone-50 dark:bg-[#151718] border-stone-200/80 dark:border-[#2B3238]'
+          : 'bg-white dark:bg-[#17191A] border-stone-200 dark:border-[#2B3238] shadow-xs'
       }`}
       aria-disabled={closed || undefined}
     >
@@ -111,19 +113,19 @@ function BatchCard({ batch, metric }) {
           <img
             src={batchImage(batch)}
             alt={batch.name}
-            className={`w-24 h-24 rounded-lg object-cover bg-stone-100 shrink-0 ${closed ? 'grayscale' : ''}`}
+            className={`w-24 h-24 rounded-lg object-cover bg-stone-100 dark:bg-[#1E2124] shrink-0 ${closed ? 'grayscale' : ''}`}
           />
 
           <div className="min-w-0 flex-1 space-y-2">
             <div className="flex items-start justify-between gap-2">
-              <h3 className={`text-base font-bold font-heading truncate ${closed ? 'text-stone-500' : 'text-stone-950'}`}>
+              <h3 className={`text-base font-bold font-heading truncate ${closed ? 'text-stone-500 dark:text-[#64748B]' : 'text-stone-950 dark:text-[#F5F7F5]'}`}>
                 {batch.name}
               </h3>
               <span
                 className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border shrink-0 inline-flex items-center gap-1 ${
                   closed
-                    ? 'bg-stone-100 text-stone-500 border-stone-200'
-                    : 'bg-sky-50 text-sky-700 border-sky-200'
+                    ? 'bg-stone-100 dark:bg-[#1E2124] text-stone-500 dark:text-[#94A3B8] border-stone-200 dark:border-[#2B3238]'
+                    : 'bg-sky-50 dark:bg-[#14233A] text-sky-700 dark:text-[#60A5FA] border-sky-200 dark:border-[#1E395F]'
                 }`}
               >
                 {closed && <Lock size={10} strokeWidth={2.5} />}
@@ -135,25 +137,25 @@ function BatchCard({ batch, metric }) {
               <span className={typePillClass(type)}>{birdTypeLabel(type)}</span>
             </div>
 
-            <div className="space-y-1.5 text-xs text-stone-600">
+            <div className="space-y-1.5 text-xs text-stone-600 dark:text-[#94A3B8]">
               <div className="flex items-center gap-2">
-                <BirdIcon size={13} strokeWidth={2.5} className="text-stone-500 shrink-0" />
+                <BirdIcon size={13} strokeWidth={2.5} className="text-stone-500 dark:text-[#94A3B8] shrink-0" />
                 <span>{Number(batch.birdCount || 0).toLocaleString()} birds</span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock size={13} strokeWidth={2.5} className="text-stone-500 shrink-0" />
+                <Clock size={13} strokeWidth={2.5} className="text-stone-500 dark:text-[#94A3B8] shrink-0" />
                 <span>
-                  Age: <strong className="font-semibold text-stone-800">{batchAge(batch)}</strong>
+                  Age: <strong className="font-semibold text-stone-800 dark:text-[#F5F7F5]">{batchAge(batch)}</strong>
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <CalendarIcon size={13} strokeWidth={2.5} className="text-stone-500 shrink-0" />
+                <CalendarIcon size={13} strokeWidth={2.5} className="text-stone-500 dark:text-[#94A3B8] shrink-0" />
                 <span className="truncate">
                   {formatDate(batch.startDate)} – {batch.closedAt ? formatDate(batch.closedAt) : 'Ongoing'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <LocationIcon size={13} strokeWidth={2.5} className="text-stone-500 shrink-0" />
+                <LocationIcon size={13} strokeWidth={2.5} className="text-stone-500 dark:text-[#94A3B8] shrink-0" />
                 <span className="truncate">{batch.housing || 'No house recorded'}</span>
               </div>
             </div>
@@ -167,12 +169,12 @@ function BatchCard({ batch, metric }) {
         to={closed ? `/history/${batch.batchId}` : `/batches/${batch.batchId}`}
         className={`border-t px-4 sm:px-5 py-3.5 flex items-center justify-between text-sm font-semibold rounded-b-xl transition-colors ${
           closed
-            ? 'border-stone-200/80 text-stone-500 hover:bg-stone-100'
-            : 'border-stone-100 text-stone-900 hover:bg-stone-50'
+            ? 'border-stone-200/80 dark:border-[#2B3238] text-stone-500 dark:text-[#94A3B8] hover:bg-stone-100 dark:hover:bg-[#1E2124]'
+            : 'border-stone-100 dark:border-[#2B3238] text-stone-900 dark:text-[#F5F7F5] hover:bg-stone-50 dark:hover:bg-[#1E2124]'
         }`}
       >
         <span>{closed ? 'View Record' : 'View Details'}</span>
-        <ChevronRight size={16} strokeWidth={2.5} className="text-stone-400" />
+        <ChevronRight size={16} strokeWidth={2.5} className="text-stone-400 dark:text-[#64748B]" />
       </Link>
     </div>
   );
@@ -296,8 +298,8 @@ export function BatchesPage() {
     <div className="max-w-7xl mx-auto pb-12 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-stone-950 font-heading">All Batches</h1>
-          <p className="text-sm text-stone-500 mt-1.5 max-w-2xl leading-relaxed">
+          <h1 className="text-2xl sm:text-3xl font-bold text-stone-950 dark:text-[#F5F7F5] font-heading">All Batches</h1>
+          <p className="text-sm text-stone-500 dark:text-[#94A3B8] mt-1.5 max-w-2xl leading-relaxed">
             View and manage all your poultry batches. Click on a batch to see detailed information,
             logs and performance.
           </p>
@@ -317,14 +319,14 @@ export function BatchesPage() {
           <Search
             size={16}
             strokeWidth={3}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 dark:text-[#64748B] pointer-events-none"
           />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search batches..."
-            className="w-full bg-white border border-stone-200 rounded-xl pl-11 pr-4 py-3 text-sm text-stone-900 placeholder:text-stone-400 shadow-xs focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 transition-colors"
+            className="w-full bg-white dark:bg-[#1E2124] border border-stone-200 dark:border-[#2B3238] rounded-xl pl-11 pr-4 py-3 text-sm text-stone-900 dark:text-[#F5F7F5] placeholder:text-stone-400 dark:placeholder:text-[#64748B] shadow-xs focus:outline-hidden focus:border-[#B7DA3E] focus:ring-2 focus:ring-[#DFFF83]/70 transition-colors"
           />
         </div>
 
@@ -341,16 +343,16 @@ export function BatchesPage() {
       </div>
 
       {loading ? (
-        <div className="py-16 text-center text-sm text-stone-400">Loading batches…</div>
+        <div className="py-16 text-center text-sm text-stone-400 dark:text-[#64748B]">Loading batches…</div>
       ) : visible.length === 0 ? (
-        <div className="text-center py-16 px-4 bg-white rounded-xl border border-stone-200 shadow-xs">
-          <div className="w-14 h-14 mx-auto bg-stone-100 rounded-xl flex items-center justify-center mb-3">
-            <BatchIcon size={24} strokeWidth={2.5} className="text-stone-400" />
+        <div className="text-center py-16 px-4 bg-white dark:bg-[#17191A] rounded-xl border border-stone-200 dark:border-[#2B3238] shadow-xs transition-colors">
+          <div className="w-14 h-14 mx-auto bg-stone-100 dark:bg-[#1E2124] rounded-xl flex items-center justify-center mb-3">
+            <BatchIcon size={24} strokeWidth={2.5} className="text-stone-400 dark:text-[#64748B]" />
           </div>
-          <h3 className="text-base font-bold text-stone-900 font-heading mb-1">
+          <h3 className="text-base font-bold text-stone-900 dark:text-[#F5F7F5] font-heading mb-1">
             {batches.length === 0 ? 'No batches yet' : 'No batches match your filters'}
           </h3>
-          <p className="text-sm text-stone-500 max-w-sm mx-auto mb-6">
+          <p className="text-sm text-stone-500 dark:text-[#94A3B8] max-w-sm mx-auto mb-6">
             {batches.length === 0
               ? 'Create your first batch to start tracking birds, feed and production.'
               : 'Try a different search, or set the filters back to All.'}

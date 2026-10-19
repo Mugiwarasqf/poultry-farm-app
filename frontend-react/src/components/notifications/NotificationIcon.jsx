@@ -16,7 +16,7 @@ export function NotificationIcon({ type, size = 'md' }) {
   const { box, glyph } = SIZES[size] || SIZES.md;
 
   return (
-    <span className={`${box} ${tint} shrink-0 rounded-full flex items-center justify-center text-stone-900`} aria-hidden="true">
+    <span className={`${box} ${tint} shrink-0 rounded-full flex items-center justify-center`} aria-hidden="true">
       {file ? (
         <img src={file} alt="" width={glyph} height={glyph} style={{ width: glyph, height: glyph }} className="object-contain" />
       ) : (

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Pencil, Check, X, Monitor, Smartphone, LogOut, KeyRound } from 'lucide-react';
+import { Pencil, Check, X, Monitor, Smartphone, LogOut, KeyRound, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { updateFarm } from '../../api/farms';
 import { useToast } from '../ui/Toast';
@@ -152,17 +152,12 @@ export function AccountPanel() {
         }
       >
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center overflow-hidden shrink-0">
-            <img
-              src="/images/irvan-maulana-ENQIxReDFKE-unsplash.jpg"
-              alt=""
-              className="w-full h-full object-cover"
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
+          <div className="w-16 h-16 rounded-full bg-[#EFFFC4] dark:bg-[#142312] text-[#4D6600] dark:text-[#DFFF83] border border-[#E3F5A8] dark:border-[#274220] flex items-center justify-center shrink-0 shadow-2xs">
+            <User size={30} strokeWidth={2} />
           </div>
           <div className="min-w-0">
-            <div className="text-base font-bold text-stone-950 font-heading truncate">{displayName}</div>
-            <div className="text-sm text-stone-500 truncate">{email || 'No email on file'}</div>
+            <div className="text-base font-bold text-stone-950 dark:text-[#F5F7F5] font-heading truncate">{displayName}</div>
+            <div className="text-sm text-stone-500 dark:text-[#94A3B8] truncate">{email || 'No email on file'}</div>
           </div>
         </div>
 
@@ -228,33 +223,33 @@ export function AccountPanel() {
         title="Login Sessions"
         description="Manage devices where you are currently logged in."
       >
-        <div className="divide-y divide-stone-100">
+        <div className="divide-y divide-stone-100 dark:divide-[#2B3238]">
           <div className="flex items-center justify-between gap-4 py-3.5">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-[#252A2E] flex items-center justify-center shrink-0">
                 {device.isMobile ? (
-                  <Smartphone size={18} strokeWidth={2.5} className="text-stone-600" />
+                  <Smartphone size={18} strokeWidth={2.5} className="text-stone-600 dark:text-[#94A3B8]" />
                 ) : (
-                  <Monitor size={18} strokeWidth={2.5} className="text-stone-600" />
+                  <Monitor size={18} strokeWidth={2.5} className="text-stone-600 dark:text-[#94A3B8]" />
                 )}
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-bold text-stone-900">Current Session</div>
-                <div className="text-xs text-stone-500 truncate">
+                <div className="text-sm font-bold text-stone-900 dark:text-[#F5F7F5]">Current Session</div>
+                <div className="text-xs text-stone-500 dark:text-[#94A3B8] truncate">
                   {device.os} • {device.browser}
                 </div>
               </div>
             </div>
             <div className="text-right shrink-0">
               <StatusPill tone="active">Active</StatusPill>
-              <div className="text-xs text-stone-400 mt-1">Active now</div>
+              <div className="text-xs text-stone-400 dark:text-[#64748B] mt-1">Active now</div>
             </div>
           </div>
         </div>
 
         {/* Only the session on this device can be listed. Sessions aren't
             recorded server-side, so any other device would be invented. */}
-        <p className="text-xs text-stone-500 mt-3">
+        <p className="text-xs text-stone-500 dark:text-[#94A3B8] mt-3">
           Only this device can be shown. TrackFarm does not yet keep a record of sign-ins on your
           other devices.
         </p>

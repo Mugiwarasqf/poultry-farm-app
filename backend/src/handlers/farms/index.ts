@@ -2,7 +2,7 @@ import type { APIGatewayProxyEventV2WithJWTAuthorizer } from "aws-lambda";
 import { GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { ddb, tables } from "../../lib/dynamo";
 import { badRequest, farmIdFromEvent, notFound, ok } from "../../lib/http";
-import type { BirdPurpose, CustomBirdType, Farm, Pen } from "../../lib/types";
+import type { BirdPurpose, CustomBirdType, Farm, NotificationPrefs, Pen } from "../../lib/types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -26,7 +26,7 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
   if (method === "PATCH") {
     const body = JSON.parse(event.body ?? "{}");
     const allowed: Array<keyof Farm> = [
-      "name", "farmerName", "location", "phone", "birdType", "onboarded", "pens", "birdTypes", "ownerEmail",
+      "name", "farmerName", "location", "phone", "birdType", "onboarded", "pens", "birdTypes", "ownerEmail", "notificationPrefs",
     ];
     const updates = allowed.filter((key) => body[key] !== undefined);
     if (updates.length === 0) return badRequest("no updatable fields provided");
@@ -44,6 +44,10 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer) {
         const types = cleanBirdTypes(body.birdTypes);
         if (!types) return badRequest("birdTypes must be a list of { id, label, purpose } (max 50)");
         values.birdTypes = types;
+      } else if (key === "notificationPrefs") {
+        const prefs = cleanNotificationPrefs(body.notificationPrefs);
+        if (!prefs) return badRequest("notificationPrefs must be a valid preferences object");
+        values.notificationPrefs = prefs;
       } else if (key === "onboarded") {
         values.onboarded = Boolean(body.onboarded);
         if (body.onboarded === true) values.onboardedAt = new Date().toISOString();
@@ -126,4 +130,25 @@ function cleanBirdTypes(raw: unknown): CustomBirdType[] | null {
     types.push({ id, label, purpose });
   }
   return types;
+}
+
+/** Returns the cleaned preferences object, or null if invalid. */
+function cleanNotificationPrefs(raw: unknown): NotificationPrefs | null {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return null;
+  const input = raw as Record<string, unknown>;
+  const prefs: NotificationPrefs = {};
+  const booleanKeys: Array<keyof NotificationPrefs> = [
+    "emailAlerts",
+    "vaccinationReminders",
+    "loggingNudges",
+    "feedAlerts",
+    "medicationAlerts",
+    "activityLogs",
+  ];
+  for (const key of booleanKeys) {
+    if (typeof input[key] === "boolean") {
+      prefs[key] = input[key] as boolean;
+    }
+  }
+  return prefs;
 }
